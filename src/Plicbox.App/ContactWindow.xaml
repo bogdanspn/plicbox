@@ -1,0 +1,225 @@
+<Window x:Class="Plicbox.App.ContactWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Plicbox.App.ViewModels"
+        xmlns:local="clr-namespace:Plicbox.App"
+        Title="{Binding Heading}" Width="800" Height="780" MinWidth="720" MinHeight="480"
+        WindowStartupLocation="CenterOwner" FontFamily="{DynamicResource UiFont}" FontSize="14" Background="{DynamicResource SurfaceBrush}">
+    <Window.Resources>
+        <!-- Round picture with the coloured initial underneath (as on the contact card). -->
+        <DataTemplate x:Key="Avatar" DataType="{x:Type vm:PersonViewModel}">
+            <Grid>
+                <Ellipse Fill="{Binding AvatarBrush}" />
+                <local:CenteredInitial Text="{Binding Initial}" Scale="0.5" />
+                <Ellipse Stroke="{DynamicResource AvatarRingBrush}" StrokeThickness="0.5" Margin="-0.75" Visibility="{Binding Photo, Converter={StaticResource NullToCollapsed}}">
+                    <Ellipse.Fill><ImageBrush ImageSource="{Binding Photo}" Stretch="UniformToFill" /></Ellipse.Fill>
+                </Ellipse>
+            </Grid>
+        </DataTemplate>
+    </Window.Resources>
+    <!-- ═══ Editor (new contact, edit, save from mail): eM Client's sections, on one page ═══ -->
+    <Grid Background="{DynamicResource SurfaceBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <Grid.Resources>
+            <Style x:Key="EditorSection" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="15" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Margin" Value="0,22,0,10" />
+            </Style>
+            <Style x:Key="FieldLabel" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="Margin" Value="0,0,12,0" />
+            </Style>
+            <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                <Setter Property="Margin" Value="0,4" />
+            </Style>
+            <Style x:Key="AddLink" TargetType="Button" BasedOn="{StaticResource ToolbarButton}">
+                <Setter Property="Foreground" Value="{DynamicResource LinkBrush}" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="Padding" Value="6,4" />
+                <Setter Property="Margin" Value="0,4,10,0" />
+            </Style>
+
+            <!-- One email / phone / website row: label, the value with its icon, remove. -->
+            <DataTemplate x:Key="ValueRow" DataType="{x:Type vm:EditableValue}">
+                <Grid Margin="0,1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="118" />
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ComboBox ItemsSource="{Binding Labels}" SelectedItem="{Binding Label}" DisplayMemberPath="Label" Margin="0,4,8,4" />
+                    <Grid Grid.Column="1">
+                        <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" local:Placeholder.Text="{Binding Hint}" Padding="10,5,32,6" />
+                        <TextBlock Style="{StaticResource Icon}" Text="{Binding Glyph}" Foreground="{DynamicResource MutedTextBrush}" FontSize="14"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,11,0" IsHitTestVisible="False" />
+                    </Grid>
+                    <Button Grid.Column="2" Style="{StaticResource ToolbarButton}" Tag="&#xE711;" Padding="7,5" Margin="4,0,0,0" ToolTip="{local:T 'Remove'}"
+                            Command="{Binding DataContext.RemoveValueCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                </Grid>
+            </DataTemplate>
+        </Grid.Resources>
+
+        <!-- Save & Close · Cancel · where to save, as in the other editors -->
+        <Border Background="{DynamicResource ChromeBrush}" BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,0,0,1" Padding="20,10">
+            <StackPanel Orientation="Horizontal">
+                <Button Style="{StaticResource PrimaryButton}" Padding="14,7" Click="Save_Click" ToolTip="{local:T 'Save &amp; Close (Ctrl+S)'}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource Icon}" Text="&#xE74E;" Margin="0,0,8,0" />
+                        <TextBlock Text="{local:T 'Save &amp; Close'}" />
+                    </StackPanel>
+                </Button>
+                <Button Content="{local:T 'Cancel'}" Margin="10,0,0,0" Padding="14,6" Click="Cancel_Click" />
+                <StackPanel Orientation="Horizontal" Margin="18,0,0,0" Visibility="{Binding IsNew, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Style="{StaticResource Icon}" Text="&#xE77B;" VerticalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,8,0" />
+                    <ComboBox MinWidth="260" DisplayMemberPath="Label" ToolTip="{local:T 'Where the contact is saved'}"
+                              ItemsSource="{Binding DataContext.SaveTargets, RelativeSource={RelativeSource AncestorType=Window}}" SelectedItem="{Binding SaveTo}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="32,18,32,28">
+                <!-- General -->
+                <TextBlock Style="{StaticResource EditorSection}" Text="{Binding Heading}" FontSize="18" Margin="0,0,0,12" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="118" />
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="{local:T 'Name'}" />
+                    <TextBox x:Name="GivenNameBox" Grid.Column="1" Text="{Binding GivenName, UpdateSourceTrigger=PropertyChanged}" local:Placeholder.Text="{local:T 'First name'}" />
+                    <TextBox Grid.Column="3" Text="{Binding FamilyName, UpdateSourceTrigger=PropertyChanged}" local:Placeholder.Text="{local:T 'Last name'}" />
+                    <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{local:T 'Nickname'}" />
+                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Nickname, UpdateSourceTrigger=PropertyChanged}" local:Placeholder.Text="{local:T 'Optional'}" />
+                    <!-- Picture (the person's own, or their letter) -->
+                    <Grid Grid.Column="4" Grid.RowSpan="2" Width="84" Height="84" Margin="24,0,0,0" VerticalAlignment="Top">
+                        <Ellipse Fill="#D5D9DE" />
+                        <local:CenteredInitial Text="{Binding Initial}" Scale="0.42" />
+                        <ContentPresenter Content="{Binding Person}" ContentTemplate="{StaticResource Avatar}"
+                                          Visibility="{Binding Person, Converter={StaticResource NullToCollapsed}}" />
+                    </Grid>
+                </Grid>
+
+                <!-- Contact information | Work details -->
+                <Grid>
+                    <!-- The two columns share the pane's width, so nothing is cut off when it's narrow. -->
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*" MinWidth="340" />
+                        <ColumnDefinition Width="32" />
+                        <ColumnDefinition Width="2*" MinWidth="240" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource EditorSection}" Text="{local:T 'Contact information'}" />
+                        <ItemsControl ItemsSource="{Binding Emails}" ItemTemplate="{StaticResource ValueRow}" />
+                        <ItemsControl ItemsSource="{Binding Phones}" ItemTemplate="{StaticResource ValueRow}" />
+                        <ItemsControl ItemsSource="{Binding Websites}" ItemTemplate="{StaticResource ValueRow}" />
+                        <WrapPanel Margin="114,2,0,0">
+                            <Button Style="{StaticResource AddLink}" Tag="&#xE710;" Content="{local:T 'Email'}"
+                                    Command="{Binding DataContext.AddEmailCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                            <Button Style="{StaticResource AddLink}" Tag="&#xE710;" Content="{local:T 'Phone'}"
+                                    Command="{Binding DataContext.AddPhoneCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                            <Button Style="{StaticResource AddLink}" Tag="&#xE710;" Content="{local:T 'Website'}"
+                                    Command="{Binding DataContext.AddWebsiteCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                        </WrapPanel>
+                    </StackPanel>
+                    <Grid Grid.Column="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="90" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.ColumnSpan="2" Style="{StaticResource EditorSection}" Text="{local:T 'Work details'}" />
+                        <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{local:T 'Company'}" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Company, UpdateSourceTrigger=PropertyChanged}" local:Placeholder.Text="{local:T 'Enter company'}" />
+                        <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{local:T 'Job title'}" />
+                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding JobTitle, UpdateSourceTrigger=PropertyChanged}" local:Placeholder.Text="{local:T 'Enter job title'}" />
+                        <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{local:T 'Department'}" />
+                        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Department, UpdateSourceTrigger=PropertyChanged}" local:Placeholder.Text="{local:T 'Enter department'}" />
+                    </Grid>
+                </Grid>
+
+                <!-- Personal details -->
+                <TextBlock Style="{StaticResource EditorSection}" Text="{local:T 'Personal details'}" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="118" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="{local:T 'Birthday'}" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,4">
+                        <DatePicker SelectedDate="{Binding Birthday}" MinWidth="200" />
+                        <CheckBox Content="{local:T 'Year unknown'}" IsChecked="{Binding BirthdayNoYear}" Margin="14,0,0,0" VerticalAlignment="Center"
+                                  ToolTip="{local:T 'Only the day and month are kept'}" />
+                    </StackPanel>
+                    <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{local:T 'Notes'}" VerticalAlignment="Top" Margin="0,12,12,0" />
+                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap"
+                             MinHeight="96" VerticalContentAlignment="Top" local:Placeholder.Text="{local:T 'Enter notes'}" />
+                </Grid>
+
+                <!-- Addresses, side by side when there's room -->
+                <TextBlock Style="{StaticResource EditorSection}" Text="{local:T 'Addresses'}" />
+                <ItemsControl ItemsSource="{Binding Addresses}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:EditableAddress}">
+                            <Grid Width="430" Margin="0,0,24,14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="118" />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="8" />
+                                    <ColumnDefinition Width="110" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <ComboBox ItemsSource="{x:Static vm:EditableAddress.Labels}" SelectedItem="{Binding Label}" DisplayMemberPath="Label" Margin="0,4,8,4" />
+                                <Button Grid.Column="3" Style="{StaticResource ToolbarButton}" Tag="&#xE711;" Content="{local:T 'Remove'}" HorizontalAlignment="Right" Padding="6,4"
+                                        Command="{Binding DataContext.RemoveAddressCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}" />
+                                <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="{local:T 'Street'}" />
+                                <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding Street, UpdateSourceTrigger=PropertyChanged}" local:Placeholder.Text="{local:T 'Street and number'}" />
+                                <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="{local:T 'City / ZIP'}" />
+                                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding City, UpdateSourceTrigger=PropertyChanged}" local:Placeholder.Text="{local:T 'City'}" />
+                                <TextBox Grid.Row="2" Grid.Column="3" Text="{Binding PostalCode, UpdateSourceTrigger=PropertyChanged}" local:Placeholder.Text="{local:T 'ZIP'}" />
+                                <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="{local:T 'State / County'}" />
+                                <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding Region, UpdateSourceTrigger=PropertyChanged}" local:Placeholder.Text="{local:T 'Optional'}" />
+                                <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="{local:T 'Country'}" />
+                                <ComboBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" IsEditable="True" Margin="0,4"
+                                          ItemsSource="{x:Static vm:EditableAddress.Countries}" Text="{Binding Country, UpdateSourceTrigger=PropertyChanged}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Style="{StaticResource AddLink}" Tag="&#xE710;" Content="{local:T 'Address'}" Margin="114,0,0,0"
+                        Command="{Binding DataContext.AddAddressCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>

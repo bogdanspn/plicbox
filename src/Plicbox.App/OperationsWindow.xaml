@@ -1,0 +1,26 @@
+<Window x:Class="Plicbox.App.OperationsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Plicbox.App"
+        Title="{local:T 'Operations'}" Width="680" Height="620" MinWidth="460" MinHeight="300"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        FontFamily="{DynamicResource UiFont}" FontSize="14" Background="{DynamicResource SurfaceBrush}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+
+        <Border Background="{DynamicResource ChromeBrush}" BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,0,0,1" Padding="20,10">
+            <StackPanel Orientation="Horizontal">
+                <Button Style="{StaticResource ToolbarButton}" Tag="&#xE72C;" Content="{local:T 'Sync all accounts'}" Click="SyncAll_Click" />
+                <Button Style="{StaticResource ToolbarButton}" Tag="&#xE8B7;" Content="{local:T 'Open log folder'}" Click="OpenLogs_Click" />
+            </StackPanel>
+        </Border>
+
+        <!-- One card per account, rebuilt every second while the window is open. -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="Cards" Margin="20,8,20,20" />
+        </ScrollViewer>
+    </Grid>
+</Window>

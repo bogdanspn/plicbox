@@ -1,0 +1,543 @@
+<UserControl x:Class="Plicbox.App.ContactsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:glob="clr-namespace:System.Globalization;assembly=System.Runtime"
+             xmlns:vm="clr-namespace:Plicbox.App.ViewModels"
+             xmlns:core="clr-namespace:Plicbox.Core;assembly=Plicbox.Core"
+             xmlns:local="clr-namespace:Plicbox.App"
+             FontFamily="{DynamicResource UiFont}" FontSize="14">
+    <UserControl.Resources>
+        <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibility" />
+        <local:CountToVisibilityConverter x:Key="CountToVisibility" />
+
+        <!-- A whole row as a button, without any button look. -->
+        <Style x:Key="RowButton" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="4" Padding="10,7">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ListHoverBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Round picture with the coloured initial underneath (shows when there's no picture). -->
+        <DataTemplate x:Key="Avatar" DataType="{x:Type vm:PersonViewModel}">
+            <Grid>
+                <Ellipse Fill="{Binding AvatarBrush}" />
+                <local:CenteredInitial Text="{Binding Initial}" Scale="0.5" />
+                <Ellipse Stroke="{DynamicResource AvatarRingBrush}" StrokeThickness="0.5" Margin="-0.75" Visibility="{Binding Photo, Converter={StaticResource NullToCollapsed}}">
+                    <Ellipse.Fill><ImageBrush ImageSource="{Binding Photo}" Stretch="UniformToFill" /></Ellipse.Fill>
+                </Ellipse>
+            </Grid>
+        </DataTemplate>
+
+        <Style x:Key="CardSection" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+
+        <!-- A panel per section of the card: a thin border on the white page sets each one apart. -->
+        <!-- A section: a thin line above its heading, no box around it (keeps the page open). -->
+        <Style x:Key="Panel" TargetType="Border">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource DividerBrush}" />
+            <Setter Property="BorderThickness" Value="0,1,0,0" />
+            <Setter Property="Padding" Value="0,16,0,6" />
+            <Setter Property="Margin" Value="0,20,0,0" />
+        </Style>
+
+        <!-- A small fact tile in the relationship row. -->
+        <Style x:Key="Tile" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource PanelBackdropBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="12,9" />
+            <Setter Property="Margin" Value="0,0,8,8" />
+            <Setter Property="MinWidth" Value="150" />
+        </Style>
+
+        <Style x:Key="ActionButton" TargetType="Button" BasedOn="{StaticResource ToolbarButton}">
+            <Setter Property="Margin" Value="0,0,4,0" />
+        </Style>
+
+        <Style x:Key="ListItem" TargetType="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" Background="Transparent" Padding="14,8">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AltRowBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ListHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SelectionBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <UserControl.InputBindings>
+        <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewContactCommand}" />
+        <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
+    </UserControl.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="52" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+
+        <Border BorderBrush="{DynamicResource ToolbarLineBrush}" BorderThickness="0,0,0,1" />
+
+        <!-- ═══ Toolbar ═══ -->
+        <DockPanel Margin="12,0,16,0" LastChildFill="False">
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Height="{StaticResource ToolbarItemHeight}">
+                <Button x:Name="NewButton" Style="{StaticResource AccentButton}" Tag="&#xE710;" Content="{local:T 'New'}" Padding="12,6" Click="NewButton_Click"
+                        ToolTip="{local:T 'New contact (Ctrl+N)'}" />
+                <Button Style="{StaticResource RefreshButton}" Content="{local:T 'Refresh'}" Command="{Binding RefreshCommand}" Margin="10,0,0,0"
+                        local:Spin.IsSpinning="{Binding IsBusy}" ToolTip="{Binding RefreshToolTip}" />
+                <Button Style="{StaticResource ToolbarButton}" Tag="&#xE712;" Margin="4,0,0,0" Click="MoreButton_Click" ToolTip="{local:T 'Import and export contacts'}" />
+            </StackPanel>
+            <local:ToolbarSearch x:Name="PeopleSearch" DockPanel.Dock="Right" HorizontalAlignment="Right" Placeholder="{local:T 'Search people'}" Text="{Binding SearchText}"
+                                   Margin="6,0,0,0" />
+            <!-- What you do most with the selected person -->
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Height="{StaticResource ToolbarItemHeight}" IsEnabled="{Binding HasSelection}">
+                <Button Style="{StaticResource ToolbarButton}" Tag="&#xE715;" Content="{local:T 'Email'}" Command="{Binding EmailCommand}" IsEnabled="{Binding HasAddress}"
+                        ToolTip="{local:T 'Write to them'}" />
+                <Button Style="{StaticResource ToolbarButton}" Tag="&#xE787;" Content="{local:T 'Meeting'}" Command="{Binding MeetingCommand}" IsEnabled="{Binding HasAddress}"
+                        ToolTip="{local:T 'Plan a meeting with them (video call included)'}" />
+                <Button Style="{StaticResource ToolbarButton}" Tag="&#xE70F;" Content="{Binding EditLabel}" Command="{Binding EditCommand}"
+                        ToolTip="{local:T 'Edit the contact, or save someone from your mail'}" />
+                <Button Style="{StaticResource ToolbarButton}" Tag="{Binding FavoriteGlyph}" Content="{Binding FavoriteLabel}" Command="{Binding ToggleFavoriteCommand}" />
+                <Button Style="{StaticResource ToolbarButton}" Tag="&#xE721;" Content="{local:T 'All Mail'}" Command="{Binding ShowAllMailCommand}" IsEnabled="{Binding HasAddress}"
+                        ToolTip="{local:T 'Search mail for them'}" />
+                <Button Style="{StaticResource ToolbarButton}" Tag="&#xE74D;" Content="{local:T 'Delete'}" Command="{Binding DeleteCommand}" IsEnabled="{Binding CanDelete}"
+                        ToolTip="{local:T 'Delete the contact (your mail with them stays)'}" />
+            </StackPanel>
+        </DockPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="SidebarColumn" Width="300" MinWidth="56" MaxWidth="480" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="380" MinWidth="280" MaxWidth="600" />
+                <ColumnDefinition Width="0" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <!-- ═══ Sidebar: smart lists ═══ -->
+            <!-- Dragged narrow, the sidebar folds into a strip of icons (MainWindow.SyncSidebarWidths) -->
+            <local:SidebarRail x:Name="Rail" Visibility="Collapsed" ItemsSource="{Binding Lists}" SelectedItem="{Binding SelectedList}" />
+            <Grid x:Name="SidebarPanel">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Border Height="8" />
+                <Border Grid.Row="1" Margin="12,0,12,10" Padding="12,10" CornerRadius="8" Background="{DynamicResource WarningFillBrush}" BorderBrush="{DynamicResource WarningStrokeBrush}" BorderThickness="1"
+                        Visibility="{Binding Banner, Converter={StaticResource NullToCollapsed}}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding Banner}" TextWrapping="Wrap" FontSize="13" />
+                        <Button Style="{StaticResource PrimaryButton}" Content="{Binding BannerAction}" Command="{Binding FixBannerCommand}"
+                                HorizontalAlignment="Left" Margin="0,10,0,0" Padding="12,5" />
+                    </StackPanel>
+                </Border>
+                <ListBox Grid.Row="2" ItemsSource="{Binding Lists}" SelectedItem="{Binding SelectedList}" Background="Transparent" BorderThickness="0"
+                         ItemContainerStyle="{StaticResource SidebarItem}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="0,0,-8,0" Padding="0,0,8,0" local:Gutter.ScrollBarWidth="8">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:PeopleListItem}">
+                            <Grid Height="33" Margin="16,0,18,0" ToolTip="{Binding Hint}" Background="Transparent">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource Icon}" Text="{Binding Glyph}" Margin="0,0,12,0" />
+                                <TextBlock Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Grid.Column="2" Text="{Binding Count}" Foreground="{DynamicResource MutedTextBrush}" FontSize="12.5" VerticalAlignment="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <Border Grid.Row="3" Height="49" />
+            </Grid>
+
+            <GridSplitter x:Name="SidebarSplitter" Grid.Column="1" Style="{StaticResource SidebarSplitter}" />
+            <!-- Module tabs: shared out evenly across the sidebar and its splitter, up to the white area (as in eM Client) -->
+            <Border Grid.ColumnSpan="2" VerticalAlignment="Bottom" Panel.ZIndex="1" Background="{DynamicResource ChromeBrush}" BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,1,0,0">
+                <UniformGrid x:Name="ModuleTabs" Rows="1">
+                    <RadioButton Style="{StaticResource ModuleButton}" Content="&#xE715;" ToolTip="{local:T 'Mail (Ctrl+1)'}" GroupName="PeopleModule" Click="MailModule_Click" />
+                    <RadioButton Style="{StaticResource ModuleButton}" Content="&#xE787;" ToolTip="{local:T 'Calendar (Ctrl+2)'}" GroupName="PeopleModule" Click="CalendarModule_Click" />
+                    <RadioButton x:Name="ContactsModuleButton" Style="{StaticResource ModuleButton}" Content="&#xE77B;" ToolTip="{local:T 'Contacts (Ctrl+3)'}" GroupName="PeopleModule" IsChecked="True" />
+                    <RadioButton Style="{StaticResource ModuleButton}" Content="&#xE930;" ToolTip="{local:T 'Tasks (Ctrl+4)'}" GroupName="PeopleModule" Click="TasksModule_Click" />
+                    <!-- Folds the sidebar into a strip of icons (‹), and opens it again from there (›) -->
+                    <Button x:Name="FoldButton" Style="{StaticResource ModuleFoldButton}" Content="&#xE76B;" ToolTip="{local:T 'Collapse sidebar'}" />
+                </UniformGrid>
+            </Border>
+
+            <!-- ═══ People ═══ -->
+<!-- A divider line along its edge, as between the other panes -->
+            <Border Grid.Column="2" Width="1" HorizontalAlignment="Left" Background="{DynamicResource DividerBrush}" />
+            <Grid Grid.Column="2" Margin="1,0,0,0" Background="{DynamicResource SurfaceBrush}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <StackPanel Margin="16,12,16,8">
+                    <TextBlock Text="{Binding ListTitle}" FontSize="18" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding ListHint}" FontSize="12.5" Foreground="{DynamicResource MutedTextBrush}" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <!-- Its scrollbar over the rows' right edge, as the message list's -->
+                <ListBox x:Name="PeopleList" Grid.Row="1" ItemsSource="{Binding People}" SelectedItem="{Binding Selected}" BorderThickness="0" Background="Transparent" AlternationCount="2"
+                         ItemContainerStyle="{StaticResource ListItem}" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                         ContextMenuOpening="PeopleList_ContextMenuOpening">
+                    <ListBox.ContextMenu>
+                        <ContextMenu />
+                    </ListBox.ContextMenu>
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate><VirtualizingStackPanel /></ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource SecondaryTextBrush}" Margin="14,12,0,4" />
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </ListBox.GroupStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:PersonViewModel}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource Avatar}" Width="36" Height="36" />
+                                <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Name}" FontSize="14.5" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Style="{StaticResource Icon}" Text="&#xE735;" FontSize="11" Foreground="#F5B400" Margin="6,0,0,0"
+                                                   Visibility="{Binding IsFavorite, Converter={StaticResource BoolToVisibility}}" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Subtitle}" FontSize="12.5" Foreground="{DynamicResource MutedTextBrush}" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="2" Text="{Binding LastText}" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <local:EmptyState Grid.Row="1" Title="{Binding EmptyTitle}" Text="{Binding EmptyText}" ActionCommand="{Binding ClearSearchCommand}"
+                                  Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}">
+                    <local:EmptyState.Style>
+                        <Style TargetType="local:EmptyState">
+                            <Setter Property="Glyph" Value="&#xE716;" /> <!-- people -->
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsSearching}" Value="True">
+                                    <Setter Property="Glyph" Value="&#xE721;" />
+                                    <Setter Property="ActionText" Value="{local:T 'Clear search'}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </local:EmptyState.Style>
+                </local:EmptyState>
+            </Grid>
+
+            <!-- No gap between the people and the card, just the card's divider line; the list is resized by dragging it
+                 (a few pixels either side of a column with no width of its own). -->
+            <GridSplitter Grid.Column="3" Style="{StaticResource SidebarSplitter}" Width="6" Margin="-3,0,-3,0" HorizontalAlignment="Stretch" />
+
+            <!-- ═══ The card ═══ -->
+<!-- A divider line along its edge, as between the other panes -->
+            <Border Grid.Column="4" Width="1" HorizontalAlignment="Left" Background="{DynamicResource DividerBrush}" />
+            <Grid Grid.Column="4" Margin="1,0,0,0" Background="{DynamicResource SurfaceBrush}">
+                <!-- Lower than its own centre by the list's heading, so it lines up with the empty list beside it. -->
+                <local:EmptyState Glyph="&#xE8FA;" Title="{Binding CardEmptyTitle}" Text="{Binding CardEmptyText}" Margin="24,114,24,72"
+                                  ActionText="{local:T 'New contact'}" ActionGlyph="&#xE710;" ActionCommand="{Binding NewContactFromSearchCommand}"
+                                  Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto" DataContext="{Binding Card}" Visibility="{Binding Converter={StaticResource NullToCollapsed}}">
+                    <!-- Fills the pane, however wide the window. -->
+                    <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Margin="18,14,18,20">
+                        <!-- Who -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <ContentPresenter Content="{Binding Person}" ContentTemplate="{StaticResource Avatar}" Width="76" Height="76" VerticalAlignment="Top" />
+                            <StackPanel Grid.Column="1" Margin="18,2,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Person.Name}" FontSize="24" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Person.Subtitle}" FontSize="14" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                <Border HorizontalAlignment="Left" Margin="0,8,0,0" CornerRadius="4" Background="{DynamicResource SubtleFillBrush}" Padding="8,2">
+                                    <TextBlock Text="{Binding SourceText}" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Quick actions (Email, Meeting and All mail need an address: left out for a phone-only contact) -->
+                        <WrapPanel Margin="-8,16,0,0">
+                            <Button Style="{StaticResource ActionButton}" Tag="&#xE715;" Content="{local:T 'Email'}" ToolTip="{local:T 'Write to them'}"
+                                    Visibility="{Binding DataContext.HasAddress, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"
+                                    Command="{Binding DataContext.EmailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                            <Button Style="{StaticResource ActionButton}" Tag="&#xE787;" Content="{local:T 'Meeting'}" ToolTip="{local:T 'Plan a meeting with them (video call included)'}"
+                                    Visibility="{Binding DataContext.HasAddress, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"
+                                    Command="{Binding DataContext.MeetingCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                            <Button Style="{StaticResource ActionButton}" Tag="&#xE717;" Content="{local:T 'Call'}" Visibility="{Binding HasPhones, Converter={StaticResource BoolToVisibility}}"
+                                    Command="{Binding DataContext.CallCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding Phones[0].Value}" />
+                            <Button Style="{StaticResource ActionButton}" Tag="&#xE721;" Content="{local:T 'All mail'}" ToolTip="{local:T 'Search mail for them'}"
+                                    Visibility="{Binding DataContext.HasAddress, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisibility}}"
+                                    Command="{Binding DataContext.ShowAllMailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                            <Button Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ActionButton}">
+                                        <Setter Property="Tag" Value="&#xE734;" />
+                                        <Setter Property="ToolTip" Value="{local:T 'Add to favorites'}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Person.IsFavorite}" Value="True">
+                                                <Setter Property="Tag" Value="&#xE735;" />
+                                                <Setter Property="Foreground" Value="#E0A800" />
+                                                <Setter Property="ToolTip" Value="{local:T 'Remove from favorites'}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Style="{StaticResource ActionButton}" Tag="&#xE70F;" Content="{local:T 'Edit'}" Visibility="{Binding Person.IsSaved, Converter={StaticResource BoolToVisibility}}"
+                                    Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                            <Button Style="{StaticResource ActionButton}" Tag="&#xE712;" ToolTip="{local:T 'More'}" Click="More_Click" />
+                        </WrapPanel>
+
+                        <!-- From your mail, not a contact yet -->
+                        <Border Margin="0,14,0,0" Padding="14,12" CornerRadius="6" Background="{DynamicResource InfoFillBrush}" BorderBrush="{DynamicResource InfoStrokeBrush}" BorderThickness="1"
+                                Visibility="{Binding SaveHint, Converter={StaticResource NullToCollapsed}}">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Style="{StaticResource PrimaryButton}" Content="{local:T 'Save contact'}" Padding="14,5" VerticalAlignment="Center"
+                                        Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                <TextBlock Text="{Binding SaveHint}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0" />
+                            </DockPanel>
+                        </Border>
+
+                        <!-- Gone quiet -->
+                        <Border Margin="0,14,0,0" Padding="14,12" CornerRadius="6" Background="{DynamicResource WarningFillBrush}" BorderBrush="{DynamicResource WarningStrokeBrush}" BorderThickness="1"
+                                Visibility="{Binding NudgeText, Converter={StaticResource NullToCollapsed}}">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Content="{local:T 'Say hello'}" Padding="14,5" VerticalAlignment="Center"
+                                        Command="{Binding DataContext.EmailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                <TextBlock Text="{Binding NudgeText}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0" />
+                            </DockPanel>
+                        </Border>
+
+                        <!-- Relationship at a glance (left out when there's nothing yet, e.g. a number-only contact) -->
+                        <Border Style="{StaticResource Panel}" Visibility="{Binding HasInTouch, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel>
+                        <TextBlock Style="{StaticResource CardSection}" Text="{local:T 'IN TOUCH'}" />
+                        <!-- The tiles fill each row (the right margin of the last one lines up with the edge) -->
+                        <local:StretchWrapPanel Margin="0,0,-8,-8">
+                            <Border Style="{StaticResource Tile}" Visibility="{Binding LastText, Converter={StaticResource NullToCollapsed}}">
+                                <StackPanel>
+                                    <TextBlock Text="{local:T 'Last email'}" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" />
+                                    <TextBlock Text="{Binding LastText}" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource Tile}" Visibility="{Binding CountsText, Converter={StaticResource NullToCollapsed}}">
+                                <StackPanel>
+                                    <TextBlock Text="{local:T 'Emails'}" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" />
+                                    <TextBlock Text="{Binding CountsText}" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource Tile}" Visibility="{Binding RhythmText, Converter={StaticResource NullToCollapsed}}">
+                                <StackPanel>
+                                    <TextBlock Text="{local:T 'Usually'}" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" />
+                                    <TextBlock Text="{Binding RhythmText}" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource Tile}" Visibility="{Binding MeetingText, Converter={StaticResource NullToCollapsed}}">
+                                <StackPanel>
+                                    <TextBlock Text="{local:T 'Next meeting'}" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" />
+                                    <TextBlock Text="{Binding MeetingText}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource Tile}" Visibility="{Binding BirthdayText, Converter={StaticResource NullToCollapsed}}">
+                                <StackPanel>
+                                    <TextBlock Text="{local:T 'Birthday'}" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" />
+                                    <TextBlock Text="{Binding BirthdayText}" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Border>
+                        </local:StretchWrapPanel>
+                        </StackPanel>
+                        </Border>
+
+                        <!-- Found in their signature -->
+                        <Border Style="{StaticResource Panel}" Visibility="{Binding Suggestions.Count, Converter={StaticResource CountToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource CardSection}" Text="{local:T 'FROM THEIR SIGNATURE'}" />
+                            <ItemsControl ItemsSource="{Binding Suggestions}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:SignatureSuggestion}">
+                                        <Button Margin="0,0,8,8" Padding="10,5" ToolTip="{local:T 'Add to the contact'}"
+                                                Command="{Binding DataContext.AddSuggestionCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Style="{StaticResource Icon}" Text="&#xE710;" FontSize="11" Foreground="{DynamicResource LinkBrush}" Margin="0,0,8,0" />
+                                                <TextBlock Text="{Binding Label}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,6,0" />
+                                                <TextBlock Text="{Binding Value}" />
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                        </Border>
+
+                        <!-- Possibly the same person twice -->
+                        <ItemsControl ItemsSource="{Binding Duplicates}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:PersonViewModel}">
+                                    <Border Margin="0,14,0,0" Padding="14,10" CornerRadius="8" Background="{DynamicResource SurfaceBrush}"
+                                            BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1">
+                                        <DockPanel>
+                                            <Button DockPanel.Dock="Right" Content="{local:T 'Merge'}" Padding="14,4" VerticalAlignment="Center"
+                                                    Command="{Binding DataContext.MergeCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}" />
+                                            <TextBlock TextWrapping="Wrap" VerticalAlignment="Center">
+                                                <Run Text="{local:T 'Looks like the same person:'}" Foreground="{DynamicResource MutedTextBrush}" />
+                                                <Run Text="{Binding Name}" FontWeight="SemiBold" />
+                                                <Run Text="{Binding Email, Mode=OneWay}" Foreground="{DynamicResource MutedTextBrush}" />
+                                            </TextBlock>
+                                        </DockPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Details -->
+                        <Border Style="{StaticResource Panel}">
+                        <StackPanel>
+                        <TextBlock Style="{StaticResource CardSection}" Text="{local:T 'DETAILS'}" />
+                        <ItemsControl ItemsSource="{Binding EmailList}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type core:LabeledValue}">
+                                    <DockPanel Margin="0,3">
+                                        <TextBlock Style="{StaticResource Icon}" Text="&#xE715;" Width="28" Foreground="{DynamicResource MutedTextBrush}" />
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding Label}" Foreground="{DynamicResource MutedTextBrush}" FontSize="12.5" Margin="12,0,0,0" />
+                                        <TextBlock>
+                                            <Hyperlink Command="{Binding DataContext.EmailCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding Value}">
+                                                <Run Text="{Binding Value, Mode=OneWay}" />
+                                            </Hyperlink>
+                                        </TextBlock>
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <ItemsControl ItemsSource="{Binding Phones}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type core:LabeledValue}">
+                                    <DockPanel Margin="0,3">
+                                        <TextBlock Style="{StaticResource Icon}" Text="&#xE717;" Width="28" Foreground="{DynamicResource MutedTextBrush}" />
+                                        <Button DockPanel.Dock="Right" Style="{StaticResource ToolbarButton}" Tag="&#xE8C8;" Padding="6,2" ToolTip="{local:T 'Copy'}"
+                                                Command="{Binding DataContext.CopyCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding Value}" />
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding Label}" Foreground="{DynamicResource MutedTextBrush}" FontSize="12.5" Margin="12,0,4,0" VerticalAlignment="Center" />
+                                        <TextBlock VerticalAlignment="Center">
+                                            <Hyperlink Command="{Binding DataContext.CallCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding Value}">
+                                                <Run Text="{Binding Value, Mode=OneWay}" />
+                                            </Hyperlink>
+                                        </TextBlock>
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <ItemsControl ItemsSource="{Binding Websites}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type core:LabeledValue}">
+                                    <DockPanel Margin="0,3">
+                                        <TextBlock Style="{StaticResource Icon}" Text="&#xE774;" Width="28" Foreground="{DynamicResource MutedTextBrush}" />
+                                        <TextBlock>
+                                            <Hyperlink Command="{Binding DataContext.OpenWebsiteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding Value}">
+                                                <Run Text="{Binding Value, Mode=OneWay}" />
+                                            </Hyperlink>
+                                        </TextBlock>
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <DockPanel Margin="0,3" Visibility="{Binding Address, Converter={StaticResource NullToCollapsed}}">
+                            <TextBlock Style="{StaticResource Icon}" Text="&#xE707;" Width="28" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Top" Margin="0,2,0,0" />
+                            <TextBlock Text="{Binding Address}" TextWrapping="Wrap" />
+                        </DockPanel>
+                        <DockPanel Margin="0,3" Visibility="{Binding Notes, Converter={StaticResource NullToCollapsed}}">
+                            <TextBlock Style="{StaticResource Icon}" Text="&#xE70B;" Width="28" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Top" Margin="0,2,0,0" />
+                            <TextBlock Text="{Binding Notes}" TextWrapping="Wrap" />
+                        </DockPanel>
+                        </StackPanel>
+                        </Border>
+
+                        <!-- Recent conversations -->
+                        <Border Style="{StaticResource Panel}" Visibility="{Binding Conversations.Count, Converter={StaticResource CountToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource CardSection}" Text="{local:T 'RECENT CONVERSATIONS'}" Margin="0,0,0,6" />
+                            <ItemsControl ItemsSource="{Binding Conversations}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type core:MessageSummary}">
+                                        <!-- A thin line between rows (not above the first). -->
+                                        <Border x:Name="Divider" BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,1,0,0" Margin="-8,0,-8,0" Padding="0,2">
+                                        <Button Style="{StaticResource RowButton}" HorizontalContentAlignment="Stretch"
+                                                Command="{Binding DataContext.OpenConversationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding Subject}" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Preview}" FontSize="12.5" Foreground="{DynamicResource MutedTextBrush}" TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Date, StringFormat=d, ConverterCulture={x:Static glob:CultureInfo.CurrentCulture}}" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" Margin="12,2,0,0" />
+                                                </Grid>
+                                        </Button>
+                                        </Border>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource PreviousData}}" Value="{x:Null}">
+                                                <Setter TargetName="Divider" Property="BorderThickness" Value="0" />
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                        </Border>
+                    </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

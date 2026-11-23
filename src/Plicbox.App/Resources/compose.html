@@ -1,0 +1,795 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:{{REMOTE_IMAGES}}; style-src 'unsafe-inline'; script-src 'nonce-{{NONCE}}'">
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { font: 14px/1.5 'Segoe UI', sans-serif; color: #1f1f1f; display: flex; flex-direction: column; }
+  .ic { font-family: 'Segoe Fluent Icons', 'Segoe MDL2 Assets'; font-size: 16px; line-height: 1; font-style: normal; font-weight: normal; }
+
+  #bar { display: flex; flex-wrap: wrap; gap: 1px; align-items: center; padding: 4px 10px; border-bottom: 1px solid #e3e3e3;
+         background: #fafafa; flex: none; user-select: none; }
+  #bar button { border: 0; background: transparent; border-radius: 4px; min-width: 30px; height: 30px; padding: 0 6px;
+                font: inherit; cursor: pointer; color: #333; display: inline-flex; align-items: center; justify-content: center; gap: 2px; }
+  #bar button:hover { background: #e8e8e8; }
+  #bar button.on { background: #dde7f5; color: #0f4c9c; }
+  #bar button:disabled { color: #bbb; background: transparent; cursor: default; }
+  #bar button .chev { font-size: 8px; margin-left: 2px; }
+  #bar button svg { width: 16px; height: 16px; }
+  #bar .sep { width: 1px; height: 18px; background: #ddd; margin: 0 5px; }
+  #bar .spacer { flex: 1; }
+  .swatch { position: relative; }
+  .swatch i.bar { position: absolute; left: 7px; right: 16px; bottom: 5px; height: 3px; border-radius: 1px; }
+  #impBtn.high { color: #c42b1c; }
+  #impBtn.low { color: #0f6cbd; }
+
+  .pop { position: fixed; z-index: 10; background: #fff; border: 1px solid #d6d6d6; border-radius: 8px; padding: 4px;
+         box-shadow: 0 6px 20px rgba(0,0,0,.16); min-width: 180px; max-height: 70vh; overflow: auto; user-select: none; }
+  .pop[hidden] { display: none; }
+  .mi { display: flex; align-items: center; gap: 10px; padding: 5px 10px 5px 8px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+  .mi:hover { background: #eef1f5; }
+  .mi .ic { width: 16px; text-align: center; color: #444; }
+  .mi .check { width: 16px; text-align: center; font-size: 12px; }
+  .mi .key { margin-left: auto; padding-left: 24px; color: #888; font-size: 12px; }
+  .mi.disabled { color: #aaa; cursor: default; background: transparent; }
+  .msep { height: 1px; background: #e6e6e6; margin: 4px 2px; }
+  .colors { display: grid; grid-template-columns: repeat(10, 20px); gap: 3px; padding: 6px; }
+  .colors button { width: 20px; height: 20px; border: 1px solid rgba(0,0,0,.15); border-radius: 3px; cursor: pointer; padding: 0; }
+  .colors button:hover { outline: 2px solid #0f6cbd; outline-offset: 1px; }
+  .emojis { display: grid; grid-template-columns: repeat(10, 30px); gap: 2px; padding: 4px; font: 20px 'Segoe UI Emoji', sans-serif; }
+  .emojis span { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; }
+  .emojis span:hover { background: #eef1f5; }
+  .grid { display: grid; grid-template-columns: repeat(8, 18px); gap: 2px; padding: 6px 6px 2px; }
+  .grid span { width: 18px; height: 18px; border: 1px solid #ccc; border-radius: 2px; }
+  .grid span.on { background: #cfe0f7; border-color: #0f6cbd; }
+  .gridlabel { padding: 2px 6px 6px; color: #555; font-size: 12px; }
+  .form { padding: 8px 10px; display: grid; gap: 8px; min-width: 300px; }
+  .form label { display: grid; gap: 2px; font-size: 12px; color: #555; }
+  .form input { font: inherit; padding: 5px 7px; border: 1px solid #ccc; border-radius: 4px; outline: none; }
+  .form input:focus { border-color: #0f6cbd; }
+  .form .buttons { display: flex; gap: 6px; justify-content: flex-end; }
+  .form button { font: inherit; padding: 4px 14px; border-radius: 4px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+  .form button.primary { background: #0f6cbd; border-color: #0f6cbd; color: #fff; }
+
+  #editor { flex: 1; overflow: auto; padding: 16px 20px; outline: none; word-wrap: break-word; }
+  #editor:empty::before { content: attr(data-placeholder); color: #9a9a9a; }
+  #editor.plain { white-space: pre-wrap; }
+  #editor a { color: #1a73e8; text-decoration: underline; }
+  #editor table td, #editor table th { min-width: 30px; }
+  blockquote { margin: 0 0 0 .8ex; border-left: 2px solid #ccc; padding-left: 1ex; }
+  .mr-quote-header { color: #555; margin-top: 8px; }
+  img { max-width: 100%; }
+  /* A picture being sized: a frame with corner handles, and a small bar of sizes under it (outside the text, so it
+     never ends up in the mail). */
+  #picframe { position: fixed; border: 1.5px solid #0f6cbd; pointer-events: none; z-index: 5; box-sizing: border-box; }
+  #picframe[hidden] { display: none; }
+  #picframe i { position: absolute; width: 10px; height: 10px; background: #fff; border: 1.5px solid #0f6cbd; border-radius: 2px;
+                box-sizing: border-box; pointer-events: auto; }
+  #picframe i[data-h="nw"] { left: -6px; top: -6px; cursor: nwse-resize; }
+  #picframe i[data-h="ne"] { right: -6px; top: -6px; cursor: nesw-resize; }
+  #picframe i[data-h="sw"] { left: -6px; bottom: -6px; cursor: nesw-resize; }
+  #picframe i[data-h="se"] { right: -6px; bottom: -6px; cursor: nwse-resize; }
+  #picbar { position: fixed; z-index: 6; display: flex; align-items: center; gap: 2px; padding: 3px; background: #fff;
+            border: 1px solid #d6d6d6; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.14); font: 12px 'Segoe UI', sans-serif; }
+  #picbar[hidden] { display: none; }
+  #picbar button { font: inherit; border: 0; background: none; padding: 4px 9px; border-radius: 4px; cursor: pointer; color: #1f1f1f; }
+  #picbar button:hover { background: #eef1f5; }
+  #picbar button.on { background: #e1ecfa; color: #0f6cbd; }
+  #picbar .dim { color: #707070; padding: 0 8px 0 6px; border-left: 1px solid #e2e2e2; margin-left: 2px; white-space: nowrap; }
+  #printhead { display: none; }
+  /* Dragging files over the page: what a drop will do, and the text outlined when pictures would go into it. */
+  #editor.droptarget { box-shadow: inset 0 0 0 2px #0f6cbd; border-radius: 4px; }
+  #drophint { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 20; pointer-events: none;
+              background: #0f6cbd; color: #fff; font: 13px 'Segoe UI', sans-serif; padding: 6px 14px; border-radius: 16px;
+              box-shadow: 0 4px 14px rgba(0,0,0,.2); white-space: nowrap; }
+  #drophint[hidden] { display: none; }
+{{SCROLLBAR_CSS}}
+
+  @media print {
+    #bar, .pop { display: none !important; }
+    body { display: block; height: auto; }
+    #editor { overflow: visible; padding: 0; }
+    #printhead { display: block; border-bottom: 1px solid #999; margin-bottom: 12px; padding-bottom: 8px; }
+    #printhead h1 { font-size: 18px; margin: 0 0 6px; }
+    #printhead div { color: #444; }
+  }
+</style>
+</head>
+<body>
+<div id="bar" role="toolbar">
+  <button data-host="attach" title="[[Attach files]]"><span class="ic">&#xE723;</span></button>
+  <button id="impBtn" data-pop="importance" title="[[Importance]]"><span class="ic" id="impIcon">&#xE8C9;</span><span class="ic chev">&#xE70D;</span></button>
+  <button data-host="signature" class="fmt" title="[[Insert signature]]"><span class="ic">&#xEE56;</span></button>
+  <button id="receiptBtn" data-action="receipt" title="[[Request a read receipt]]"><span class="ic">&#xE890;</span></button>
+  <span class="sep"></span>
+  <button data-cmd="bold" class="fmt" title="[[Bold (Ctrl+B)]]"><span class="ic">&#xE8DD;</span></button>
+  <button data-cmd="italic" class="fmt" title="[[Italic (Ctrl+I)]]"><span class="ic">&#xE8DB;</span></button>
+  <button data-cmd="underline" class="fmt" title="[[Underline (Ctrl+U)]]"><span class="ic">&#xE8DC;</span></button>
+  <button data-cmd="strikeThrough" class="fmt" title="[[Strikethrough]]"><span class="ic">&#xEDE0;</span></button>
+  <span class="sep"></span>
+  <button data-pop="font" class="fmt" title="[[Font]]"><span class="ic">&#xE8D2;</span><span class="ic chev">&#xE70D;</span></button>
+  <button data-pop="size" class="fmt" title="[[Font size]]"><span class="ic">&#xE8E9;</span><span class="ic chev">&#xE70D;</span></button>
+  <button data-pop="color" class="fmt swatch" title="[[Text colour]]"><span class="ic">&#xE8D3;</span><i class="bar" id="colorBar" style="background:#c00000"></i><span class="ic chev">&#xE70D;</span></button>
+  <button data-pop="highlight" class="fmt swatch" title="[[Highlight]]"><span class="ic">&#xE7E6;</span><i class="bar" id="highlightBar" style="background:#ffff00"></i><span class="ic chev">&#xE70D;</span></button>
+  <span class="sep"></span>
+  <button data-cmd="insertUnorderedList" class="fmt" title="[[Bulleted list]]"><span class="ic">&#xE8FD;</span></button>
+  <button data-cmd="insertOrderedList" class="fmt" title="[[Numbered list]]">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1"><path d="M6.5 3.5h8M6.5 8h8M6.5 12.5h8" stroke-linecap="round"/><text x="0.6" y="5.3" font-size="5.2" font-family="Segoe UI" fill="currentColor" stroke="none">1</text><text x="0.6" y="9.8" font-size="5.2" font-family="Segoe UI" fill="currentColor" stroke="none">2</text><text x="0.6" y="14.3" font-size="5.2" font-family="Segoe UI" fill="currentColor" stroke="none">3</text></svg>
+  </button>
+  <button id="alignBtn" data-pop="align" class="fmt" title="[[Alignment]]"><span class="ic" id="alignIcon">&#xE8E4;</span><span class="ic chev">&#xE70D;</span></button>
+  <button data-cmd="outdent" class="fmt" title="[[Decrease indent]]"><span class="ic">&#xE290;</span></button>
+  <button data-cmd="indent" class="fmt" title="[[Increase indent]]"><span class="ic">&#xE291;</span></button>
+  <span class="sep"></span>
+  <button data-pop="link" class="fmt" title="[[Insert link (Ctrl+K)]]"><span class="ic">&#xE71B;</span></button>
+  <button data-host="image" class="fmt" title="[[Insert picture]]"><span class="ic">&#xEB9F;</span></button>
+  <button data-pop="emoji" title="[[Emoji]]"><span class="ic">&#xE76E;</span></button>
+  <button data-cmd="removeFormat" class="fmt" title="[[Clear formatting]]"><span class="ic">&#xED60;</span></button>
+  <span class="spacer"></span>
+  <button data-pop="more" title="[[More options]]"><span class="ic">&#xE712;</span></button>
+</div>
+<div id="pop" class="pop" hidden></div>
+<div id="printhead"></div>
+<div id="drophint" hidden></div>
+<div id="editor" contenteditable="true" spellcheck="true" data-placeholder="[[Write your message…]]">{{BODY}}</div>
+<script nonce="{{NONCE}}">
+  const editor = document.getElementById('editor');
+  const pop = document.getElementById('pop');
+  const STRINGS = {{STRINGS}};
+  const T = (s, ...args) => (STRINGS[s] ?? s).replace(/\{(\d)\}/g, (_, i) => args[i]);
+  const state = Object.assign({ importance: 'normal', receipt: false, plain: false }, {{STATE}});
+  const host = (msg, files) => {
+    if (!window.chrome?.webview) return;
+    if (files) chrome.webview.postMessageWithAdditionalObjects(msg, files);
+    else chrome.webview.postMessage(msg);
+  };
+  document.execCommand('styleWithCSS', false, true);
+  // Enter starts a new line, not a spaced-out paragraph: lines sit directly under each other, as in Gmail and
+  // Outlook, both here and in the mail people receive.
+  document.execCommand('defaultParagraphSeparator', false, 'div');
+
+  // ───────── selection helpers ─────────
+  let saved = null;
+  function saveSelection() {
+    const sel = getSelection();
+    if (sel.rangeCount && editor.contains(sel.getRangeAt(0).commonAncestorContainer)) saved = sel.getRangeAt(0).cloneRange();
+  }
+  function restoreSelection() {
+    editor.focus();
+    if (!saved || !editor.contains(saved.startContainer)) return;
+    const sel = getSelection();
+    sel.removeAllRanges();
+    sel.addRange(saved);
+  }
+  function exec(cmd, value = null) {
+    restoreSelection();
+    document.execCommand(cmd, false, value);
+    saveSelection();
+    updateState();
+  }
+  function closestIn(node, selector) {
+    for (let n = node; n && n !== editor; n = n.parentNode) if (n.nodeType === 1 && n.matches(selector)) return n;
+    return null;
+  }
+  const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+  // ───────── automatic links ─────────
+  // Web addresses become links once they're finished (a space, Enter or paste after them); undo removes the link.
+  const URL_ANY = /(?<![\w.\/@-])(?:https?:\/\/|www\.)[^\s<>"]+/gi;
+  const URL_AT_END = /(?:^|[^\w.\/@-])((?:https?:\/\/|www\.)[^\s<>"]+)(\s*)$/i;
+  function trimUrl(u) {
+    for (;;) {
+      const last = u.slice(-1);
+      const count = c => u.split(c).length - 1;
+      if (last && '.,;:!?\'"»”’…'.includes(last)) u = u.slice(0, -1);
+      else if (last === ')' && count(')') > count('(')) u = u.slice(0, -1);
+      else if (last === ']' && count(']') > count('[')) u = u.slice(0, -1);
+      else return u;
+    }
+  }
+  const linkable = u => /^www\./i.test(u) ? u.indexOf('.', 4) > 4 : u.length > u.indexOf('//') + 2;
+  const hrefFor = u => /^www\./i.test(u) ? 'http://' + u : u;
+
+  /** Links the address that ends just before `end` in a text node, then puts the caret back. */
+  function autoLink(node, end, caret) {
+    if (!node || node.nodeType !== 3 || closestIn(node.parentNode, 'a') || !editor.contains(node)) return;
+    const before = node.data.slice(0, end);
+    const m = URL_AT_END.exec(before);
+    if (!m) return;
+    const url = trimUrl(m[1]);
+    if (!linkable(url)) return;
+    const start = before.length - m[2].length - m[1].length;
+    const sel = getSelection();
+    const r = document.createRange();
+    r.setStart(node, start);
+    r.setEnd(node, start + url.length);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    document.execCommand('createLink', false, hrefFor(url));
+    sel.removeAllRanges();
+    if (caret && editor.contains(caret.startContainer)) {
+      sel.addRange(caret);
+    } else {
+      const after = document.createRange();
+      const a = closestIn(sel.anchorNode, 'a') || node;
+      after.setStartAfter(a);
+      sel.addRange(after);
+    }
+  }
+
+  /** The last text node that starts before the caret (the end of the line just finished by Enter). */
+  function textBefore(caret) {
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    let last = null;
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (caret.comparePoint(n, 0) >= 0) break;
+      last = n;
+    }
+    return last;
+  }
+
+  function plainToHtml(text) {
+    let html = '', pos = 0;
+    for (const m of text.matchAll(URL_ANY)) {
+      const url = trimUrl(m[0]);
+      if (!linkable(url)) continue;
+      html += esc(text.slice(pos, m.index)) + `<a href="${esc(hrefFor(url))}">${esc(url)}</a>`;
+      pos = m.index + url.length;
+    }
+    return (html + esc(text.slice(pos))).replace(/\r?\n/g, '<br>');
+  }
+
+  editor.addEventListener('input', e => {
+    if (state.plain) return;
+    const sel = getSelection();
+    if (!sel.rangeCount || !sel.isCollapsed) return;
+    const caret = sel.getRangeAt(0).cloneRange();
+    if (e.inputType === 'insertText' && /^\s$/.test(e.data || '')) autoLink(sel.anchorNode, sel.anchorOffset, caret);
+    else if (e.inputType === 'insertParagraph' || e.inputType === 'insertLineBreak') {
+      const node = textBefore(caret);
+      if (node) autoLink(node, node.length, caret);
+    } else if (e.inputType === 'insertFromPaste' && pasteStart) {
+      linkPasted(pasteStart, caret);
+      pasteStart = null;
+    }
+  });
+
+  /** Links every address between where a plain-text paste started and the caret (the paste itself stays native). */
+  let pasteStart = null;
+  function linkPasted(start, caret) {
+    const area = document.createRange();
+    area.setStart(start.startContainer, start.startOffset);
+    area.setEnd(caret.startContainer, caret.startOffset);
+    const sel = getSelection();
+    let previous = null, lastLink = null;
+    for (let guard = 0; guard < 200; guard++) {
+      const hit = findUrl(area);
+      if (!hit || (previous && hit.node === previous.node && hit.start === previous.start)) break;
+      previous = hit;
+      const r = document.createRange();
+      r.setStart(hit.node, hit.start);
+      r.setEnd(hit.node, hit.end);
+      sel.removeAllRanges();
+      sel.addRange(r);
+      document.execCommand('createLink', false, hrefFor(hit.url));
+      lastLink = closestIn(sel.anchorNode, 'a') || lastLink;
+    }
+    sel.removeAllRanges();
+    const back = document.createRange();
+    if (editor.contains(caret.startContainer) && !closestIn(caret.startContainer, 'a')) back.setStart(caret.startContainer, caret.startOffset);
+    else if (lastLink) back.setStartAfter(lastLink);
+    else back.setStart(editor, editor.childNodes.length);
+    sel.addRange(back);
+  }
+  function findUrl(area) {
+    let root = area.commonAncestorContainer;
+    if (root.nodeType === 3) root = root.parentNode;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (!area.intersectsNode(n) || closestIn(n.parentNode, 'a')) continue;
+      for (const m of n.data.matchAll(URL_ANY)) {
+        const url = trimUrl(m[0]);
+        if (linkable(url)) return { node: n, start: m.index, end: m.index + url.length, url };
+      }
+    }
+    return null;
+  }
+
+  // ───────── paste and drop: links, pictures, files ─────────
+  function readImage(file) {
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  }
+  async function insertImages(files) {
+    for (const file of files) {
+      const url = await readImage(file);
+      if (url) insertPicture(url);
+    }
+    fitNewPictures();
+  }
+
+  editor.addEventListener('paste', e => {
+    const data = e.clipboardData;
+    const text = data.getData('text/plain');
+    const hasHtml = data.types.includes('text/html');
+    const images = [...data.files].filter(f => f.type.startsWith('image/'));
+    if (state.plain) {
+      e.preventDefault();
+      document.execCommand('insertText', false, text);
+      return;
+    }
+    if (images.length && !hasHtml) {          // a screenshot or copied picture
+      e.preventDefault();
+      insertImages(images);
+      return;
+    }
+    if (!hasHtml && text && new RegExp(URL_ANY.source, 'i').test(text)) {
+      const sel = getSelection();
+      if (sel.rangeCount) { pasteStart = sel.getRangeAt(0).cloneRange(); pasteStart.collapse(true); }
+    }
+  });
+
+  // Files dropped on the text: pictures go in where they're dropped, everything else is attached. Dropped anywhere
+  // else (the formatting bar), everything is attached. Only pictures every mail app shows go in the text, and only up
+  // to 10 MB; bigger ones, and HEIC, TIFF, SVG and the like, are attached instead.
+  const INLINE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  const MAX_INLINE_BYTES = 10 * 1024 * 1024;
+  const inlineType = type => !state.plain && INLINE_TYPES.includes(type);
+  const dropHint = document.getElementById('drophint');
+  let dropHintTimer = 0;
+  function showDropHint(e) {
+    const files = [...e.dataTransfer.items].filter(i => i.kind === 'file');
+    const onText = editor.contains(e.target);
+    const pictures = onText ? files.filter(i => inlineType(i.type)).length : 0;
+    dropHint.textContent = pictures === 0 ? T('Drop to attach')
+      : pictures < files.length ? T('Pictures go in the text, other files are attached')
+      : pictures === 1 ? T('Drop to put the picture in the text') : T('Drop to put the pictures in the text');
+    dropHint.hidden = false;
+    editor.classList.toggle('droptarget', pictures > 0);
+    // No reliable "drag left the page" event: the hint goes once dragover stops coming.
+    clearTimeout(dropHintTimer);
+    dropHintTimer = setTimeout(hideDropHint, 150);
+  }
+  function hideDropHint() {
+    clearTimeout(dropHintTimer);
+    dropHint.hidden = true;
+    editor.classList.remove('droptarget');
+  }
+  document.addEventListener('dragover', e => {
+    if (!e.dataTransfer.types.includes('Files')) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    showDropHint(e);
+  });
+  document.addEventListener('drop', e => {
+    hideDropHint();
+    const files = [...e.dataTransfer.files];
+    if (!files.length) return;
+    e.preventDefault();
+    const onText = editor.contains(e.target);
+    const candidates = onText ? files.filter(f => inlineType(f.type)) : [];
+    const images = candidates.filter(f => f.size <= MAX_INLINE_BYTES);
+    const tooBig = candidates.filter(f => f.size > MAX_INLINE_BYTES);
+    const others = files.filter(f => !images.includes(f));
+    if (images.length) {
+      const point = document.caretRangeFromPoint(e.clientX, e.clientY);
+      if (point) { const sel = getSelection(); sel.removeAllRanges(); sel.addRange(point); }
+      insertImages(images);
+    }
+    if (tooBig.length) host({ type: 'tooBigForText' });
+    if (others.length) host({ type: 'files' }, others);   // regular attachments
+  });
+
+  // ───────── pictures: click one to size it ─────────
+  // Corner handles keep its proportions; the bar sizes it to the text column (small, medium, full) or its own size.
+  // The width goes into the HTML (width attribute and style), which mail apps respect; the picture itself is only
+  // made smaller when the mail is sent (sendableHtml), so a draft can still be made bigger again without blur.
+  const picFrame = document.createElement('div');
+  picFrame.id = 'picframe';
+  picFrame.hidden = true;
+  picFrame.innerHTML = '<i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i>';
+  const picBar = document.createElement('div');
+  picBar.id = 'picbar';
+  picBar.hidden = true;
+  picBar.innerHTML = '<button data-fit="0.33">[[Small]]</button><button data-fit="0.5">[[Medium]]</button>'
+    + '<button data-fit="1">[[Large]]</button><button data-fit="0">[[Original size]]</button><span class="dim"></span>';
+  document.body.append(picFrame, picBar);
+  let picked = null;
+
+  /** Room for a picture: the editor's width less its padding. */
+  function column() {
+    const cs = getComputedStyle(editor);
+    return editor.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  }
+  function setPictureWidth(img, width) {
+    const w = Math.max(24, Math.round(Math.min(width, column())));
+    img.setAttribute('width', w);
+    img.removeAttribute('height');
+    img.style.width = w + 'px';
+    img.style.height = 'auto';
+  }
+  function placeFrame() {
+    if (!picked || !editor.contains(picked)) { unpick(); return; }
+    const r = picked.getBoundingClientRect();
+    Object.assign(picFrame.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+    const below = r.bottom + 8, barHeight = picBar.offsetHeight || 32;
+    picBar.style.left = Math.max(4, Math.min(r.left, innerWidth - picBar.offsetWidth - 4)) + 'px';
+    picBar.style.top = (below + barHeight < innerHeight ? below : Math.max(r.top + 8, 4)) + 'px';
+    const shown = Math.round(r.width);
+    picBar.querySelector('.dim').textContent = `${shown} × ${Math.round(r.height)}`;
+    const col = column();
+    picBar.querySelectorAll('button').forEach(b => {
+      const fit = +b.dataset.fit;
+      const target = fit ? Math.min(picked.naturalWidth, Math.round(col * fit)) : Math.min(picked.naturalWidth, col);
+      b.classList.toggle('on', Math.abs(target - shown) <= 1 && (fit ? picked.hasAttribute('width') : !picked.hasAttribute('width')));
+    });
+  }
+  function pick(img) {
+    picked = img;
+    picFrame.hidden = picBar.hidden = false;
+    placeFrame();
+  }
+  function unpick() {
+    picked = null;
+    picFrame.hidden = picBar.hidden = true;
+  }
+  editor.addEventListener('mousedown', e => {
+    if (e.target.tagName === 'IMG' && !state.plain) {
+      e.preventDefault();             // no caret jumping beside it
+      pick(e.target);
+      const r = document.createRange(); // selected, so copy and cut work on it
+      r.selectNode(e.target);
+      getSelection().removeAllRanges();
+      getSelection().addRange(r);
+    } else unpick();
+  });
+  editor.addEventListener('keydown', e => {
+    if (!picked) return;
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      picked.remove();
+      unpick();
+      editor.dispatchEvent(new Event('input'));
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      unpick();
+    } else if (!['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) unpick();
+  });
+  editor.addEventListener('scroll', placeFrame);
+  addEventListener('resize', () => { if (picked) placeFrame(); });
+  editor.addEventListener('input', () => { if (picked) placeFrame(); });
+  picBar.addEventListener('mousedown', e => e.preventDefault());
+  picBar.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b || !picked) return;
+    const fit = +b.dataset.fit;
+    if (fit) setPictureWidth(picked, Math.min(picked.naturalWidth, column() * fit));
+    else {
+      picked.removeAttribute('width');
+      picked.removeAttribute('height');
+      picked.style.width = picked.style.height = '';
+    }
+    placeFrame();
+    editor.dispatchEvent(new Event('input'));
+  });
+  picFrame.addEventListener('pointerdown', e => {
+    const handle = e.target.closest('i');
+    if (!handle || !picked) return;
+    e.preventDefault();
+    handle.setPointerCapture(e.pointerId);
+    const startX = e.clientX, startWidth = picked.getBoundingClientRect().width;
+    const sign = handle.dataset.h.endsWith('e') ? 1 : -1;  // left handles grow it when dragged left
+    const move = ev => { setPictureWidth(picked, startWidth + sign * (ev.clientX - startX)); placeFrame(); };
+    const done = () => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', done);
+      editor.dispatchEvent(new Event('input'));
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', done);
+  });
+
+  /** A picture on a line of its own (in the middle of a sentence it would sit on the text's baseline). */
+  function insertPicture(url) {
+    const img = document.createElement('img');
+    img.src = url;
+    document.execCommand('insertHTML', false, `<div>${img.outerHTML}</div>`);
+  }
+
+  /** A picture just put in: no wider than the text column (it would be cut down to it anyway). */
+  function fitNewPictures() {
+    for (const img of editor.querySelectorAll('img:not([width])')) {
+      if (img.style.width || img.dataset.fitted) continue;
+      img.dataset.fitted = '1';
+      const fit = () => { if (img.naturalWidth > column()) setPictureWidth(img, column()); delete img.dataset.fitted; };
+      if (img.complete && img.naturalWidth) fit(); else img.addEventListener('load', fit, { once: true });
+    }
+  }
+
+  /**
+   * The text as it goes out: pictures shown smaller than they are made smaller too, to twice the size they're shown
+   * at (still sharp on high-resolution screens), so the mail carries no pixels nobody sees. Animations and drawings
+   * (GIF, SVG) are left as they are, and so is a picture the smaller copy wouldn't save anything on.
+   */
+  function sendableHtml() {
+    const copy = editor.cloneNode(true);
+    const originals = editor.querySelectorAll('img'), copies = copy.querySelectorAll('img');
+    originals.forEach((img, i) => {
+      const shown = parseInt(img.getAttribute('width'), 10);
+      if (!shown || !img.complete || !img.naturalWidth || !/^data:image\/(png|jpe?g|webp|bmp)/i.test(img.src)) return;
+      const width = Math.min(img.naturalWidth, shown * 2);
+      if (width >= img.naturalWidth * 0.9) return;
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * width / img.naturalWidth));
+      const g = canvas.getContext('2d');
+      g.imageSmoothingQuality = 'high';
+      g.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const smaller = /^data:image\/jpe?g/i.test(img.src) ? canvas.toDataURL('image/jpeg', 0.9) : canvas.toDataURL('image/png');
+      if (smaller.length < img.src.length) copies[i].src = smaller;
+    });
+    copy.querySelectorAll('img[data-fitted]').forEach(img => img.removeAttribute('data-fitted'));
+    return copy.innerHTML;
+  }
+
+  // ───────── toolbar ─────────
+  const bar = document.getElementById('bar');
+  bar.addEventListener('mousedown', e => { if (e.target.closest('button')) e.preventDefault(); }); // keep the caret in the editor
+  bar.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b || b.disabled) return;
+    if (b.dataset.cmd) exec(b.dataset.cmd);
+    else if (b.dataset.host) { saveSelection(); host({ type: b.dataset.host }); }
+    else if (b.dataset.pop) togglePop(b.dataset.pop, b);
+    else if (b.dataset.action === 'receipt') { state.receipt = !state.receipt; updateState(); }
+  });
+
+  const POP = {};
+  let popFor = null;
+  function togglePop(kind, anchor) {
+    if (popFor === kind && !pop.hidden) { closePop(); return; }
+    saveSelection();
+    pop.innerHTML = '';
+    POP[kind](pop);
+    popFor = kind;
+    pop.hidden = false;
+    const r = anchor.getBoundingClientRect();
+    const w = pop.offsetWidth;
+    pop.style.top = (r.bottom + 2) + 'px';
+    pop.style.left = Math.max(4, Math.min(r.left, innerWidth - w - 6)) + 'px';
+    pop.querySelector('input')?.focus();
+  }
+  function closePop(restore = true) {
+    if (pop.hidden) return;
+    pop.hidden = true;
+    popFor = null;
+    if (restore) restoreSelection();
+  }
+  document.addEventListener('mousedown', e => {
+    if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('#bar button[data-pop]')) closePop(false);
+  });
+  pop.addEventListener('mousedown', e => { if (e.target.tagName !== 'INPUT') e.preventDefault(); });
+
+  function item(parent, label, run, { icon, check, key, disabled } = {}) {
+    const el = document.createElement('div');
+    el.className = 'mi' + (disabled ? ' disabled' : '');
+    el.innerHTML = (check !== undefined ? `<span class="check">${check ? '✓' : ''}</span>` : '')
+      + (icon ? `<span class="ic">${icon}</span>` : '')
+      + `<span>${esc(label)}</span>` + (key ? `<span class="key">${esc(key)}</span>` : '');
+    if (!disabled) el.addEventListener('click', () => run(el));
+    parent.appendChild(el);
+    return el;
+  }
+  const separator = parent => parent.appendChild(Object.assign(document.createElement('div'), { className: 'msep' }));
+
+  POP.importance = p => {
+    for (const [value, label, icon] of [['high', T('High importance'), '\uE8C9'], ['normal', T('Normal'), ''], ['low', T('Low importance'), '\uE8D0']])
+      item(p, label, () => { state.importance = value; closePop(); updateState(); }, { check: state.importance === value, icon: icon || ' ' });
+  };
+
+  const FONTS = ['Segoe UI', 'Arial', 'Calibri', 'Cambria', 'Candara', 'Georgia', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana', 'Courier New', 'Consolas'];
+  POP.font = p => {
+    for (const f of FONTS) item(p, f, () => { closePop(); exec('fontName', f); }).querySelector('span:last-child').style.fontFamily = f;
+  };
+
+  const SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 36, 48];
+  POP.size = p => {
+    for (const s of SIZES) item(p, s + ' pt', () => { closePop(); setFontSize(s); });
+  };
+  function setFontSize(pt) {
+    // execCommand only knows sizes 1–7: apply 7, then turn what it produced into the size actually picked.
+    exec('fontSize', 7);
+    editor.querySelectorAll('span[style*="xxx-large"], font[size="7"]').forEach(el => {
+      if (el.tagName === 'FONT') el.removeAttribute('size');
+      el.style.fontSize = pt + 'pt';
+    });
+  }
+
+  const PALETTE = [
+    '#000000', '#262626', '#404040', '#595959', '#7f7f7f', '#a5a5a5', '#bfbfbf', '#d8d8d8', '#f2f2f2', '#ffffff',
+    '#c00000', '#ff0000', '#ffc000', '#ffff00', '#92d050', '#00b050', '#00b0f0', '#0070c0', '#002060', '#7030a0',
+    '#e6b8af', '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#c9daf8', '#cfe2f3', '#d9d2e9', '#ead1dc',
+  ];
+  function palette(p, onPick, noneLabel) {
+    if (noneLabel) item(p, noneLabel, () => onPick(null), { icon: '\uE711' });
+    const grid = Object.assign(document.createElement('div'), { className: 'colors' });
+    for (const c of PALETTE) {
+      const b = document.createElement('button');
+      b.style.background = c;
+      b.title = c;
+      b.addEventListener('click', () => onPick(c));
+      grid.appendChild(b);
+    }
+    p.appendChild(grid);
+  }
+  POP.color = p => palette(p, c => {
+    closePop();
+    exec('foreColor', c || '#1f1f1f');
+    if (c) document.getElementById('colorBar').style.background = c;
+  }, T('Automatic'));
+  POP.highlight = p => palette(p, c => {
+    closePop();
+    exec('hiliteColor', c || 'transparent');
+    if (c) document.getElementById('highlightBar').style.background = c;
+  }, T('No highlight'));
+
+  const ALIGN = [['justifyLeft', T('Align left'), '\uE8E4'], ['justifyCenter', T('Center'), '\uE8E3'], ['justifyRight', T('Align right'), '\uE8E2'], ['justifyFull', T('Justify'), '\uE8E4']];
+  POP.align = p => {
+    for (const [cmd, label, icon] of ALIGN)
+      item(p, label, () => { closePop(); exec(cmd); }, { icon, check: document.queryCommandState(cmd) });
+  };
+
+  const EMOJI = '😀 😃 😄 😁 😆 😅 😂 🙂 😉 😊 😍 😘 😎 🤔 😐 😴 😮 😢 😭 😡 👍 👎 👌 👏 🙌 🙏 💪 👋 🤝 ✌️ ❤️ 💔 🔥 ⭐ ✨ 🎉 🎂 🎁 ☕ 🍕 🍺 ⚽ 🚀 ✈️ 🏠 💡 📎 📅 ✅ ❌ ⚠️ ❓ 💯 👀 🤷 🙈 😬 🤗 🥳 😇'.split(' ');
+  POP.emoji = p => {
+    const grid = Object.assign(document.createElement('div'), { className: 'emojis' });
+    for (const e of EMOJI) {
+      const s = Object.assign(document.createElement('span'), { textContent: e });
+      s.addEventListener('click', () => { closePop(); exec('insertText', e); });
+      grid.appendChild(s);
+    }
+    p.appendChild(grid);
+  };
+
+  POP.link = p => {
+    const anchor = saved && closestIn(saved.commonAncestorContainer, 'a');
+    if (anchor) { saved = document.createRange(); saved.selectNodeContents(anchor); }
+    const needsText = !anchor && (!saved || saved.collapsed);
+    p.innerHTML = `<div class="form">
+        <label>${esc(T('Web or email address'))}<input id="linkUrl" placeholder="https://"></label>
+        ${needsText ? `<label>${esc(T('Text to show'))}<input id="linkText"></label>` : ''}
+        <div class="buttons">${anchor ? `<button id="linkRemove">${esc(T('Remove link'))}</button>` : ''}<button class="primary" id="linkOk">${esc(anchor ? T('Update') : T('Insert'))}</button></div>
+      </div>`;
+    const urlBox = p.querySelector('#linkUrl');
+    urlBox.value = anchor ? anchor.getAttribute('href') : '';
+    const apply = () => {
+      let url = urlBox.value.trim();
+      if (!url) return;
+      if (/^[^\s@\/:]+@[^\s@\/]+\.[^\s@\/]+$/.test(url)) url = 'mailto:' + url;
+      else if (!/^[a-z][\w+.-]*:/i.test(url)) url = 'https://' + url;
+      const text = p.querySelector('#linkText')?.value.trim();
+      closePop();
+      if (needsText) exec('insertHTML', `<a href="${esc(url)}">${esc(text || url.replace(/^mailto:/, ''))}</a>&nbsp;`);
+      else exec('createLink', url);
+    };
+    p.querySelector('#linkOk').addEventListener('click', apply);
+    p.querySelector('#linkRemove')?.addEventListener('click', () => { closePop(); exec('unlink'); });
+    p.querySelectorAll('input').forEach(i => i.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); apply(); }
+    }));
+  };
+
+  POP.table = p => {
+    const grid = Object.assign(document.createElement('div'), { className: 'grid' });
+    const label = Object.assign(document.createElement('div'), { className: 'gridlabel', textContent: T('Insert table') });
+    const cells = [];
+    for (let r = 1; r <= 8; r++) for (let c = 1; c <= 8; c++) {
+      const s = document.createElement('span');
+      s.addEventListener('mouseenter', () => {
+        cells.forEach(x => x.el.classList.toggle('on', x.r <= r && x.c <= c));
+        label.textContent = T('{0} × {1} table', c, r);
+      });
+      s.addEventListener('click', () => { closePop(); insertTable(r, c); });
+      cells.push({ el: s, r, c });
+      grid.appendChild(s);
+    }
+    p.append(grid, label);
+  };
+  function insertTable(rows, cols) {
+    const td = '<td style="border:1px solid #bbb;padding:4px 8px;vertical-align:top"><br></td>';
+    const tr = `<tr>${td.repeat(cols)}</tr>`;
+    exec('insertHTML', `<table style="border-collapse:collapse;width:100%"><tbody>${tr.repeat(rows)}</tbody></table><div><br></div>`);
+  }
+
+  POP.more = p => {
+    item(p, T('Reply-to address…'), () => { closePop(false); host({ type: 'replyTo' }); }, { icon: '\uE97A' });
+    item(p, T('Save draft'), () => { closePop(); host({ type: 'save' }); }, { icon: '\uE74E', key: T('Ctrl+S') });
+    item(p, T('Print…'), () => { closePop(); host({ type: 'print' }); }, { icon: '\uE749', key: T('Ctrl+P') });
+    separator(p);
+    item(p, 'HTML', () => { closePop(); if (state.plain) setPlain(false); }, { check: !state.plain });
+    item(p, T('Plain text'), () => { closePop(); if (!state.plain) host({ type: 'plainText' }); }, { check: state.plain });
+    separator(p);
+    item(p, T('Undo'), () => { closePop(); exec('undo'); }, { icon: '\uE7A7', key: T('Ctrl+Z') });
+    item(p, T('Redo'), () => { closePop(); exec('redo'); }, { icon: '\uE7A6', key: T('Ctrl+Y') });
+    separator(p);
+    item(p, T('Insert table'), () => togglePop('table', document.querySelector('#bar button[data-pop="more"]')),
+      { icon: '\uE80A', disabled: state.plain });
+    item(p, T('Horizontal line'), () => { closePop(); exec('insertHorizontalRule'); }, { icon: '\uE76F', disabled: state.plain });
+  };
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !pop.hidden) { e.preventDefault(); closePop(); }
+    else if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k' && !state.plain) {
+      e.preventDefault();
+      togglePop('link', document.querySelector('#bar button[data-pop="link"]'));
+    }
+  });
+
+  // ───────── toolbar state ─────────
+  const STATEFUL = ['bold', 'italic', 'underline', 'strikeThrough', 'insertUnorderedList', 'insertOrderedList'];
+  function updateState() {
+    for (const b of bar.querySelectorAll('button[data-cmd]'))
+      b.classList.toggle('on', STATEFUL.includes(b.dataset.cmd) && !state.plain && document.queryCommandState(b.dataset.cmd));
+    for (const b of bar.querySelectorAll('button.fmt')) b.disabled = state.plain;
+    const align = ALIGN.find(([cmd]) => cmd !== 'justifyLeft' && document.queryCommandState(cmd));
+    document.getElementById('alignIcon').textContent = align ? align[2] : '\uE8E4';
+    const imp = document.getElementById('impBtn');
+    imp.className = state.importance === 'normal' ? '' : state.importance + ' on';
+    document.getElementById('impIcon').textContent = state.importance === 'low' ? '\uE8D0' : '\uE8C9';
+    imp.title = { high: T('High importance'), low: T('Low importance'), normal: T('Importance') }[state.importance];
+    const receipt = document.getElementById('receiptBtn');
+    receipt.classList.toggle('on', state.receipt);
+    receipt.title = state.receipt ? T('Read receipt requested') : T('Request a read receipt');
+  }
+  document.addEventListener('selectionchange', () => { if (document.activeElement === editor) updateState(); });
+  editor.addEventListener('input', updateState);
+  editor.addEventListener('keyup', updateState);
+
+  function setPlain(plain) {
+    const text = editor.innerText;
+    state.plain = plain;
+    editor.classList.toggle('plain', plain);
+    if (plain) editor.textContent = text;
+    else editor.innerHTML = plainToHtml(text) || '<div><br></div>';
+    editor.focus();
+    updateState();
+  }
+
+  // ───────── start ─────────
+  if (state.plain) { editor.classList.add('plain'); editor.textContent = editor.textContent; }
+  // Caret at the very top, above any signature or quote.
+  editor.focus();
+  const range = document.createRange();
+  range.setStart(editor, 0);
+  range.collapse(true);
+  getSelection().removeAllRanges();
+  getSelection().addRange(range);
+  updateState();
+
+  window.plicbox = {
+    /** forSending: pictures shown smaller go out smaller (sendableHtml); drafts keep them as they are. */
+    state: forSending => ({ html: forSending ? sendableHtml() : editor.innerHTML, text: editor.innerText, plain: state.plain, importance: state.importance, receipt: state.receipt }),
+    focus: () => editor.focus(),
+    setPlain,
+    insertImage: url => { restoreSelection(); insertPicture(url); saveSelection(); fitNewPictures(); },
+    /** Replaces the signature block; when there is none, inserts it at the caret if `insert` is set. */
+    setSignature: (html, insert) => {
+      const old = editor.querySelector(':scope > .mr-signature');
+      if (old) {
+        if (html) { const t = document.createElement('template'); t.innerHTML = html; old.replaceWith(t.content); }
+        else old.remove();
+        return true;
+      }
+      if (!insert || !html) return false;
+      exec('insertHTML', html);
+      return true;
+    },
+    setPrintHeader: html => { document.getElementById('printhead').innerHTML = html; },
+  };
+</script>
+</body>
+</html>

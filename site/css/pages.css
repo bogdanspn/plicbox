@@ -1,0 +1,76 @@
+/* Text pages (docs, privacy, terms), set for long reading. Colours, type and the footer come from base.css. */
+
+body { font-size: 16.5px; line-height: 1.65; }
+h1, h2, h3 { line-height: 1.2; }
+a { color: var(--link); text-underline-offset: 2px; }
+code { font: 13.5px/1.4 Consolas, "Cascadia Mono", ui-monospace, monospace; background: color-mix(in srgb, var(--text) 6%, transparent);
+  padding: 1px 5px; border-radius: 5px; overflow-wrap: anywhere; }
+kbd { font: 12.5px/1 Consolas, "Cascadia Mono", ui-monospace, monospace; padding: 3px 6px; border: 1px solid var(--line);
+  border-bottom-width: 2px; border-radius: 5px; background: var(--surface); color: var(--text); }
+
+/* ── top bar, and the way back to the home page with a drawn arrow ── */
+header.top { border-bottom: 1px solid var(--line); }
+.back { display: inline-flex; align-items: center; gap: 7px; font-size: 15px; color: var(--muted); text-decoration: none; }
+.back:hover { color: var(--text); }
+.back svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .15s; }
+.back:hover svg { transform: translateX(-2px); }
+
+/* ── the text ── */
+main.wrap { width: min(760px, 100% - 32px); }   /* privacy, terms: a reading column */
+.doc { padding: 56px 0 72px; }
+.doc h1 { font-size: clamp(32px, 5vw, 44px); letter-spacing: -0.03em; }
+.doc .date { color: var(--faint); margin: 8px 0 32px; font-size: 15px; }
+.doc h2 { font-size: 22px; letter-spacing: -0.01em; margin: 44px 0 10px; }
+.doc h2[id] { scroll-margin-top: 24px; }
+.doc h3 { font-size: 17px; margin: 28px 0 8px; }
+.doc p, .doc li { color: var(--muted); }
+.doc strong { color: var(--text); font-weight: 600; }
+.doc ul, .doc ol { padding-left: 22px; }
+.doc li { margin: 6px 0; }
+.doc p.lead { color: var(--text); font-size: 18px; line-height: 1.6; }
+
+.doc table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 15px; }
+.doc th, .doc td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.doc th { font-weight: 600; color: var(--text); }
+.doc td { color: var(--muted); }
+.doc td:first-child { width: 34%; color: var(--text); }
+.doc td code { font-size: 12.5px; }
+
+/* Yes/no tables (What syncs): a ticked circle or a faint dash, centred under each column. The colours reach the icons
+   (an <svg><use>) through currentColor. */
+.matrix th:not(:first-child), .matrix td:not(:first-child) { text-align: center; }
+.matrix td { vertical-align: middle; }
+.yes, .no { display: inline-block; width: 22px; height: 22px; vertical-align: middle; }
+.yes { color: var(--accent); }
+.no { color: var(--faint); opacity: .7; }
+.matrix .note { display: block; margin-top: 4px; font-size: 13px; line-height: 1.4; color: var(--faint); }
+
+/* ── docs: "On this page" in a sticky sidebar beside the text; the section in view is marked (js/docs.js) ── */
+.docs { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 64px; width: min(1120px, 100% - 32px); margin-inline: auto; }
+.toc { position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto; padding: 66px 0 24px; }
+.toc-title { margin: 0 0 10px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+.toc a { display: block; padding: 5px 0 5px 14px; border-left: 2px solid var(--line); font-size: 14.5px; line-height: 1.45; color: var(--muted); text-decoration: none;
+  transition: color .15s, border-color .15s; }
+.toc a:hover { color: var(--text); }
+.toc a[aria-current] { color: var(--text); border-left-color: var(--accent); font-weight: 600; }
+
+@media (max-width: 960px) {
+  .docs { display: block; width: min(760px, 100% - 32px); }
+  .toc { position: static; max-height: none; padding: 32px 0 0; columns: 2; column-gap: 24px; }
+  .toc-title { column-span: all; }
+  .toc a { break-inside: avoid; }
+  .toc a[aria-current] { color: var(--muted); border-left-color: var(--line); font-weight: 400; } /* no "you are here" in a list at the top */
+  .docs .doc { padding-top: 32px; }
+}
+@media (max-width: 560px) {
+  .doc td:first-child { width: 42%; }
+  .doc th, .doc td { padding: 9px 6px; }
+}
+@media (max-width: 480px) { .toc { columns: 1; } }
+
+/* ── What's new: one section per version, the date beside the number ── */
+.changes .release { padding: 8px 0 4px; border-bottom: 1px solid var(--line); }
+.changes .release h2 { display: flex; align-items: baseline; gap: 12px; margin: 28px 0 6px; scroll-margin-top: 24px; }
+.changes .release .when { font-size: 14px; font-weight: 400; color: var(--faint); letter-spacing: 0; }
+.changes .release:first-of-type h2::after { content: "Latest"; font-size: 12px; font-weight: 600; color: var(--accent);
+  padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 12%, transparent); align-self: center; }

@@ -1,0 +1,379 @@
+<UserControl x:Class="Plicbox.App.ReadingView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Plicbox.App.ViewModels"
+             xmlns:local="clr-namespace:Plicbox.App"
+             xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf">
+    <!-- One message: header, chips, notices, attachments and the message itself. The main window's reading pane and
+         every message window use it, so both always offer the same. DataContext: a MessageReader. -->
+    <Grid>
+        <!-- Nothing picked. Not while the main window's list is empty (its Tag: the list has rows), which says why itself. -->
+        <local:EmptyState Glyph="&#xE8C3;" Title="{local:T 'Select a message to read'}" Margin="24">
+            <local:EmptyState.Style>
+                <Style TargetType="local:EmptyState">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasSelection}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource AncestorType=local:ReadingView}}" Value="False">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </local:EmptyState.Style>
+        </local:EmptyState>
+
+        <Grid x:Name="ReadingPane" Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+
+            <!-- Attachments: click to open, right-click to save -->
+            <ItemsControl Grid.Row="3" ItemsSource="{Binding Attachments}" Margin="16,0,16,8">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Style="{StaticResource BareButton}" Margin="4" ToolTip="{Binding ToolTipText}"
+                                Command="{Binding DataContext.OpenAttachmentCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                CommandParameter="{Binding}"
+                                Tag="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ItemsControl}}">
+                            <Button.ContextMenu>
+                                <ContextMenu DataContext="{Binding PlacementTarget.Tag, RelativeSource={RelativeSource Self}}">
+                                    <MenuItem Header="{local:T 'Open'}" Command="{Binding OpenAttachmentCommand}"
+                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                    <MenuItem Header="{local:T 'Save as…'}" Command="{Binding SaveAttachmentCommand}"
+                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                    <MenuItem Header="{local:T 'Add to Calendar…'}" Command="{Binding AddToCalendarCommand}"
+                                              CommandParameter="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                              Visibility="{Binding PlacementTarget.DataContext.IsCalendar, RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource BoolToVisibility}}" />
+                                </ContextMenu>
+                            </Button.ContextMenu>
+                            <Border x:Name="Chip" Background="{DynamicResource SubtleFillBrush}" BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1" CornerRadius="4" Padding="8,4,10,4">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="ChipIcon" Style="{StaticResource Icon}" Text="&#xE723;" FontSize="13" Margin="0,0,8,0"
+                                               Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center" />
+                                    <!-- The extension sits apart from the name, so a long name can't push it out of sight. -->
+                                    <TextBlock Text="{Binding Safety.Stem}" VerticalAlignment="Center" MaxWidth="220" TextTrimming="CharacterEllipsis" />
+                                    <Border x:Name="ExtensionChip" Background="{DynamicResource SubtleStrongFillBrush}" CornerRadius="3" Padding="5,1" Margin="6,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock x:Name="ExtensionText" Text="{Binding ExtensionText}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SecondaryTextBrush}" />
+                                    </Border>
+                                    <TextBlock Text="{Binding SizeText}" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+                        </Button>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsCaution}" Value="True">
+                                <Setter TargetName="Chip" Property="Background" Value="{DynamicResource CautionFillBrush}" />
+                                <Setter TargetName="Chip" Property="BorderBrush" Value="{DynamicResource CautionStrokeBrush}" />
+                                <Setter TargetName="ChipIcon" Property="Text" Value="&#xE7BA;" />
+                                <Setter TargetName="ChipIcon" Property="Foreground" Value="{DynamicResource CautionTextBrush}" />
+                                <Setter TargetName="ExtensionChip" Property="Background" Value="#F7D774" />
+                                <Setter TargetName="ExtensionText" Property="Foreground" Value="#3D2E00" /> <!-- on the fixed yellow, in both modes -->
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsDanger}" Value="True">
+                                <Setter TargetName="Chip" Property="Background" Value="{DynamicResource DangerFillBrush}" />
+                                <Setter TargetName="Chip" Property="BorderBrush" Value="{DynamicResource DangerStrokeBrush}" />
+                                <Setter TargetName="ChipIcon" Property="Text" Value="&#xE7BA;" />
+                                <Setter TargetName="ChipIcon" Property="Foreground" Value="{DynamicResource DangerTextBrush}" />
+                                <Setter TargetName="ExtensionChip" Property="Background" Value="{DynamicResource DangerTextBrush}" />
+                                <Setter TargetName="ExtensionText" Property="Foreground" Value="White" />
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <DockPanel Margin="20,10,16,0">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <!-- Reply All (only when it would reach more than the sender), Reply and Forward, left of the labels; as tall as the pills -->
+                    <Button Style="{StaticResource ToolbarButton}" Tag="&#xE8C2;" Command="{Binding ReplyAllCommand}" Padding="6,3" Margin="0,0,2,0" VerticalAlignment="Center"
+                            ToolTip="{local:T 'Reply All'}" Visibility="{Binding CanReplyAll, Converter={StaticResource BoolToVisibility}}" />
+                    <Button Style="{StaticResource ToolbarButton}" Tag="&#xE97A;" Command="{Binding ReplyCommand}" Padding="6,3" Margin="0,0,2,0" VerticalAlignment="Center"
+                            ToolTip="{local:T 'Reply'}" />
+                    <Button Style="{StaticResource ToolbarButton}" Tag="&#xEE35;" Command="{Binding ForwardCommand}" Padding="6,3" Margin="0,0,4,0" VerticalAlignment="Center"
+                            ToolTip="{local:T 'Forward'}" />
+                    <!-- Gmail labels besides this folder (Important in yellow), each with an ✕ to take it off -->
+                    <ItemsControl ItemsSource="{Binding Labels}" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:LabelChip}">
+                                <Border x:Name="LabelChip" Style="{StaticResource Chip}" Background="{DynamicResource SubtleStrongFillBrush}" Padding="11,3,7,3">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock x:Name="LabelText" Text="{Binding Name}" VerticalAlignment="Center" />
+                                        <Button Style="{StaticResource BareButton}" Margin="7,0,0,0" ToolTip="{local:T 'Remove this label (in Gmail too)'}"
+                                                Command="{Binding DataContext.RemoveLabelCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}">
+                                            <TextBlock x:Name="LabelX" Style="{StaticResource Icon}" Text="&#xE711;" FontSize="10" />
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding IsImportant}" Value="True">
+                                        <Setter TargetName="LabelChip" Property="Background" Value="#FFD54F" />
+                                        <Setter TargetName="LabelText" Property="Foreground" Value="#1F1F1F" />
+                                        <Setter TargetName="LabelX" Property="Foreground" Value="#1F1F1F" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Border Style="{StaticResource Chip}" Background="#FFD54F"
+                            Visibility="{Binding SelectedMessage.IsFlagged, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="{local:T 'Flagged'}" Foreground="#1F1F1F" />
+                    </Border>
+                    <Border Style="{StaticResource Chip}" Background="{DynamicResource SubtleStrongFillBrush}">
+                        <TextBlock Text="{Binding SelectedFolderName}" />
+                    </Border>
+                </StackPanel>
+                <TextBlock Text="{Binding SelectedMessage.Subject}" FontSize="18" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+            </DockPanel>
+
+            <!-- Beside the picture, centred on it: the sender with the date, then who it went to. Below, starting under the name,
+                 the notice chips. -->
+            <Grid Grid.Row="1" Margin="20,4,20,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid Width="48" Height="48" VerticalAlignment="Center">
+                    <Ellipse Fill="{Binding SelectedMessage.AvatarBrush}" />
+                    <local:CenteredInitial Text="{Binding SelectedMessage.Initial}" Scale="0.42" />
+                    <Grid>
+                        <!-- No picture for a sender flagged as doubtful: a forged message mustn't borrow a real logo. -->
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedMessage.Picture}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding HasSenderWarning}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <Ellipse Fill="White" Margin="0.5" />
+                        <Ellipse Stroke="{DynamicResource AvatarRingBrush}" StrokeThickness="0.5" Margin="-0.75">
+                            <Ellipse.Fill>
+                                <ImageBrush ImageSource="{Binding SelectedMessage.Picture}" Stretch="UniformToFill" />
+                            </Ellipse.Fill>
+                        </Ellipse>
+                    </Grid>
+                </Grid>
+                <Grid Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock FontSize="15" Foreground="{DynamicResource LinkBrush}" VerticalAlignment="Bottom">
+                        <!-- The name: click or right-click for what you can do with them -->
+                        <InlineUIContainer BaselineAlignment="Baseline">
+                            <TextBlock Text="{Binding SelectedMessage.Sender}" Tag="{Binding SelectedMessage.SenderPerson}" Cursor="Hand" Background="Transparent"
+                                       MouseLeftButtonUp="Person_Click" ContextMenuOpening="Person_ContextMenuOpening">
+                                <TextBlock.ContextMenu><ContextMenu /></TextBlock.ContextMenu>
+                            </TextBlock>
+                        </InlineUIContainer>
+                        <Run Text="{Binding SelectedMessage.Model.FromAddress, StringFormat='&lt;{0}&gt;', Mode=OneWay}" Foreground="{DynamicResource MutedTextBrush}" FontSize="13" />
+                        <!-- A quiet note, not a warning: most first messages are fine, but it's worth knowing. -->
+                        <Run Text="{Binding FirstContactNote, StringFormat=' · {0}', Mode=OneWay}" Foreground="{DynamicResource HintBrush}" FontSize="12.5" FontStyle="Italic" />
+                    </TextBlock>
+                    <TextBlock Grid.Column="1" Text="{Binding SelectedMessage.FullDate}" Foreground="{DynamicResource MutedTextBrush}" Margin="12,0,0,0"
+                               HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                    <!-- To: each person by name, the address on hover, a menu on click. The line runs on under the date. -->
+                    <DockPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,2,0,0">
+                        <TextBlock Text="{local:T 'to'}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,5,0" VerticalAlignment="Top" />
+                        <ItemsControl ItemsSource="{Binding SelectedMessage.ToPeople}" Focusable="False">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:HeaderPerson}">
+                                    <TextBlock Text="{Binding Display}" Tag="{Binding}" ToolTip="{Binding Tip}" Foreground="{DynamicResource LinkBrush}"
+                                               Margin="0,0,5,0" Cursor="Hand" Background="Transparent"
+                                               MouseLeftButtonUp="Person_Click" ContextMenuOpening="Person_ContextMenuOpening">
+                                        <TextBlock.ContextMenu><ContextMenu /></TextBlock.ContextMenu>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </DockPanel>
+                </Grid>
+                    <!-- Compact (Settings → Mail → Reading): every notice as a small chip, on a row of their own starting under the
+                         name; hover for the full sentence -->
+                    <WrapPanel Grid.Row="1" Grid.ColumnSpan="2"
+                           Visibility="{Binding CompactNotices, Converter={StaticResource BoolToVisibility}}">
+                        <WrapPanel.Resources>
+                            <!-- The same size as the label pills in the header (Important, Inbox…) -->
+                            <Style x:Key="NoticeChip" TargetType="Border" BasedOn="{StaticResource Chip}">
+                                <Setter Property="Background" Value="{DynamicResource SubtleFillBrush}" />
+                                <Setter Property="Margin" Value="0,6,6,0" />
+                                <Setter Property="ToolTipService.InitialShowDelay" Value="300" />
+                            </Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontSize" Value="13" />
+                            </Style>
+                            <Style x:Key="ChipIcon" TargetType="Run">
+                                <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
+                                <Setter Property="FontSize" Value="13" />
+                                <Setter Property="BaselineAlignment" Value="Center" />
+                                <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+                            </Style>
+                            <Style x:Key="ChipLink" TargetType="Hyperlink">
+                                <Setter Property="Foreground" Value="{DynamicResource LinkBrush}" />
+                                <Setter Property="TextDecorations" Value="None" />
+                            </Style>
+                        </WrapPanel.Resources>
+                        <!-- Doubtful sender: amber (caution) or red (danger); the reasons on hover -->
+                        <Border BorderThickness="1" ToolTip="{Binding SenderWarningText}" ToolTipService.ShowDuration="60000"
+                                Visibility="{Binding ShowWarningChip, Converter={StaticResource BoolToVisibility}}">
+                            <Border.Style>
+                                <Style TargetType="Border" BasedOn="{StaticResource NoticeChip}">
+                                    <Setter Property="Background" Value="{DynamicResource CautionFillBrush}" />
+                                    <Setter Property="BorderBrush" Value="{DynamicResource CautionStrokeBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SenderWarningIsDanger}" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource DangerFillBrush}" />
+                                            <Setter Property="BorderBrush" Value="{DynamicResource DangerStrokeBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock FontWeight="SemiBold">
+                                <Run Text="&#xE7BA;" FontFamily="{StaticResource IconFont}" FontSize="13" BaselineAlignment="Center" FontWeight="Normal">
+                                    <Run.Style>
+                                        <Style TargetType="Run">
+                                            <Setter Property="Foreground" Value="{DynamicResource CautionTextBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SenderWarningIsDanger}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource DangerTextBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Run.Style>
+                                </Run><Run Text=" " /><Run Text="{Binding SenderWarningTitle, Mode=OneWay}" />
+                            </TextBlock>
+                        </Border>
+                        <Border Style="{StaticResource NoticeChip}" ToolTip="{Binding BlockedTrackingText}"
+                                Visibility="{Binding HasBlockedTracking, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}">
+                                <Run Style="{StaticResource ChipIcon}" Text="&#xF272;" /><Run Text=" " /><Run Text="{local:T 'Tracking blocked'}" /><Run Text=" / " />
+                                <Hyperlink Style="{StaticResource ChipLink}" Command="{Binding AllowTrackingCommand}"><Run Text="{local:T 'Allow'}" /></Hyperlink>
+                            </TextBlock>
+                        </Border>
+                        <Border Style="{StaticResource NoticeChip}" ToolTip="{local:T 'Stop receiving these messages.'}"
+                                Visibility="{Binding CanUnsubscribe, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock>
+                                <Run Style="{StaticResource ChipIcon}" Text="&#xE946;" /><Run Text=" " />
+                                <Hyperlink Style="{StaticResource ChipLink}" Command="{Binding UnsubscribeFromSenderCommand}"><Run Text="{local:T 'Unsubscribe'}" /></Hyperlink>
+                            </TextBlock>
+                        </Border>
+                        <Border Style="{StaticResource NoticeChip}" Visibility="{Binding UnsubscribeDone, Converter={StaticResource NullToCollapsed}}">
+                            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}">
+                                <Run Style="{StaticResource ChipIcon}" Text="&#xE73E;" /><Run Text=" " /><Run Text="{Binding UnsubscribeDone, Mode=OneWay}" />
+                            </TextBlock>
+                        </Border>
+                        <Border Style="{StaticResource NoticeChip}" ToolTip="{local:T 'To preserve privacy, external content was not downloaded.'}"
+                                Visibility="{Binding HasRemoteContent, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}">
+                                <Run Style="{StaticResource ChipIcon}" Text="&#xE7BA;" /><Run Text=" " /><Run Text="{local:T 'Pictures blocked'}" /><Run Text=" / " />
+                                <Hyperlink Style="{StaticResource ChipLink}" Command="{Binding ShowRemoteContentCommand}"><Run Text="{local:T 'Download'}" /></Hyperlink><Run Text=" / " />
+                                <Hyperlink Style="{StaticResource ChipLink}" Command="{Binding AlwaysShowFromSenderCommand}"
+                                           ToolTip="{local:T 'always download pictures from this sender'}"><Run Text="{local:T 'Always from this sender'}" /></Hyperlink>
+                            </TextBlock>
+                        </Border>
+                    </WrapPanel>
+            </Grid>
+
+            <!-- Sender warning and privacy notices (above the attachments, so they're read first) -->
+            <StackPanel Grid.Row="2" Margin="20,0,20,0">
+                <!-- Doubtful sender (failed SPF/DKIM/DMARC, look-alike domain, …): amber for caution, red for danger -->
+                <Border CornerRadius="6" BorderThickness="1" Padding="12,6" Margin="0,0,0,8"
+                        Visibility="{Binding ShowWarningBanner, Converter={StaticResource BoolToVisibility}}">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="{DynamicResource CautionFillBrush}" />
+                            <Setter Property="BorderBrush" Value="{DynamicResource CautionStrokeBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SenderWarningIsDanger}" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource DangerFillBrush}" />
+                                    <Setter Property="BorderBrush" Value="{DynamicResource DangerStrokeBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <DockPanel>
+                        <TextBlock Text="&#xE7BA;" FontFamily="{StaticResource IconFont}" FontSize="16" Margin="0,2,10,0" VerticalAlignment="Top">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{DynamicResource CautionTextBrush}" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding SenderWarningIsDanger}" Value="True">
+                                            <Setter Property="Foreground" Value="{DynamicResource DangerTextBrush}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <!-- One line: what to watch for, then why (wraps only when the pane is narrow) -->
+                        <TextBlock TextWrapping="Wrap" LineHeight="20">
+                            <Run Text="{Binding SenderWarningTitle, Mode=OneWay}" FontWeight="SemiBold" /><Run Text="  " />
+                            <Run Text="{Binding SenderWarningText, Mode=OneWay}" Foreground="{DynamicResource SecondaryTextBrush}" />
+                        </TextBlock>
+                    </DockPanel>
+                </Border>
+                <!-- Full sentences -->
+                <StackPanel Margin="0,0,0,6" Visibility="{Binding FullNotices, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4" TextWrapping="Wrap"
+                           Visibility="{Binding HasBlockedTracking, Converter={StaticResource BoolToVisibility}}">
+                    <Run Text="&#xF272;" FontFamily="{StaticResource IconFont}" FontSize="15" BaselineAlignment="Center" Foreground="{DynamicResource SecondaryTextBrush}" />
+                    <Run Text=" " />
+                    <Hyperlink Command="{Binding AllowTrackingCommand}" Foreground="{DynamicResource LinkBrush}" TextDecorations="None"><Run Text="{local:T 'Allow email tracking'}" /></Hyperlink><Run Text=". " /><Run Text="{Binding BlockedTracking, Mode=OneWay}" /><Run Text="{local:T ' was blocked to preserve privacy.'}" />
+                </TextBlock>
+                <!-- Unsubscribe (the message's List-Unsubscribe) -->
+                <TextBlock Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4" TextWrapping="Wrap"
+                           Visibility="{Binding CanUnsubscribe, Converter={StaticResource BoolToVisibility}}">
+                    <Run Text="&#xE946;" FontFamily="{StaticResource IconFont}" FontSize="15" BaselineAlignment="Center" Foreground="{DynamicResource SecondaryTextBrush}" />
+                    <Run Text=" " />
+                    <Hyperlink Command="{Binding UnsubscribeFromSenderCommand}" Foreground="{DynamicResource LinkBrush}" TextDecorations="None"><Run Text="{local:T 'Unsubscribe'}" /></Hyperlink><Run Text="{local:T ' from receiving these messages.'}" />
+                </TextBlock>
+                <TextBlock Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4" TextWrapping="Wrap"
+                           Visibility="{Binding UnsubscribeDone, Converter={StaticResource NullToCollapsed}}">
+                    <Run Text="&#xE73E;" FontFamily="{StaticResource IconFont}" FontSize="15" BaselineAlignment="Center" Foreground="{DynamicResource SecondaryTextBrush}" />
+                    <Run Text=" " /><Run Text="{Binding UnsubscribeDone, Mode=OneWay}" />
+                </TextBlock>
+                <TextBlock Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                           Visibility="{Binding HasRemoteContent, Converter={StaticResource BoolToVisibility}}">
+                    <Run Text="&#xE7BA;" FontFamily="{StaticResource IconFont}" FontSize="15" BaselineAlignment="Center" Foreground="{DynamicResource SecondaryTextBrush}" />
+                    <Run Text=" " />
+                    <Hyperlink Command="{Binding ShowRemoteContentCommand}" Foreground="{DynamicResource LinkBrush}" TextDecorations="None"><Run Text="{local:T 'Download pictures'}" /></Hyperlink><Run Text="{local:T ' or '}" /><Hyperlink Command="{Binding AlwaysShowFromSenderCommand}" Foreground="{DynamicResource LinkBrush}" TextDecorations="None"><Run Text="{local:T 'always download pictures from this sender'}" /></Hyperlink><Run Text="{local:T '. To preserve privacy, external content was not downloaded.'}" />
+                </TextBlock>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- The message. While the window is being resized a still image of it stands in (see FreezeBodyAsync). -->
+            <Border Grid.Row="4" BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,1,0,0" Background="White">
+                <Grid>
+                    <wv2:WebView2 x:Name="Body" DefaultBackgroundColor="White" />
+                    <Image x:Name="BodySnapshot" Stretch="Fill" HorizontalAlignment="Left" VerticalAlignment="Top" Visibility="Collapsed" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

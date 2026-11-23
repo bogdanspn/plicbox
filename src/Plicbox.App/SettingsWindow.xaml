@@ -1,0 +1,463 @@
+<Window x:Class="Plicbox.App.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Plicbox.App"
+        Title="{local:T 'Settings'}" Width="880" Height="680" MinWidth="720" MinHeight="460"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        FontFamily="{DynamicResource UiFont}" FontSize="14" Background="{DynamicResource SurfaceBrush}">
+    <Window.Resources>
+        <Style x:Key="SectionHeader" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource SubtleFillBrush}" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Margin" Value="0,16,0,8" />
+            <Setter Property="TextElement.FontWeight" Value="SemiBold" />
+        </Style>
+        <Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
+            <Setter Property="Margin" Value="10,4" />
+        </Style>
+        <Style x:Key="PageTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+
+        <!-- One page in the list on the left: icon and name, a bar and tint when it's the one shown. -->
+        <Style x:Key="NavItem" TargetType="RadioButton">
+            <Setter Property="GroupName" Value="SettingsNav" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="Margin" Value="8,1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="5" Padding="12,9">
+                            <Grid>
+                                <Border x:Name="Bar" Width="3" Height="16" CornerRadius="2" HorizontalAlignment="Left" Margin="-10,0,0,0"
+                                        Background="{DynamicResource AccentBrush}" Visibility="Collapsed" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Style="{StaticResource Icon}" Text="{TemplateBinding Tag}" FontSize="16" Margin="0,0,12,0" FontWeight="Normal" />
+                                    <ContentPresenter VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ChromeHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ChromeHoverBrush}" />
+                                <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <!-- Save / Cancel on top, as in the other settings windows, set off from the pages by a divider -->
+        <Border DockPanel.Dock="Top" Background="{DynamicResource ChromeBrush}" BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,0,0,1" Padding="20,10">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource PrimaryButton}" Click="Save_Click" Padding="14,7" IsDefault="True">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Style="{StaticResource Icon}" Text="&#xE74E;" Margin="0,0,8,0" />
+                            <TextBlock Text="{local:T 'Save &amp; Close'}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Content="{local:T 'Cancel'}" IsCancel="True" Margin="10,0,0,0" Padding="14,6" />
+                </StackPanel>
+                <TextBlock x:Name="ErrorText" Foreground="{DynamicResource DangerTextBrush}" Margin="16,0,0,0" VerticalAlignment="Center" Visibility="Collapsed"
+                           TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+        </Border>
+
+        <!-- Pages -->
+        <Border DockPanel.Dock="Left" Width="210" Background="{DynamicResource ChromeBrush}" BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,0,1,0">
+            <StackPanel Margin="0,12,0,0">
+                <RadioButton x:Name="NavGeneral" Style="{StaticResource NavItem}" Tag="&#xE713;" Content="{local:T 'General'}" IsChecked="True" Checked="Nav_Checked" />
+                <RadioButton x:Name="NavAppearance" Style="{StaticResource NavItem}" Tag="&#xE790;" Content="{local:T 'Appearance'}" Checked="Nav_Checked" />
+                <RadioButton x:Name="NavMail" Style="{StaticResource NavItem}" Tag="&#xE715;" Content="{local:T 'Mail'}" Checked="Nav_Checked" />
+                <RadioButton x:Name="NavCalendar" Style="{StaticResource NavItem}" Tag="&#xE787;" Content="{local:T 'Calendar'}" Checked="Nav_Checked" />
+                <RadioButton x:Name="NavSenders" Style="{StaticResource NavItem}" Tag="&#xE716;" Content="{local:T 'Senders'}" Checked="Nav_Checked" />
+                <RadioButton x:Name="NavBackup" Style="{StaticResource NavItem}" Tag="&#xE81C;" Content="{local:T 'Backup'}" Checked="Nav_Checked" />
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer x:Name="PageScroll" VerticalScrollBarVisibility="Auto">
+            <!-- The page fills the width up to 1000 px (plus its margins), then stays on the left: every page, not only
+                 the ones with long text. -->
+            <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MaxWidth="1056" />
+                <ColumnDefinition Width="0*" />
+            </Grid.ColumnDefinitions>
+            <Grid Margin="28,18,28,24">
+
+                <!-- ═══ General ═══ -->
+                <StackPanel x:Name="GeneralPage">
+                    <TextBlock Style="{StaticResource PageTitle}" Text="{local:T 'General'}" />
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Application'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <CheckBox x:Name="MinimizeToTray" Content="{local:T 'Minimize application to tray'}" />
+                    <CheckBox x:Name="CloseToTray" Content="{local:T 'Close application to tray (keeps new mail and reminders arriving)'}" />
+                    <CheckBox x:Name="RunOnStartup" Content="{local:T 'Run on system startup'}" />
+                    <StackPanel Orientation="Horizontal" Margin="10,10,0,0">
+                        <TextBlock Text="{local:T 'Show on startup:'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ComboBox x:Name="StartupView" MinWidth="280" DisplayMemberPath="Label" />
+                    </StackPanel>
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Language'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <StackPanel Orientation="Horizontal" Margin="10,4">
+                        <TextBlock Text="{local:T 'Language:'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ComboBox x:Name="LanguageBox" MinWidth="220" DisplayMemberPath="Label" />
+                    </StackPanel>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,4,0,0" TextWrapping="Wrap"
+                               Text="{local:T 'Dates and times keep the format set in Windows. A new language shows after Plicbox restarts.'}" />
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Updates'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <StackPanel x:Name="UpdatesSection">
+                        <StackPanel Orientation="Horizontal" Margin="10,4">
+                            <TextBlock x:Name="VersionText" VerticalAlignment="Center" />
+                            <Button x:Name="CheckUpdates" Content="{local:T 'Check for updates'}" Command="{Binding CheckCommand}" Margin="16,0,0,0" Padding="12,5" />
+                            <Button Content="{local:T 'Restart to update'}" Command="{Binding RestartCommand}" Margin="8,0,0,0" Padding="12,5"
+                                    Visibility="{Binding IsReady, Converter={StaticResource BoolToVisibility}}" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding Status}" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,2,0,4" TextWrapping="Wrap" />
+                        <CheckBox x:Name="AutoUpdate" Content="{local:T 'Download new versions automatically (they install when Plicbox restarts)'}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- ═══ Appearance: shown live while you choose; Cancel puts it back ═══ -->
+                <StackPanel x:Name="AppearancePage" Visibility="Collapsed">
+                    <TextBlock Style="{StaticResource PageTitle}" Text="{local:T 'Appearance'}" />
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Mode'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <StackPanel Orientation="Horizontal" Margin="10,4">
+                        <TextBlock Text="{local:T 'Show Plicbox in:'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ComboBox x:Name="ThemeBox" MinWidth="220" DisplayMemberPath="Label" SelectionChanged="Appearance_Changed" />
+                    </StackPanel>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,4,0,0" TextWrapping="Wrap"
+                               Text="{local:T 'Match Windows switches along with Windows\' light or dark mode. Messages stay on a white page, as most are designed for one.'}" />
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Accent colour'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,0,0,8" TextWrapping="Wrap"
+                               Text="{local:T 'Used for New, Send, Save and other main buttons, and small highlights. The first one follows your Windows accent colour, also when you change it there.'}" />
+                    <WrapPanel x:Name="AccentSwatches" Margin="6,0,0,0" />
+
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Font'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <StackPanel Orientation="Horizontal" Margin="10,4">
+                        <TextBlock Text="{local:T 'App font:'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ComboBox x:Name="UiFontBox" MinWidth="260" SelectionChanged="Appearance_Changed">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" FontFamily="{Binding}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,4,0,0" TextWrapping="Wrap"
+                               Text="{local:T 'Only fonts installed on this computer that fit the app\'s layout are offered. Messages keep their own fonts.'}" />
+
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Reading pane'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <TextBlock Margin="10,4,0,6" TextWrapping="Wrap" Text="{local:T 'Where messages open when you pick them in the list.'}" />
+                    <!-- Four across the full width; each choice keeps 8 px either side, so the row lines up with the text at 10. -->
+                    <UniformGrid x:Name="ReadingPaneChoices" Rows="1" Margin="2,2,-8,0" />
+                    <TextBlock x:Name="ReadingPaneHint" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,4,0,4" TextWrapping="Wrap" />
+
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Message text'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <Grid Margin="10,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="{local:T 'Font:'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ComboBox x:Name="MessageFontBox" Grid.Column="1" MinWidth="260" HorizontalAlignment="Left" SelectionChanged="Appearance_Changed">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" FontFamily="{Binding}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Grid.Row="1" Text="{local:T 'Text size:'}" VerticalAlignment="Center" Margin="0,8,12,0" />
+                        <ComboBox x:Name="MessageTextSizeBox" Grid.Row="1" Grid.Column="1" MinWidth="260" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                  DisplayMemberPath="Label" SelectionChanged="Appearance_Changed" />
+                        <TextBlock Grid.Row="2" Text="{local:T 'Show messages at:'}" VerticalAlignment="Center" Margin="0,8,12,0" />
+                        <ComboBox x:Name="MessageZoomBox" Grid.Row="2" Grid.Column="1" MinWidth="260" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                  DisplayMemberPath="Label" SelectionChanged="Appearance_Changed" />
+                    </Grid>
+                    <!-- How a message looks with the chosen font, size and zoom: a small message.
+                         White with dark text in dark mode too, as messages are shown. -->
+                    <Border Margin="10,12,0,0" CornerRadius="8" Background="White" TextElement.Foreground="#1F1F1F"
+                            BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1">
+                        <Grid>
+                            <StackPanel Margin="22,14,18,20">
+                                <DockPanel Margin="0,0,0,12">
+                                    <Grid DockPanel.Dock="Left" Width="30" Height="30" Margin="0,0,10,0">
+                                        <Ellipse Fill="{DynamicResource AccentBrush}" />
+                                        <TextBlock Text="M" Foreground="{DynamicResource OnAccentBrush}" FontSize="14" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Grid>
+                                    <TextBlock DockPanel.Dock="Right" Text="18:12" Foreground="#707070" FontSize="12" VerticalAlignment="Center" />
+                                    <TextBlock Text="Mia Chen" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                </DockPanel>
+                                <TextBlock x:Name="MessageTextSample" TextWrapping="Wrap"
+                                           Text="{local:T 'Hi Ana, the train gets in at 18:40. See you at the station!'}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,8,0,0" TextWrapping="Wrap"
+                               Text="{local:T 'Font and text size are for mail that doesn\'t choose its own, such as plain-text mail; newsletters keep their design. Show messages at enlarges every message, pictures included. Ctrl + mouse wheel still zooms a single message.'}" />
+                </StackPanel>
+
+                <!-- ═══ Mail ═══ -->
+                <StackPanel x:Name="MailPage" Visibility="Collapsed">
+                    <TextBlock Style="{StaticResource PageTitle}" Text="{local:T 'Mail'}" />
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Reading'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <StackPanel Orientation="Horizontal" Margin="10,4">
+                        <TextBlock Text="{local:T 'Mark messages as read:'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ComboBox x:Name="MarkReadBox" MinWidth="220" DisplayMemberPath="Label" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="10,4">
+                        <TextBlock Text="{local:T 'Message notices:'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ComboBox x:Name="NoticesBox" MinWidth="220" DisplayMemberPath="Label" />
+                    </StackPanel>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,4,0,0" TextWrapping="Wrap"
+                               Text="{local:T 'The notes above a message about blocked tracking, pictures and unsubscribing.'}" />
+
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Synchronization'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <StackPanel Orientation="Horizontal" Margin="10,4">
+                        <TextBlock Text="{local:T 'Check all folders every'}" VerticalAlignment="Center" />
+                        <TextBox x:Name="SyncInterval" Width="60" Margin="10,0" TextAlignment="Center" />
+                        <TextBlock Text="{local:T 'minutes'}" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,4,0,0" TextWrapping="Wrap"
+                               Text="{local:T 'New mail in your inboxes arrives instantly regardless; this is for other folders, changes made elsewhere and calendars.'}" />
+
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Sending'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <StackPanel Orientation="Horizontal" Margin="10,4">
+                        <TextBlock Text="{local:T 'Undo send:'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ComboBox x:Name="UndoSendBox" MinWidth="180" DisplayMemberPath="Label" />
+                    </StackPanel>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,4,0,0" TextWrapping="Wrap"
+                               Text="{local:T 'A sent message waits this long in the Outbox; Undo next to Refresh brings it back to edit. Send later, next to Send, picks any time.'}" />
+
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Offline mail'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <!-- Room taken on this computer: a bar split by what takes it, the two parts and the total. -->
+                    <Border Margin="10,4,0,0" CornerRadius="4" Padding="14,12,14,10"
+                            BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Border Grid.ColumnSpan="3" Height="6" CornerRadius="3" Margin="0,0,0,10" Background="{DynamicResource SubtleFillBrush}">
+                                <Grid x:Name="OfflineBar">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition x:Name="OfflineBarMessages" Width="0" />
+                                        <ColumnDefinition x:Name="OfflineBarDatabase" Width="0" />
+                                        <ColumnDefinition Width="0" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Background="{DynamicResource AccentBrush}" CornerRadius="3,0,0,3" />
+                                    <Border Grid.Column="1" Background="{DynamicResource AccentBrush}" Opacity="0.4" CornerRadius="0,3,3,0" />
+                                </Grid>
+                            </Border>
+
+                            <Ellipse Grid.Row="1" Width="8" Height="8" Margin="0,0,10,0" VerticalAlignment="Center" Fill="{DynamicResource AccentBrush}" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,3" Text="{local:T 'Downloaded messages'}" />
+                            <TextBlock x:Name="OfflineMessages" Grid.Row="1" Grid.Column="2" Margin="16,3,0,3" HorizontalAlignment="Right" Text="…" />
+
+                            <Ellipse Grid.Row="2" Width="8" Height="8" Margin="0,0,10,0" VerticalAlignment="Center" Fill="{DynamicResource AccentBrush}" Opacity="0.4" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,3" Text="{local:T 'List and search'}" />
+                            <TextBlock x:Name="OfflineDatabase" Grid.Row="2" Grid.Column="2" Margin="16,3,0,3" HorizontalAlignment="Right" Text="…" />
+
+                            <Border Grid.Row="3" Grid.ColumnSpan="3" Height="1" Margin="0,6" Background="{DynamicResource DividerBrush}" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" FontWeight="SemiBold" Text="{local:T 'Total on this computer'}" />
+                            <TextBlock x:Name="OfflineTotal" Grid.Row="4" Grid.Column="2" Margin="16,0,0,0" HorizontalAlignment="Right" FontWeight="SemiBold" Text="…" />
+                        </Grid>
+                    </Border>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,8,0,0" TextWrapping="Wrap"
+                               Text="{local:T 'How much mail each account keeps here is chosen under Accounts → Sync options → Offline mail.'}" />
+
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Notifications'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <CheckBox x:Name="NotifyNewMail" Content="{local:T 'Show a desktop notification when new mail arrives'}" />
+
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Pictures'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <CheckBox x:Name="SenderPictures" Content="{local:T 'Show senders\' pictures from the internet (Gravatar and verified company logos)'}" />
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,0,0,0" TextWrapping="Wrap"
+                               Text="{local:T 'Each sender is looked up once and remembered for a month. Only the address is used (hashed for Gravatar); nothing about your messages is sent, and mail in Junk is never looked up. Off: coloured letters only.'}" />
+
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Phishing and malware'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <CheckBox x:Name="ThreatLists" Content="{local:T 'Warn about senders and links on public lists of phishing and malware sites'}" />
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,0,0,0" TextWrapping="Wrap"
+                               Text="{local:T 'The lists (from OpenPhish, PhishTank, IPThreat and URLhaus, via malware-filter) are downloaded twice a day and checked here: nothing about your mail is sent anywhere. Rules can move such mail to Junk (Sender or links → are on a phishing or malware list).'}" />
+                    <TextBlock x:Name="ThreatListsStatus" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,4,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+
+                <!-- ═══ Senders: every per-sender list in one place ═══ -->
+                <StackPanel x:Name="SendersPage" Visibility="Collapsed">
+                    <StackPanel.Resources>
+                        <!-- One entry: the address or @domain, and a remove button. -->
+                        <DataTemplate x:Key="SenderEntry">
+                            <DockPanel Margin="0,1">
+                                <Button DockPanel.Dock="Right" Style="{StaticResource ToolbarButton}" Tag="&#xE711;" Padding="6,4" ToolTip="{local:T 'Remove'}" Click="RemoveSender_Click" />
+                                <TextBlock Text="{Binding}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            </DockPanel>
+                        </DataTemplate>
+                    </StackPanel.Resources>
+                    <TextBlock Style="{StaticResource PageTitle}" Text="{local:T 'Senders'}" />
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,0,0,4"
+                               Text="{local:T 'Lists of senders that get special treatment. Add an address (ana@shop.example) or a whole domain (@shop.example, which also covers news.shop.example).'}" />
+
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Always show pictures from'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,0,0,6" TextWrapping="Wrap"
+                               Text="{local:T 'Pictures in their mail load right away (trackers are still removed). Added when you choose &quot;always download pictures from this sender&quot;.'}" />
+                    <ListBox x:Name="PictureSenders" Style="{StaticResource EntryList}" Margin="10,0,0,0" MinHeight="60" MaxHeight="220"
+                             ItemTemplate="{StaticResource SenderEntry}" />
+                    <DockPanel Margin="10,8,0,0">
+                        <Button DockPanel.Dock="Right" Content="{local:T 'Add'}" Padding="16,5" Margin="8,0,0,0" Click="AddPictureSender_Click" />
+                        <TextBox x:Name="NewPictureSender" local:Placeholder.Text="{local:T 'newsletter@shop.example or @shop.example'}" KeyDown="NewPictureSender_KeyDown" />
+                    </DockPanel>
+
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Blocked senders'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,0,0,6" TextWrapping="Wrap"
+                               Text="{local:T 'Their new mail is moved away as it arrives, before any notification. Right-click a message and choose Block Sender to add someone.'}" />
+                    <ListBox x:Name="BlockedSenders" Style="{StaticResource EntryList}" Margin="10,0,0,0" MinHeight="60" MaxHeight="220"
+                             ItemTemplate="{StaticResource SenderEntry}" />
+                    <DockPanel Margin="10,8,0,0">
+                        <Button DockPanel.Dock="Right" Content="{local:T 'Block'}" Padding="16,5" Margin="8,0,0,0" Click="AddBlockedSender_Click" />
+                        <TextBox x:Name="NewBlockedSender" local:Placeholder.Text="{local:T 'spammer@example.com or @example.com'}" KeyDown="NewBlockedSender_KeyDown" />
+                    </DockPanel>
+                    <StackPanel Orientation="Horizontal" Margin="10,12,0,0">
+                        <TextBlock Text="{local:T 'Move their mail to'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <RadioButton x:Name="BlockedToJunk" Content="{local:T 'Junk'}" GroupName="BlockedTarget" MinWidth="0" Margin="0,0,16,0" />
+                        <RadioButton x:Name="BlockedToTrash" Content="{local:T 'Trash'}" GroupName="BlockedTarget" MinWidth="0" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- ═══ Calendar ═══ -->
+                <StackPanel x:Name="CalendarPage" Visibility="Collapsed">
+                    <TextBlock Style="{StaticResource PageTitle}" Text="{local:T 'Calendar'}" />
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Week and working hours'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <Grid Margin="10,2,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="190" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                                <Setter Property="Margin" Value="0,6" />
+                            </Style>
+                            <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                                <Setter Property="Margin" Value="0,4" />
+                                <Setter Property="MinWidth" Value="150" />
+                                <Setter Property="HorizontalAlignment" Value="Left" />
+                                <Setter Property="DisplayMemberPath" Value="Label" />
+                            </Style>
+                        </Grid.Resources>
+
+                        <TextBlock Text="{local:T 'First day of week'}" />
+                        <ComboBox x:Name="FirstDay" Grid.Column="1" />
+
+                        <TextBlock Grid.Row="1" Text="{local:T 'Work week'}" />
+                        <StackPanel x:Name="WorkDaysPanel" Grid.Row="1" Grid.Column="1" Margin="0,4" Orientation="Horizontal" />
+
+                        <TextBlock Grid.Row="2" Text="{local:T 'Working hours'}" />
+                        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+                            <ComboBox x:Name="WorkStart" MinWidth="100" />
+                            <TextBlock Text="–" Margin="10,0" />
+                            <ComboBox x:Name="WorkEnd" MinWidth="100" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Display'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <Grid Margin="10,2,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="190" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                            </Style>
+                            <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                                <Setter Property="Margin" Value="0,4" />
+                                <Setter Property="MinWidth" Value="150" />
+                                <Setter Property="HorizontalAlignment" Value="Left" />
+                                <Setter Property="DisplayMemberPath" Value="Label" />
+                            </Style>
+                        </Grid.Resources>
+                        <TextBlock Text="{local:T 'Time grid rows'}" />
+                        <ComboBox x:Name="SlotSize" Grid.Column="1" />
+                    </Grid>
+                    <CheckBox x:Name="ShowWeekNumbers" Content="{local:T 'Show week numbers'}" Margin="10,8,10,4" />
+
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'New events and reminders'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <Grid Margin="10,2,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="190" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.Resources>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                            </Style>
+                            <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                                <Setter Property="Margin" Value="0,4" />
+                                <Setter Property="MinWidth" Value="150" />
+                                <Setter Property="HorizontalAlignment" Value="Left" />
+                                <Setter Property="DisplayMemberPath" Value="Label" />
+                            </Style>
+                        </Grid.Resources>
+                        <TextBlock Text="{local:T 'New events last'}" />
+                        <ComboBox x:Name="DefaultLength" Grid.Column="1" />
+                        <TextBlock Grid.Row="1" Text="{local:T 'Remind me of new events'}" />
+                        <ComboBox x:Name="DefaultReminder" Grid.Row="1" Grid.Column="1" />
+                    </Grid>
+                    <CheckBox x:Name="NotifyReminders" Content="{local:T 'Show a desktop notification for event reminders'}" Margin="10,8,10,4" />
+                </StackPanel>
+
+                <!-- ═══ Backup: what exists only on this computer ═══ -->
+                <StackPanel x:Name="BackupPage" Visibility="Collapsed">
+                    <TextBlock Style="{StaticResource PageTitle}" Text="{local:T 'Backup'}" />
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,0,0,0" TextWrapping="Wrap"
+                               Text="{local:T 'Calendars, contacts and tasks kept on this computer, your accounts and their settings, rules and signatures. Mail isn\'t included: it stays on your mail servers and downloads again.'}" />
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Automatic backup'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <CheckBox x:Name="BackupDaily" Content="{local:T 'Back up once a day'}" />
+                    <DockPanel Margin="10,8,0,0">
+                        <TextBlock Text="{local:T 'Folder:'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <Button DockPanel.Dock="Right" Content="{local:T 'Choose…'}" Click="ChooseBackupFolder_Click" Margin="8,0,0,0" Padding="12,5" />
+                        <TextBox x:Name="BackupFolder" IsReadOnly="True" VerticalContentAlignment="Center" />
+                    </DockPanel>
+                    <StackPanel Orientation="Horizontal" Margin="10,10,0,0">
+                        <Button x:Name="BackUpNow" Content="{local:T 'Back up now'}" Click="BackUpNow_Click" Padding="12,5" />
+                        <TextBlock x:Name="BackupStatus" VerticalAlignment="Center" Margin="12,0,0,0" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap" MaxWidth="480" />
+                    </StackPanel>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,8,0,0" TextWrapping="Wrap"
+                               Text="{local:T 'The newest 10 backups are kept. In a OneDrive folder they\'re safe even if this computer isn\'t.'}" />
+                    <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Restore'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
+                    <StackPanel Orientation="Horizontal" Margin="10,4">
+                        <Button Content="{local:T 'Restore from a backup…'}" Click="Restore_Click" Padding="12,5" />
+                    </StackPanel>
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,4,0,0" TextWrapping="Wrap"
+                               Text="{local:T 'Everything on this computer is replaced by what\'s in the backup, then Plicbox restarts. Mail downloads again from your servers.'}" />
+                </StackPanel>
+            </Grid>
+            </Grid>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

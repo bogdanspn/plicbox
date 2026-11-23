@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Plicbox.Core\Plicbox.Core.csproj" />
+    <ProjectReference Include="..\Plicbox.Storage\Plicbox.Storage.csproj" />
+    <ProjectReference Include="..\Plicbox.Mail\Plicbox.Mail.csproj" />
+    <ProjectReference Include="..\Plicbox.Dav\Plicbox.Dav.csproj" />
+    <ProjectReference Include="..\Plicbox.Auth\Plicbox.Auth.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="H.NotifyIcon.Wpf" Version="2.4.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="SharpVectors.Wpf" Version="1.8.6" />
+    <PackageReference Include="Velopack" Version="1.2.161" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- The release version: release.ps1 raises it and packs the installer and updates with it. -->
+    <Version>0.1.15</Version>
+    <!-- Restored for the release build too (release.ps1 publishes win-x64; WPF's inner build needs it listed). -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <!-- Plain Windows target, without the 53 MB binding for Windows' APIs (Microsoft.Windows.SDK.NET.dll): the print
+         preview's PDF renderer, the only one used, is called directly (Services\WindowsPdf.cs). -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationIcon>Assets\plicbox\windows\plicbox.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- WPF0001: ThemeMode (Fluent) is still flagged experimental. -->
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
+  </PropertyGroup>
+  <!-- Program.Main starts the app (Velopack's install and update hooks run before it), so App.xaml is a plain page. -->
+  <ItemGroup>
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\compose.html" />
+    <Resource Include="Assets\plicbox\windows\plicbox.ico" />
+    <Resource Include="Assets\plicbox\web\icon-192.png" />
+  </ItemGroup>
+
+  <!-- The licence, its additional terms and the third-party notices travel with every copy (About: Licence). -->
+  <ItemGroup>
+    <None Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\..\NOTICE.md" Link="NOTICE.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plicbox: email for Windows, without the noise</title>
+<meta name="description" content="A calm, fast email client for Windows. Mail, calendar, contacts and tasks in one window. No AI, no ads, your mail stays on your PC. In English, German and Romanian.">
+<meta name="color-scheme" content="light dark">
+<link rel="canonical" href="https://plicbox.bogdanrosu.net/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Plicbox">
+<meta property="og:url" content="https://plicbox.bogdanrosu.net/">
+<meta property="og:title" content="Plicbox: email for Windows, without the noise">
+<meta property="og:description" content="Mail, calendar, contacts and tasks in one calm window. No AI. No ads.">
+<meta property="og:image" content="https://plicbox.bogdanrosu.net/media/mail-light.png">
+<meta property="og:image:width" content="2160">
+<meta property="og:image:height" content="1350">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/home.css">
+</head>
+<body>
+
+<header class="top" id="top">
+  <div class="wrap">
+    <a class="brand" href="#"><img src="icons/favicon.svg" alt="">Plicbox</a>
+    <nav>
+      <a href="#tour">Tour</a>
+      <a href="#details">Features</a>
+      <a href="docs.html">Docs</a>
+      <a href="changes.html">What's new</a>
+      <a class="btn btn-primary btn-small" href="#download">Download</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="backdrop" aria-hidden="true">
+    <canvas id="dots"></canvas>
+  </div>
+  <div class="wrap">
+
+    <section class="hero">
+      <h1>Email, without<br><span>the noise.</span></h1>
+      <p class="lede">A calm, fast and FREE email client for Windows. Mail, calendar, contacts and tasks in one window.</p>
+      <a class="btn btn-primary" href="https://github.com/bogdanspn/plicbox-releases/releases/latest/download/Plicbox.App-win-Setup.exe">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.5 10.5 4.4v7.1H3zm0 13 7.5 1.1v-7H3zm8.4 1.2L21 21v-8.5h-9.6zm0-15.4v7.2H21V3z"/></svg>
+        Download for Windows
+      </a>
+      <div class="meta">Windows 10 &amp; 11 · <span lang="en">English</span>, <span lang="de">Deutsch</span>, <span lang="ro">Română</span>, <span lang="es">Español</span></div>
+      <!-- The newest version, written by site/update-versions.ps1 when a release goes out -->
+      <div class="meta version"><!-- version -->Version 0.1.15 · 23 November 2026 · <a href="changes.html">What's new</a><!-- /version --></div>
+    </section>
+
+    <div class="shot hero-shot">
+      <!-- Recorded from the app (--record-site): new mail arrives, then a reply is written and sent. -->
+      <video data-name="hero" muted loop playsinline preload="auto" width="1920" height="1200"
+        aria-label="Plicbox: a new email arrives, then a reply to Ana is typed and sent"></video>
+      <!-- Straight after the element, so the first paint already shows the right theme's first frame. -->
+      <script>document.querySelector('video[data-name="hero"]').poster = `media/hero-${matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'}.jpg`;</script>
+    </div>
+
+    <div class="promises">
+      <div>
+        <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M6.4 6.4l11.2 11.2"/></svg></span>
+        <h3>No AI, no ads</h3>
+        <p>Nothing summarises, rewrites or reads your mail. Just you and your messages.</p>
+      </div>
+      <div>
+        <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12.5" rx="2"/><path d="M12 16.5V20M8 20h8"/></svg></span>
+        <h3>Your mail stays on your PC</h3>
+        <p>Stored locally and synced straight with your mail servers. Works offline.</p>
+      </div>
+      <div>
+        <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="8.5" width="14" height="10.5" rx="2"/><path d="m3.6 10 6.4 4.6 6.4-4.6"/><path d="M7 5.5h12a2 2 0 0 1 2 2V15"/></svg></span>
+        <h3>Works with what you have</h3>
+        <p>Gmail, Google Workspace, Outlook.com and any IMAP account, side by side.</p>
+      </div>
+    </div>
+
+    <section id="tour">
+      <h2>The rest of your day, too.</h2>
+      <p class="sub">Calendar, contacts and tasks sit one click from your inbox, synced with the same accounts.</p>
+
+      <div class="tabs" role="tablist" aria-label="Modules">
+        <button role="tab" id="t-calendar" aria-controls="p-calendar" aria-selected="true">Calendar</button>
+        <button role="tab" id="t-contacts" aria-controls="p-contacts" aria-selected="false" tabindex="-1">Contacts</button>
+        <button role="tab" id="t-tasks" aria-controls="p-tasks" aria-selected="false" tabindex="-1">Tasks</button>
+        <button role="tab" id="t-settings" aria-controls="p-settings" aria-selected="false" tabindex="-1">Settings</button>
+      </div>
+      <p class="tab-caption" id="caption" aria-live="polite">Day, week, month and agenda views. Drag to move, invitations answered in one click.</p>
+
+      <div class="panel shot" role="tabpanel" id="p-calendar" aria-labelledby="t-calendar" data-caption="Day, week, month and agenda views. Drag to move, invitations answered in one click.">
+        <video data-name="video-calendar" muted loop playsinline preload="none" width="1920" height="1200"
+          aria-label="The Plicbox calendar in week view: “Coffee with Mia Friday 3pm” typed into Quick add appears on Friday"></video>
+      </div>
+      <div class="panel shot" role="tabpanel" id="p-contacts" aria-labelledby="t-contacts" hidden data-caption="Your address book plus everyone you write to, with smart lists like Keep in touch.">
+        <video data-name="video-contacts" muted loop playsinline preload="none" width="1920" height="1200"
+          aria-label="Plicbox contacts: the Keep in touch list shows a colleague you haven't written to in three months"></video>
+      </div>
+      <div class="panel shot" role="tabpanel" id="p-tasks" aria-labelledby="t-tasks" hidden data-caption="Today, lists and due dates. Turn any email into a task, add one by just typing.">
+        <video data-name="video-tasks" muted loop playsinline preload="none" width="1920" height="1200"
+          aria-label="Plicbox tasks: a task is typed into Today, then ticked off"></video>
+      </div>
+      <div class="panel shot" role="tabpanel" id="p-settings" aria-labelledby="t-settings" hidden data-caption="Make it yours: light or dark, accent colour, font and text size, when mail counts as read, your work week and reminders, and whose pictures load or mail stays out.">
+        <video data-name="video-settings" muted loop playsinline preload="none" width="1920" height="1200"
+          aria-label="The Plicbox Settings window, going through its pages: General, Appearance, Mail, Calendar and Senders"></video>
+      </div>
+    </section>
+
+    <section class="details" id="details" aria-label="Features">
+      <div>
+        <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.4-4.4"/></svg></span>
+        <h3>Fast search</h3><p>Full-text search over all your mail, right on your PC, online or off.</p>
+      </div>
+      <div>
+        <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1Q11.3 5 12 5c5 0 8.5 4.5 9.5 7a13 13 0 0 1-2.4 3.6M6.6 6.6C4.4 8 3 10.2 2.5 12c1 2.5 4.5 7 9.5 7 1.7 0 3.2-.5 4.5-1.2"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></span>
+        <h3>Trackers blocked</h3><p>Remote pictures and tracking pixels stay off until you choose to show them.</p>
+      </div>
+      <div>
+        <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M12 8v4.5M12 16h.01"/></svg></span>
+        <h3>Phishing warnings</h3><p>Forged senders, look-alike domains and disguised attachments are called out plainly.</p>
+      </div>
+      <div>
+        <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16l-6 7.5V18l-4 2v-7.5z"/></svg></span>
+        <h3>Rules</h3><p>Sort new mail automatically, or create a rule from any message in one click.</p>
+      </div>
+      <div>
+        <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg></span>
+        <h3>Push mail</h3><p>New mail arrives the moment it lands, with notifications from the tray.</p>
+      </div>
+      <div>
+        <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></span>
+        <h3>Undo send, send later</h3><p>Mail waits 30 seconds before it goes, so a slip can be taken back. Or pick when it should go.</p>
+      </div>
+      <div>
+        <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M8.5 6.1A6 6 0 0 1 17.7 10 4.5 4.5 0 0 1 20.6 17M17 19H7a5 5 0 0 1-1.6-9.7"/></svg></span>
+        <h3>Offline, for real</h3><p>A year of mail to read on the plane. What you send or change meanwhile goes out once you're back.</p>
+      </div>
+      <div>
+        <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9"/><path d="M10 13h4"/></svg></span>
+        <h3>Daily backups</h3><p>Calendars, contacts, accounts and rules saved once a day to OneDrive. Import and export .ics and .vcf files.</p>
+      </div>
+      <div>
+        <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.3 3.6 5.1 3.6 8.5s-1.2 6.2-3.6 8.5c-2.4-2.3-3.6-5.1-3.6-8.5s1.2-6.2 3.6-8.5z"/></svg></span>
+        <h3>In your language</h3><p>English, German and Romanian, switched in Settings. Light or dark like Windows, with your own accent colour and text size.</p>
+      </div>
+    </section>
+
+    <section class="cta" id="download">
+      <img src="icons/favicon.svg" alt="">
+      <h2>Get Plicbox.</h2>
+      <p>One small installer. No account to create, nothing to configure: sign in to your mail and you're done.</p>
+      <a class="btn btn-primary" href="https://github.com/bogdanspn/plicbox-releases/releases/latest/download/Plicbox.App-win-Setup.exe">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 5.5 10.5 4.4v7.1H3zm0 13 7.5 1.1v-7H3zm8.4 1.2L21 21v-8.5h-9.6zm0-15.4v7.2H21V3z"/></svg>
+        Download for Windows
+      </a>
+      <p class="fine version"><!-- version -->Version 0.1.15 · 23 November 2026 · <a href="changes.html">What's new</a><!-- /version --></p>
+      <p class="fine">The installer isn't code-signed yet, so Windows may warn you once: choose <b>More info</b> → <b>Run anyway</b>. Plicbox then keeps itself up to date.</p>
+      <p class="fine" id="privacy">When you sign in with Google or Microsoft, Plicbox syncs your mail, calendar, contacts and tasks directly between
+      your provider and your PC. Nothing passes through us, and your data is never shared, sold or used to train AI.
+      <a href="privacy.html">Privacy policy</a></p>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Plicbox. All rights and lefts reserved.</span>
+    <span class="links"><a href="docs.html">How it works</a><a href="changes.html">What's new</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a class="github" href="https://github.com/bogdanspn/plicbox-releases/releases"><svg class="gh" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>Release notes</a><span class="marks"><a href="https://bogdanrosu.com" target="_blank" rel="noopener" aria-label="BRCreative (bogdanrosu.com)" title="BRCreative"><svg class="br" viewBox="35 22 2128 2380" aria-hidden="true"><path d="M2049.4 532.1L1212.5 49c-62.4-36-164.4-36-226.7 0L148.9 532.1C86.5 568.1 35.5 656.5 35.5 728.5v966.2c0 72 51 160.4 113.4 196.4l836.9 483.1c62.4 36 164.4 36 226.7 0l836.9-483.1c62.4-36 113.4-124.4 113.4-196.4V728.4c-.1-72-51.1-160.3-113.4-196.3ZM627.5 1184v468.8H473.1V1184c0-120.7 98.2-219 219-219h768.6v154.4H692.1c-35.7 0-64.6 29-64.6 64.6ZM1718.9 1646.8H936.3c-112.1 0-203.2-91.2-203.2-203.2v-215.1h778.3c26.9 0 48.9-21.9 48.9-48.9V908.3c0-26.9-21.9-48.9-48.9-48.9H479.4V705.1h1032c112.1 0 203.2 91.2 203.2 203.2v271.2c0 112.1-91.1 203.2-203.2 203.2H887.4v60.8c0 26.9 21.9 48.9 48.9 48.9h782.6v154.4Z"/></svg></a><a href="https://bogdanrosu.net" target="_blank" rel="noopener" aria-label="Pixel Crusher (bogdanrosu.net)" title="Pixel Crusher"><svg class="pc" viewBox="270 273 1877 1877" aria-hidden="true"><rect x="270.6" y="273.1" width="267" height="267"/><rect x="270.6" y="1883" width="267" height="267"/><rect x="1879.4" y="1880.5" width="267" height="267"/><rect x="1879.4" y="273.1" width="267" height="267"/><path d="M1882.7 1341.5v-534h-267v.6-267.6h-801v267h-267v534h267v533.6h267v-267h267v267h267v-534h-267v-266.6h267v-.5 267.5h267ZM1081.7 1341.1h-267v-266.6h267v266.6Z"/></svg></a></span></span>
+  </div>
+</footer>
+
+<script src="js/home.js"></script>
+</body>
+</html>

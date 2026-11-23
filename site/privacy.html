@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy policy · Plicbox</title>
+<meta name="description" content="How Plicbox handles your data: everything stays on your PC. No servers, no analytics, no AI.">
+<meta name="color-scheme" content="light dark">
+<link rel="canonical" href="https://plicbox.bogdanrosu.net/privacy.html">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="icons/favicon.svg" alt="">Plicbox</a>
+    <a class="back" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Back to Plicbox</a>
+  </div>
+</header>
+
+<main class="wrap doc">
+  <h1>Privacy policy</h1>
+  <p class="date">Effective 10 November 2026 · updated 13 November 2026</p>
+
+  <p class="lead"><strong>The short version:</strong> Plicbox is a desktop app that talks straight to your mail provider. There is no Plicbox server.
+  Your mail, calendar, contacts, tasks, passwords and sign-in tokens stay on your PC and are never sent to the developer
+  or anyone else. Plicbox has no analytics, no tracking, no ads and no AI.</p>
+
+  <h2>Who we are</h2>
+  <p>Plicbox is an email, calendar, contacts and tasks app for Windows, made by Cristian Bogdan Rosu, an independent developer
+  (“we”, “us”). This policy covers the Plicbox app and this website, <a href="./">plicbox.bogdanrosu.net</a>.</p>
+
+  <h2>What Plicbox stores, and where</h2>
+  <p>Everything Plicbox keeps is stored on your own PC, in your Windows user profile:</p>
+  <ul>
+    <li><strong>Your mail, calendar, contacts and tasks:</strong> a local copy, so you can read and search them offline. Stored in
+      <code>%LOCALAPPDATA%\Plicbox</code>.</li>
+    <li><strong>Passwords and sign-in tokens:</strong> kept in Windows Credential Manager, or encrypted for your Windows account,
+      so other users of the PC can't read them.</li>
+    <li><strong>Settings, cached sender pictures and log files:</strong> also in <code>%LOCALAPPDATA%\Plicbox</code>. The logs
+      record what the app did, to help with troubleshooting, and are never uploaded. You only send them to us if you choose to.</li>
+    <li><strong>Backups:</strong> once a day (you can turn this off), your accounts' settings, rules, signatures and the calendars,
+      contacts and tasks kept on your PC are saved to a <em>Plicbox Backups</em> folder: in your OneDrive folder if you have one,
+      otherwise in Documents, or wherever you choose in Settings → Backup. Mail, passwords and sign-in tokens are never included.
+      A backup in OneDrive is uploaded by Microsoft's OneDrive app under your own account, not by Plicbox.</li>
+  </ul>
+  <p>We have no copy of any of this and no way to see it.</p>
+
+  <h2>Google account data</h2>
+  <p>When you add a Gmail or Google Workspace account, you sign in on Google's own page in your browser. Plicbox then asks Google for
+  the following access. Each one is used only for the feature described, between your PC and Google's servers directly:</p>
+  <table>
+    <thead><tr><th>Access</th><th>What Plicbox does with it</th></tr></thead>
+    <tbody>
+      <tr><td>Gmail<br><code>https://mail.google.com/</code></td>
+        <td>Downloads your mail so you can read and search it, sends the mail you write, and keeps read, flagged, moved and deleted
+        messages in step with Gmail (IMAP and SMTP). Also reads your Gmail “Send mail as” addresses so you can send from them.</td></tr>
+      <tr><td>Google Calendar<br><code>…/auth/calendar</code></td>
+        <td>Shows your calendars and events, and saves the events and invitation replies you create or change.</td></tr>
+      <tr><td>Google Contacts<br><code>…/auth/contacts</code></td>
+        <td>Shows your contacts and saves the contacts you add or edit.</td></tr>
+      <tr><td>Other contacts<br><code>…/auth/contacts.other.readonly</code></td>
+        <td>Suggests addresses of people you've written to as you type a recipient. Read-only.</td></tr>
+      <tr><td>Google Tasks<br><code>…/auth/tasks</code></td>
+        <td>Shows your task lists and saves the tasks you add, complete or change.</td></tr>
+      <tr><td>Basic profile<br><code>openid email profile</code></td>
+        <td>Identifies which account you signed in to and shows your name on it.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Limited Use</h3>
+  <p>Plicbox's use and transfer to any other app of information received from Google APIs will adhere to the
+  <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>,
+  including the Limited Use requirements. In particular:</p>
+  <ul>
+    <li>Google user data is used only to provide the features above, which you can see and use in the app.</li>
+    <li>It is never sent to the developer or to any third party, and never sold.</li>
+    <li>It is never used for advertising, and never used to develop, improve or train AI or machine-learning models.</li>
+    <li>No person reads it. It stays on your PC.</li>
+  </ul>
+
+  <h2>Microsoft and other accounts</h2>
+  <p>For Outlook.com and Microsoft 365 accounts, you sign in on Microsoft's page. Plicbox only asks for access to your mailbox over IMAP
+  and to send mail over SMTP. For any other provider, Plicbox connects to that provider's mail servers with the details you enter.
+  The same rules apply: the data stays on your PC.</p>
+
+  <h2>Other connections the app makes</h2>
+  <p>Apart from your mail providers, Plicbox only connects to the following. None of them receives the contents of your mail.</p>
+  <ul>
+    <li><strong>Updates:</strong> Plicbox checks GitHub for new versions and downloads them from
+      <a href="https://github.com/bogdanspn/plicbox-releases">our releases page</a>. GitHub sees a normal web request from your PC.
+      You can turn automatic updates off in Settings.</li>
+    <li><strong>Sender pictures:</strong> to show a picture next to a sender, Plicbox may ask Gravatar for that sender's picture
+      (Gravatar receives a one-way hash of the sender's address, not the address itself). It may also look up the sender's
+      company logo published in DNS (BIMI), or a website icon for addresses like noreply@. Results are cached for about a month.
+      You can turn this off in Settings (<em>Show senders' pictures from the internet</em>).</li>
+    <li><strong>Setting up an account:</strong> to find the server settings for an address that isn't Google or Microsoft,
+      Plicbox looks up the domain (the part after the @) in DNS and in Mozilla's public Thunderbird configuration database.</li>
+    <li><strong>Pictures inside emails:</strong> pictures loaded from the internet are blocked until you choose to show them, and
+      known tracking pixels are removed even then. When you show a message's pictures, the servers they come from see a normal
+      request from your PC.</li>
+  </ul>
+
+  <h2>Your control</h2>
+  <ul>
+    <li><strong>Remove an account</strong> in Plicbox to delete its local mail and its stored password or token.</li>
+    <li><strong>Revoke access</strong> at any time at <a href="https://myaccount.google.com/permissions">your Google Account permissions</a>
+      or <a href="https://account.live.com/consent/Manage">your Microsoft account consents</a>.</li>
+    <li><strong>Delete everything:</strong> uninstall Plicbox and delete the folder <code>%LOCALAPPDATA%\Plicbox</code>.</li>
+  </ul>
+  <p>Because we don't hold any of your data, there's nothing for us to export or delete on our side.</p>
+
+  <h2>This website</h2>
+  <p>This site is a few static pages with no cookies, analytics, trackers or third-party scripts. Like any web server, ours keeps
+  standard access logs (such as IP address, page and time) for security and troubleshooting, kept for a short time and never shared.
+  Download links take you to GitHub, where <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a> applies.</p>
+
+  <h2>Children</h2>
+  <p>Plicbox isn't directed at children under 13, and we don't knowingly collect anyone's personal information, of any age.</p>
+
+  <h2>Changes</h2>
+  <p>If this policy changes, the new version will be posted on this page with a new effective date. If Plicbox ever starts using
+  your data in a new way, it will ask you first.</p>
+
+  <h2>Contact</h2>
+  <p>Questions about privacy: <a href="mailto:contact@bogdanrosu.com">contact@bogdanrosu.com</a></p>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Plicbox</span>
+    <span class="links"><a href="./">Home</a><a href="docs.html">How it works</a><a href="terms.html">Terms</a><a class="github" href="https://github.com/bogdanspn/plicbox-releases/releases"><svg class="gh" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>Release notes</a><span class="marks"><a href="https://bogdanrosu.com" target="_blank" rel="noopener" aria-label="BRCreative (bogdanrosu.com)" title="BRCreative"><svg class="br" viewBox="35 22 2128 2380" aria-hidden="true"><path d="M2049.4 532.1L1212.5 49c-62.4-36-164.4-36-226.7 0L148.9 532.1C86.5 568.1 35.5 656.5 35.5 728.5v966.2c0 72 51 160.4 113.4 196.4l836.9 483.1c62.4 36 164.4 36 226.7 0l836.9-483.1c62.4-36 113.4-124.4 113.4-196.4V728.4c-.1-72-51.1-160.3-113.4-196.3ZM627.5 1184v468.8H473.1V1184c0-120.7 98.2-219 219-219h768.6v154.4H692.1c-35.7 0-64.6 29-64.6 64.6ZM1718.9 1646.8H936.3c-112.1 0-203.2-91.2-203.2-203.2v-215.1h778.3c26.9 0 48.9-21.9 48.9-48.9V908.3c0-26.9-21.9-48.9-48.9-48.9H479.4V705.1h1032c112.1 0 203.2 91.2 203.2 203.2v271.2c0 112.1-91.1 203.2-203.2 203.2H887.4v60.8c0 26.9 21.9 48.9 48.9 48.9h782.6v154.4Z"/></svg></a><a href="https://bogdanrosu.net" target="_blank" rel="noopener" aria-label="Pixel Crusher (bogdanrosu.net)" title="Pixel Crusher"><svg class="pc" viewBox="270 273 1877 1877" aria-hidden="true"><rect x="270.6" y="273.1" width="267" height="267"/><rect x="270.6" y="1883" width="267" height="267"/><rect x="1879.4" y="1880.5" width="267" height="267"/><rect x="1879.4" y="273.1" width="267" height="267"/><path d="M1882.7 1341.5v-534h-267v.6-267.6h-801v267h-267v534h267v533.6h267v-267h267v267h267v-534h-267v-266.6h267v-.5 267.5h267ZM1081.7 1341.1h-267v-266.6h267v266.6Z"/></svg></a></span></span>
+  </div>
+</footer>
+</body>
+</html>

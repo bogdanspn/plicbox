@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Plicbox.App/Plicbox.App.csproj" />
+    <Project Path="src/Plicbox.Auth/Plicbox.Auth.csproj" />
+    <Project Path="src/Plicbox.Core/Plicbox.Core.csproj" />
+    <Project Path="src/Plicbox.Dav/Plicbox.Dav.csproj" />
+    <Project Path="src/Plicbox.Mail/Plicbox.Mail.csproj" />
+    <Project Path="src/Plicbox.Storage/Plicbox.Storage.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Plicbox.Tests/Plicbox.Tests.csproj" />
+  </Folder>
+</Solution>

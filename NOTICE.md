@@ -23,7 +23,7 @@ of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Publ
 ## Third-party components
 
 Plicbox includes libraries and icons by others, each under its own licence (MIT, Apache 2.0, BSD and public domain),
-listed with their notices in THIRD-PARTY-NOTICES.txt, installed next to the app (About Plicbox → Third-party licences).
+listed with their notices in [src/Plicbox.App/THIRD-PARTY-NOTICES.txt](src/Plicbox.App/THIRD-PARTY-NOTICES.txt).
 
 ## Contact
 

@@ -1,0 +1,72 @@
+<Window x:Class="Plicbox.App.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Plicbox.App"
+        Title="{local:T 'About Plicbox'}"
+        Width="540" SizeToContent="Height" ResizeMode="NoResize" WindowStyle="None" AllowsTransparency="True"
+        Background="Transparent" ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+        FontFamily="{DynamicResource UiFont}" FontSize="14" Foreground="{DynamicResource TextBrush}">
+    <!-- The same card as MessageDialog: margin leaves room for the shadow around it. -->
+    <Border Margin="16" Background="{DynamicResource SurfaceBrush}" CornerRadius="10" BorderBrush="{DynamicResource StrongDividerBrush}" BorderThickness="1"
+            MouseLeftButtonDown="Card_MouseLeftButtonDown">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="22" ShadowDepth="3" Direction="270" Opacity="0.22" />
+        </Border.Effect>
+        <StackPanel Margin="28,26,28,20">
+            <!-- Logo, name, version -->
+            <DockPanel>
+                <Image Source="pack://application:,,,/Assets/plicbox/web/icon-192.png" Width="56" Height="56"
+                       RenderOptions.BitmapScalingMode="HighQuality" Margin="0,0,16,0" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="Plicbox" FontSize="22" FontWeight="SemiBold" />
+                    <TextBlock x:Name="VersionText" Foreground="{DynamicResource MutedTextBrush}" Margin="0,2,0,0" />
+                </StackPanel>
+            </DockPanel>
+
+            <TextBlock Margin="0,18,0,0" TextWrapping="Wrap" LineHeight="20" Foreground="{DynamicResource SecondaryTextBrush}"
+                       Text="{local:T 'An email client for Windows: mail, calendar, contacts and tasks in one window. Simple and useful; your mail on your computer.'}" />
+            <!-- Free software: the licence and the others' licences, both shipped next to the app -->
+            <TextBlock Margin="0,10,0,0" FontSize="12.5" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}">
+                <Run Text="{local:T 'Free software under the GNU GPL, version 3.'}" />
+                <Hyperlink Tag="NOTICE.md" Click="LicenceFile_Click" Style="{StaticResource QuietLink}"><Run Text="{local:T 'Licence'}" /></Hyperlink>
+                <Run Text=" · " />
+                <Hyperlink Tag="THIRD-PARTY-NOTICES.txt" Click="LicenceFile_Click" Style="{StaticResource QuietLink}"><Run Text="{local:T 'Third-party licences'}" /></Hyperlink>
+            </TextBlock>
+
+            <!-- What it's made of -->
+            <TextBlock Text="{local:T 'Built with'}" FontWeight="SemiBold" Margin="0,22,0,8" />
+            <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,1,0,0" Padding="0,8,0,0">
+                <ItemsControl x:Name="TechList" Grid.IsSharedSizeScope="True" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" SharedSizeGroup="Name" />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" Margin="0,0,18,0" MaxWidth="190" TextWrapping="Wrap" />
+                                <TextBlock Grid.Column="1" Text="{Binding Use}" FontSize="13" TextWrapping="Wrap"
+                                           Foreground="{DynamicResource MutedTextBrush}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+
+            <DockPanel Margin="0,22,0,0">
+                <Button DockPanel.Dock="Right" Content="{local:T 'Close'}" IsCancel="True" IsDefault="True" MinWidth="100" Padding="16,7"
+                        Click="Close_Click" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="© 2026 Cristian Bogdan Rosu" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" />
+                    <!-- The author's site, then the app's -->
+                    <TextBlock FontSize="11.5" Margin="0,3,0,0">
+                        <Hyperlink NavigateUri="https://bogdanrosu.com" Click="Link_Click" Style="{StaticResource QuietLink}"><Run Text="bogdanrosu.com" /></Hyperlink>
+                    </TextBlock>
+                    <TextBlock FontSize="11.5" Margin="0,1,0,0">
+                        <Hyperlink NavigateUri="https://plicbox.bogdanrosu.net" Click="Link_Click" Style="{StaticResource QuietLink}"><Run Text="plicbox.bogdanrosu.net" /></Hyperlink>
+                    </TextBlock>
+                </StackPanel>
+            </DockPanel>
+        </StackPanel>
+    </Border>
+</Window>

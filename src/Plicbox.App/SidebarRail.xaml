@@ -1,0 +1,197 @@
+<UserControl x:Class="Plicbox.App.SidebarRail"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Plicbox.App"
+             Margin="0,0,-8,0">
+    <UserControl.Resources>
+        <!-- Declared before the templates that use it (a static resource is found only if it comes earlier). -->
+        <local:RowBackgroundConverter x:Key="RowBackground" />
+
+        <!-- One icon in the rail, styled like the module tabs stacked under it: 48 high, the hover tint across the whole
+             width, and for the list being shown a blue line at the left and the icon in blue. -->
+        <Style x:Key="RailItem" TargetType="ListBoxItem">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" Background="Transparent" Height="48" TextElement.Foreground="{DynamicResource SecondaryTextBrush}">
+                            <Grid>
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Border x:Name="Bar" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LinkBrush}" Visibility="Collapsed" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ChromeHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Bd" Property="TextElement.Foreground" Value="{DynamicResource LinkBrush}" />
+                            </Trigger>
+                            <!-- Its menu is open (an account's folders or calendars): keeps the hover tint. -->
+                            <Trigger Property="Tag" Value="menu-open">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ChromeHoverBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ⋯ after the last icon that fits: the rest in a menu. Looks like a rail icon; lit up like one when what's open is among them. -->
+        <Style x:Key="RailMore" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{DynamicResource ChromeBrush}" Height="48" TextElement.Foreground="{DynamicResource SecondaryTextBrush}">
+                            <Grid>
+                                <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <local:GlyphIcon Glyph="&#xE712;" FontSize="20" />
+                                    <Ellipse x:Name="Dot" Width="10" Height="10" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-1,-7,0"
+                                             Fill="{DynamicResource UnreadDotBrush}" StrokeThickness="2" Visibility="Collapsed"
+                                             Stroke="{Binding Background, ElementName=Bd, Converter={StaticResource RowBackground}}" />
+                                </Grid>
+                                <Border x:Name="Bar" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LinkBrush}" Visibility="Collapsed" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ChromeHoverBrush}" />
+                            </Trigger>
+                            <DataTrigger Binding="{Binding MoreHasSelection, RelativeSource={RelativeSource AncestorType=local:SidebarRail}}" Value="True">
+                                <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Bd" Property="TextElement.Foreground" Value="{DynamicResource LinkBrush}" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding MoreHasUnread, RelativeSource={RelativeSource AncestorType=local:SidebarRail}}" Value="True">
+                                <Setter TargetName="Dot" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <Trigger Property="Tag" Value="menu-open">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ChromeHoverBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- Lists, folders and smart views: their own icon, the name as a tooltip. -->
+        <DataTemplate x:Key="GlyphTemplate">
+            <local:GlyphIcon Glyph="{Binding Glyph}" FontSize="20" ToolTip="{Binding Title}" />
+        </DataTemplate>
+        <!-- An account: its initial on its colour. -->
+        <DataTemplate x:Key="EntryTemplate" DataType="{x:Type local:RailEntry}">
+            <Grid ToolTip="{Binding Title}" Background="Transparent">
+                <local:GlyphIcon x:Name="Glyph" Glyph="{Binding Glyph}" FontSize="20" />
+                <Border x:Name="Avatar" Width="28" Height="28" CornerRadius="14" Background="{Binding Color}" Visibility="Collapsed">
+                    <TextBlock Text="{Binding Initial}" Foreground="White" FontSize="13" FontWeight="SemiBold"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,1" />
+                </Border>
+                <!-- The account's own picture, when it has one -->
+                <Ellipse x:Name="Photo" Width="28" Height="28" Visibility="Collapsed">
+                    <Ellipse.Fill>
+                        <ImageBrush ImageSource="{Binding Picture}" Stretch="UniformToFill" />
+                    </Ellipse.Fill>
+                </Ellipse>
+                <!-- Unread mail: the list's blue dot at the top right, ringed in the row's colour so it stands off the icon -->
+                <Ellipse x:Name="UnreadDot" Width="10" Height="10" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-3,-4,0"
+                         Fill="{DynamicResource UnreadDotBrush}" StrokeThickness="2" Visibility="Collapsed"
+                         Stroke="{Binding Background, RelativeSource={RelativeSource AncestorType=Border}, Converter={StaticResource RowBackground}}" />
+            </Grid>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsAccount}" Value="True">
+                    <Setter TargetName="Glyph" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="Avatar" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HasGlyphIcon}" Value="True">
+                    <Setter TargetName="Glyph" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="Avatar" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HasUnread}" Value="True">
+                    <Setter TargetName="UnreadDot" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HasPicture}" Value="True">
+                    <Setter TargetName="Glyph" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="Avatar" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="Photo" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+        <!-- A task list: its own icon, or (an account's list) the account, as above. -->
+        <DataTemplate x:Key="ListTemplate">
+            <Grid ToolTip="{Binding Title}" Background="Transparent">
+                <local:GlyphIcon x:Name="Glyph" Glyph="{Binding Glyph}" FontSize="20" />
+                <Border x:Name="Avatar" Width="28" Height="28" CornerRadius="14" Background="{Binding AccountColor}" Visibility="Collapsed">
+                    <TextBlock Text="{Binding AccountInitial}" Foreground="White" FontSize="13" FontWeight="SemiBold"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,1" />
+                </Border>
+                <Ellipse x:Name="Photo" Width="28" Height="28" Visibility="Collapsed">
+                    <Ellipse.Fill>
+                        <ImageBrush ImageSource="{Binding AccountPicture}" Stretch="UniformToFill" />
+                    </Ellipse.Fill>
+                </Ellipse>
+            </Grid>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding HasAccountIcon}" Value="True">
+                    <Setter TargetName="Glyph" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="Avatar" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HasAccountPicture}" Value="True">
+                    <Setter TargetName="Glyph" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="Avatar" Property="Visibility" Value="Collapsed" />
+                    <Setter TargetName="Photo" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+        <local:RailTemplateSelector x:Key="Templates" Glyph="{StaticResource GlyphTemplate}" Entry="{StaticResource EntryTemplate}" List="{StaticResource ListTemplate}" />
+    </UserControl.Resources>
+
+    <!-- 8px wider than its column, over the gutter beside it, as the module tabs are: the icons centre above the tabs. -->
+    <DockPanel Background="Transparent">
+        <Border DockPanel.Dock="Top" Height="8" />
+        <!-- Room for the module tabs, stacked under the rail -->
+        <Border DockPanel.Dock="Bottom" Height="241" />
+        <Grid>
+        <ListBox x:Name="Items" ItemContainerStyle="{StaticResource RailItem}" ItemTemplateSelector="{StaticResource Templates}"
+                 Background="Transparent" BorderThickness="0" Padding="0" FocusVisualStyle="{x:Null}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.CanContentScroll="False"
+                 ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource AncestorType=local:SidebarRail}}"
+                 SelectedItem="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=local:SidebarRail}, Mode=TwoWay}"
+                 PreviewMouseLeftButtonDown="Items_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="Items_PreviewMouseLeftButtonUp"
+                 ScrollViewer.ScrollChanged="Items_ScrollChanged" PreviewMouseWheel="Items_PreviewMouseWheel">
+            <!-- Groups (accounts, your lists) are set apart by a short line. -->
+            <ListBox.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.ContainerStyle>
+                        <Style TargetType="GroupItem">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="GroupItem">
+                                        <StackPanel>
+                                            <ContentPresenter />
+                                            <ItemsPresenter />
+                                        </StackPanel>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </GroupStyle.ContainerStyle>
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate>
+                            <Border x:Name="Line" Height="1" Margin="14,6" Background="{DynamicResource DividerBrush}" />
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Name}" Value="">
+                                    <Setter TargetName="Line" Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+            </ListBox.GroupStyle>
+        </ListBox>
+        <Button x:Name="MoreButton" Style="{StaticResource RailMore}" VerticalAlignment="Top" Visibility="Collapsed" Click="MoreButton_Click"
+                ToolTip="{local:T 'More'}" />
+        </Grid>
+    </DockPanel>
+</UserControl>
