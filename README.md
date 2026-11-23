@@ -1,6 +1,31 @@
 # Plicbox
 
-A personal, no-AI Windows email client (mail, calendar, contacts, tasks) built on .NET 10 + WPF + MailKit.
+A calm, fast email client for Windows. Mail, calendar, contacts and tasks in one window.
+No AI, no ads, and your mail stays on your PC.
+
+**[plicbox.bogdanrosu.net](https://plicbox.bogdanrosu.net/)** · [How it works](https://plicbox.bogdanrosu.net/docs.html) ·
+[Privacy](https://plicbox.bogdanrosu.net/privacy.html) · [Release notes](https://plicbox.bogdanrosu.net/changes.html)
+
+## Download
+
+Download **Plicbox.App-win-Setup.exe** from the [latest release](https://github.com/bogdanspn/plicbox/releases/latest)
+and run it. Plicbox then keeps itself up to date.
+The installer is not code-signed yet, so Windows asks once: **More info → Run anyway**.
+
+Windows 10 and 11, 64-bit.
+
+## What it does
+
+- Gmail, Google Workspace, Outlook.com, Microsoft 365 and any IMAP account, side by side
+- Calendar, contacts and tasks, synced with Google
+- Fast full-text search over all your mail, online or off
+- Remote pictures and trackers blocked; forged senders, look-alike links and risky attachments called out
+- Rules, push mail and notifications from the tray
+- English, German, Romanian and Spanish; light and dark
+
+---
+
+Everything below is for building Plicbox from source: .NET 10, WPF and MailKit, no AI.
 
 ## Run
 
@@ -60,8 +85,8 @@ Data lives in `%LOCALAPPDATA%\Plicbox` (`plicbox.db`, `bodies\`, `logs\`). Demo 
 .\release.ps1 -NoUpload           # pack only, into artifacts\releases
 ```
 
-Releases go to the public [plicbox-releases](https://github.com/bogdanspn/plicbox-releases) repo (installer and
-update packages only, no source). Install once with `Plicbox.App-win-Setup.exe` from there; the app lives in
+Releases go to this repository's [GitHub releases](https://github.com/bogdanspn/plicbox/releases) (installer and
+update packages; each `vX.Y.Z` tag is also the source of that version). Install once with `Plicbox.App-win-Setup.exe` from there; the app lives in
 `%LOCALAPPDATA%\Plicbox.App`, checks for a new version a minute after start and every 4 hours (Settings → General →
 Updates), downloads only what changed, and installs it when it quits or on **Restart to update**. Uninstalling removes
 the app, never the mail data. The installer isn't signed, so Windows asks once (More info → Run anyway).

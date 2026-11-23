@@ -76,7 +76,7 @@ $markFile = Join-Path $stateDir 'deployed.txt'
 
 $defaultAddress = 'https://bogdanrosu.ro:2078'
 $liveSite = 'https://plicbox.bogdanrosu.net'
-$homeMarker = 'plicbox-releases/releases/latest/download'  # only our home page has it (the Download button), and copy edits don't touch it
+$homeMarker = 'bogdanspn/plicbox/releases/latest/download'  # only our home page has it (the Download button), and copy edits don't touch it
 $checkPages = '', 'privacy.html', 'terms.html', 'docs.html'
 
 # Tracked in site/, never on the server (matched against the path inside site/, case-insensitively).

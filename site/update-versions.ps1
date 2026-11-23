@@ -6,7 +6,7 @@
 # Visitors' browsers never ask GitHub for anything: the versions are written into the pages here.
 
 $ErrorActionPreference = "Stop"
-$repo = "bogdanspn/plicbox-releases"
+$repo = "bogdanspn/plicbox"
 $en = [Globalization.CultureInfo]::GetCultureInfo("en-GB")
 function Html([string]$text) { $text.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;") }
 function Write-Utf8([string]$path, [string]$text) { [IO.File]::WriteAllText($path, $text, (New-Object Text.UTF8Encoding $false)) }

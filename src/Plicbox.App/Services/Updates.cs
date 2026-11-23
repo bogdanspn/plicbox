@@ -15,7 +15,7 @@ namespace Plicbox.App.Services;
 /// </summary>
 public sealed partial class Updates : ObservableObject
 {
-    public const string Feed = "https://github.com/bogdanspn/plicbox-releases";
+    public const string Feed = "https://github.com/bogdanspn/plicbox";
     private static readonly TimeSpan FirstCheck = TimeSpan.FromMinutes(1), CheckEvery = TimeSpan.FromHours(4);
 
     private static readonly UpdateManager? Manager = CreateManager();

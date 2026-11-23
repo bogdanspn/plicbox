@@ -26,8 +26,8 @@ To publish, run `webdisk/deploy.ps1` (see below). It uploads everything here exc
 The absolute links (canonical, `og:url`, `og:image`, sitemap) use `https://plicbox.bogdanrosu.net/`. Change them if the address
 ever changes. Google sign-in verification steps are in `branding/google/README.md`.
 
-The Download buttons point at the newest installer in the releases repo:
-`https://github.com/bogdanspn/plicbox-releases/releases/latest/download/Plicbox.App-win-Setup.exe`
+The Download buttons point at the newest installer in the repository's releases:
+`https://github.com/bogdanspn/plicbox/releases/latest/download/Plicbox.App-win-Setup.exe`
 
 ## Versions
 

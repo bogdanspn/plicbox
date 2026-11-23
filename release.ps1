@@ -17,7 +17,7 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
 
-$releasesRepo = 'bogdanspn/plicbox-releases'
+$releasesRepo = 'bogdanspn/plicbox'
 $repoUrl = "https://github.com/$releasesRepo"
 $project = 'src\Plicbox.App\Plicbox.App.csproj'
 # Also the install folder (%LocalAppData%\Plicbox.App). Never "Plicbox": that's where the mail is kept, and
