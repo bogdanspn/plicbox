@@ -660,30 +660,26 @@
             </Setter>
         </Style>
 
-        <!-- A row in a settings-style list on the left (Accounts, Rules), drawn like the pages list in Settings:
-             a rounded tint on hover and when picked, plus the accent bar at its side when picked. -->
+        <!-- A row in a settings-style list on the left (Accounts, Rules), drawn like the main window's rail: a tint on
+             hover; when picked, the accent bar along the window edge and the title in the accent colour. -->
         <Style x:Key="PaneListItem" TargetType="ListBoxItem">
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
             <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Margin" Value="8,1" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="Bd" Background="Transparent" CornerRadius="5" Padding="12,8">
-                            <Grid>
-                                <Border x:Name="Bar" Width="3" Height="16" CornerRadius="2" HorizontalAlignment="Left" VerticalAlignment="Center"
-                                        Margin="-10,0,0,0" Background="{DynamicResource AccentBrush}" Visibility="Collapsed" />
-                                <ContentPresenter />
-                            </Grid>
-                        </Border>
+                        <Grid x:Name="Bd" Background="Transparent">
+                            <ContentPresenter x:Name="Content" Margin="20,10,16,10" />
+                            <Border x:Name="Bar" Width="3" HorizontalAlignment="Left" Background="{DynamicResource LinkBrush}" Visibility="Collapsed" />
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ChromeHoverBrush}" />
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ChromeHoverBrush}" />
                                 <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Content" Property="TextElement.Foreground" Value="{DynamicResource LinkBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

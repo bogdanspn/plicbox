@@ -69,7 +69,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- Account list -->
-            <ListBox ItemsSource="{Binding Editors}" SelectedItem="{Binding Selected}" ItemContainerStyle="{StaticResource PaneListItem}" Padding="0,12,0,8" BorderThickness="0,0,1,0"
+            <ListBox ItemsSource="{Binding Editors}" SelectedItem="{Binding Selected}" ItemContainerStyle="{StaticResource PaneListItem}" Padding="0,8" BorderThickness="0,0,1,0"
                      BorderBrush="{DynamicResource DividerBrush}" Background="{DynamicResource ChromeBrush}"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.ItemTemplate>
@@ -103,9 +103,6 @@
                             </DataTrigger>
                             <DataTrigger Binding="{Binding IsDefault}" Value="True">
                                 <Setter TargetName="DefaultStar" Property="Visibility" Value="Visible" />
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-                                <Setter TargetName="Title" Property="FontWeight" Value="SemiBold" />
                             </DataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>
