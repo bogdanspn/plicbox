@@ -1,7 +1,7 @@
 # Plicbox
 
-A calm, fast email client for Windows. Mail, calendar, contacts and tasks in one window.
-No AI, no ads, and your mail stays on your PC.
+A calm, fast and free email client for Windows. Mail, calendar, contacts and tasks in one window.
+Your mail stays on your PC.
 
 **[plicbox.bogdanrosu.net](https://plicbox.bogdanrosu.net/)** · [How it works](https://plicbox.bogdanrosu.net/docs.html) ·
 [Privacy](https://plicbox.bogdanrosu.net/privacy.html) · [Release notes](https://plicbox.bogdanrosu.net/changes.html)
@@ -25,7 +25,7 @@ Windows 10 and 11, 64-bit.
 
 ---
 
-Everything below is for building Plicbox from source: .NET 10, WPF and MailKit, no AI.
+Everything below is for building Plicbox from source: .NET 10, WPF and MailKit.
 
 ## Run
 
