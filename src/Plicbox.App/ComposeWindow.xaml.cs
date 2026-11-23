@@ -223,7 +223,9 @@ public partial class ComposeWindow : Window
         var body = _draft.ShowRemotePictures ? _draft.BodyHtml : Composing.HoldRemotePictures(_draft.BodyHtml);
         _page = EditorTemplate.Value.Replace("{{NONCE}}", nonce).Replace("{{STATE}}", state)
             .Replace("{{REMOTE_IMAGES}}", _draft.ShowRemotePictures ? " https: http:" : "")
-            .Replace("{{SCROLLBAR_CSS}}", MessageRenderer.ScrollbarCss).Replace("{{BODY}}", body);
+            .Replace("{{SCROLLBAR_CSS}}", MessageRenderer.ScrollbarCss)
+            .Replace("{{TEXT_SIZE}}", MessageRenderer.TextSize.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .Replace("{{BODY}}", body);
         core.Navigate(PageUri);
 
         if (ToBox.Text.Length == 0) ToBox.Focus();

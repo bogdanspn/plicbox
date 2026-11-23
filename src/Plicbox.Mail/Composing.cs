@@ -234,7 +234,9 @@ public static partial class Composing
         else
         {
             var (html, images) = PrepareHtml(body);
-            builder.HtmlBody = $"<!doctype html><html><head><meta charset=\"utf-8\"></head><body style=\"font-family:'Segoe UI',sans-serif;font-size:14px\">{html}</body></html>";
+            // At the message text size set in Settings, the size it was written at.
+            var size = MessageRenderer.TextSize.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            builder.HtmlBody = $"<!doctype html><html><head><meta charset=\"utf-8\"></head><body style=\"font-family:'Segoe UI',sans-serif;font-size:{size}px\">{html}</body></html>";
             builder.TextBody = MessageRenderer.HtmlToText(html);
             foreach (var image in images)
                 builder.LinkedResources.Add(image.FileName, image.Data, ContentType.Parse(image.MimeType)).ContentId = image.ContentId;

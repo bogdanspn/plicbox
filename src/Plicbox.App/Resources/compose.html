@@ -52,7 +52,8 @@
   .form button { font: inherit; padding: 4px 14px; border-radius: 4px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
   .form button.primary { background: #0f6cbd; border-color: #0f6cbd; color: #fff; }
 
-  #editor { flex: 1; overflow: auto; padding: 16px 20px; outline: none; word-wrap: break-word; }
+  /* The text at the size set for messages (Settings > Appearance), as it goes out (Composing.ToMimeMessage). */
+  #editor { flex: 1; overflow: auto; padding: 16px 20px; outline: none; word-wrap: break-word; font-size: {{TEXT_SIZE}}px; }
   #editor:empty::before { content: attr(data-placeholder); color: #9a9a9a; }
   #editor.plain { white-space: pre-wrap; }
   #editor a { color: #1a73e8; text-decoration: underline; }
