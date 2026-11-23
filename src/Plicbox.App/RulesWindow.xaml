@@ -57,30 +57,8 @@
 
             <!-- Rules, in the order they run -->
             <Grid Background="{DynamicResource ChromeBrush}">
-                <ListBox ItemsSource="{Binding Rules}" SelectedItem="{Binding Selected}" BorderThickness="0,0,1,0"
+                <ListBox ItemsSource="{Binding Rules}" SelectedItem="{Binding Selected}" ItemContainerStyle="{StaticResource PaneListItem}" Padding="0,12,0,8" BorderThickness="0,0,1,0"
                          BorderBrush="{DynamicResource DividerBrush}" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ListBoxItem">
-                                        <Border x:Name="Bd" Background="Transparent" Padding="14,10">
-                                            <ContentPresenter />
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ChromeHoverBrush}" />
-                                            </Trigger>
-                                            <Trigger Property="IsSelected" Value="True">
-                                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SelectionBrush}" />
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
                     <ListBox.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:RuleEditor}">
                             <Grid>
@@ -90,7 +68,7 @@
                                 </Grid.ColumnDefinitions>
                                 <CheckBox IsChecked="{Binding Enabled}" MinWidth="0" VerticalAlignment="Top" Margin="0,1,0,0" ToolTip="{local:T 'On / off'}" />
                                 <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                    <TextBlock x:Name="RuleName" Text="{Binding Name}" FontSize="14.5" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock x:Name="RuleName" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
                                     <TextBlock Text="{Binding Summary}" Foreground="{DynamicResource MutedTextBrush}" FontSize="12.5"
                                                TextWrapping="Wrap" MaxHeight="36" TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
@@ -98,6 +76,9 @@
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding Enabled}" Value="False">
                                     <Setter TargetName="RuleName" Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                    <Setter TargetName="RuleName" Property="FontWeight" Value="SemiBold" />
                                 </DataTrigger>
                             </DataTemplate.Triggers>
                         </DataTemplate>

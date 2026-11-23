@@ -69,31 +69,9 @@
             </Grid.ColumnDefinitions>
 
             <!-- Account list -->
-            <ListBox ItemsSource="{Binding Editors}" SelectedItem="{Binding Selected}" BorderThickness="0,0,1,0"
+            <ListBox ItemsSource="{Binding Editors}" SelectedItem="{Binding Selected}" ItemContainerStyle="{StaticResource PaneListItem}" Padding="0,12,0,8" BorderThickness="0,0,1,0"
                      BorderBrush="{DynamicResource DividerBrush}" Background="{DynamicResource ChromeBrush}"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListBoxItem">
-                                    <Border x:Name="Bd" Background="Transparent" Padding="14,10">
-                                        <ContentPresenter />
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ChromeHoverBrush}" />
-                                        </Trigger>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SelectionBrush}" />
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </ListBox.ItemContainerStyle>
                 <ListBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:AccountEditor}">
                         <Grid>
@@ -101,7 +79,7 @@
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition />
                             </Grid.ColumnDefinitions>
-                            <Grid Width="40" Height="40">
+                            <Grid Width="34" Height="34">
                                 <Ellipse Fill="{Binding AvatarBrush}" />
                                 <local:CenteredInitial Text="{Binding Initial}" Scale="0.425" />
                                 <Ellipse x:Name="AccountPicture" Stroke="{DynamicResource AvatarRingBrush}" StrokeThickness="0.5" Margin="-0.75">
@@ -109,14 +87,14 @@
                                         <ImageBrush ImageSource="{Binding Picture}" Stretch="UniformToFill" />
                                     </Ellipse.Fill>
                                 </Ellipse>
-                                <Border x:Name="DefaultStar" Width="17" Height="17" CornerRadius="9" Background="{DynamicResource LinkBrush}"
+                                <Border x:Name="DefaultStar" Width="15" Height="15" CornerRadius="8" Background="{DynamicResource LinkBrush}"
                                         HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-3,-3" Visibility="Collapsed" ToolTip="{local:T 'Default account'}">
-                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE735;" FontSize="9" Foreground="White" HorizontalAlignment="Center" />
+                                    <TextBlock Style="{StaticResource Icon}" Text="&#xE735;" FontSize="8" Foreground="White" HorizontalAlignment="Center" />
                                 </Border>
                             </Grid>
-                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Email}" FontSize="15" TextTrimming="CharacterEllipsis" />
-                                <TextBlock Text="{Binding Summary}" Foreground="{DynamicResource MutedTextBrush}" FontSize="13" />
+                            <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="Title" Text="{Binding Email}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Summary}" Foreground="{DynamicResource MutedTextBrush}" FontSize="12.5" />
                             </StackPanel>
                         </Grid>
                         <DataTemplate.Triggers>
@@ -125,6 +103,9 @@
                             </DataTrigger>
                             <DataTrigger Binding="{Binding IsDefault}" Value="True">
                                 <Setter TargetName="DefaultStar" Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                <Setter TargetName="Title" Property="FontWeight" Value="SemiBold" />
                             </DataTrigger>
                         </DataTemplate.Triggers>
                     </DataTemplate>
