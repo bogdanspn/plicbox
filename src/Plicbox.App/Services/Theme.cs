@@ -74,6 +74,28 @@ public static class Theme
         ["DatePickerBackground"] = ("#F8F8F9", "#2D2D2D"),
         ["DatePickerBackgroundPointerOver"] = ("#F3F3F5", "#333333"),
         ["DatePickerBackgroundFocused"] = ("#FFFFFF", "#1F1F1F"),
+        // ticked checkboxes and radio buttons: neutral, not Windows' accent colour (which ignores the one set in Plicbox)
+        ["CheckBoxCheckBackgroundFillChecked"] = ("#3D3D3D", "#D0D0D0"),
+        ["CheckBoxCheckBackgroundFillCheckedPointerOver"] = ("#4D4D4D", "#DEDEDE"),
+        ["CheckBoxCheckBackgroundFillCheckedPressed"] = ("#5C5C5C", "#BDBDBD"),
+        ["CheckBoxCheckBackgroundFillIndeterminate"] = ("#3D3D3D", "#D0D0D0"),
+        ["CheckBoxCheckBackgroundFillIndeterminatePointerOver"] = ("#4D4D4D", "#DEDEDE"),
+        ["CheckBoxCheckBackgroundFillIndeterminatePressed"] = ("#5C5C5C", "#BDBDBD"),
+        ["CheckBoxCheckBackgroundStrokeChecked"] = ("#3D3D3D", "#D0D0D0"),
+        ["CheckBoxCheckBackgroundStrokeCheckedPointerOver"] = ("#4D4D4D", "#DEDEDE"),
+        ["CheckBoxCheckBackgroundStrokeCheckedPressed"] = ("#5C5C5C", "#BDBDBD"),
+        ["CheckBoxCheckBackgroundStrokeIndeterminate"] = ("#3D3D3D", "#D0D0D0"),
+        ["CheckBoxCheckBackgroundStrokeIndeterminatePointerOver"] = ("#4D4D4D", "#DEDEDE"),
+        ["CheckBoxCheckBackgroundStrokeIndeterminatePressed"] = ("#5C5C5C", "#BDBDBD"),
+        ["CheckBoxCheckGlyphForeground"] = ("#FFFFFF", "#1F1F1F"),
+        ["CheckBoxCheckGlyphForegroundPressed"] = ("#E6E6E6", "#333333"),
+        ["RadioButtonOuterEllipseCheckedFill"] = ("#3D3D3D", "#D0D0D0"),
+        ["RadioButtonOuterEllipseCheckedStroke"] = ("#3D3D3D", "#D0D0D0"),
+        ["RadioButtonCheckOuterEllipseCheckedFillPointerOver"] = ("#4D4D4D", "#DEDEDE"),
+        ["RadioButtonOuterEllipseCheckedStrokePointerOver"] = ("#4D4D4D", "#DEDEDE"),
+        ["RadioButtonCheckOuterEllipseCheckedFillPressed"] = ("#5C5C5C", "#BDBDBD"),
+        ["RadioButtonCheckOuterEllipseCheckedStrokePressed"] = ("#5C5C5C", "#BDBDBD"),
+        ["RadioButtonCheckGlyphFill"] = ("#FFFFFF", "#1F1F1F"),
     };
 
     public static IEnumerable<string> Keys => Palette.Keys;
