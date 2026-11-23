@@ -184,6 +184,7 @@
 
         <!-- Title-bar caption buttons (minimize / maximize / close). -->
         <Style x:Key="CaptionButton" TargetType="Button">
+            <Setter Property="Cursor" Value="Arrow" /> <!-- window buttons keep Windows' arrow (App.HandCursors gives other buttons the hand) -->
             <Setter Property="Width" Value="46" />
             <Setter Property="Height" Value="36" />
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
@@ -580,6 +581,7 @@
 
         <!-- Bottom-left module switcher (Mail / Calendar / Contacts / Tasks). -->
         <Style x:Key="ModuleButton" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand" />
             <!-- No fixed width: the tabs share the sidebar's width between them. -->
             <Setter Property="MinWidth" Value="40" />
             <Setter Property="Height" Value="48" />

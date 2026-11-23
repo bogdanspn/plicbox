@@ -52,10 +52,23 @@ public partial class App : Application
     /// </summary>
     public static string OwnDir { get; } = Updates.IsInstalled ? DataDir : Path.Combine(DataDir, "dev");
 
+    /// <summary>
+    /// Everything you click shows the hand, as the app's own buttons do: the plain Windows buttons (Cancel, Discard,
+    /// Add…), checkboxes, radio buttons and dropdowns too. Done as the controls' default cursor rather than with styles,
+    /// so they keep the Fluent look (a style based on theirs, set up in App.xaml, gets the classic one). A style that
+    /// sets its own cursor still wins (the window's caption buttons keep the arrow).
+    /// </summary>
+    private static void HandCursors()
+    {
+        foreach (var type in new[] { typeof(System.Windows.Controls.Button), typeof(System.Windows.Controls.Primitives.ToggleButton), typeof(System.Windows.Controls.ComboBox) })
+            FrameworkElement.CursorProperty.OverrideMetadata(type, new FrameworkPropertyMetadata(System.Windows.Input.Cursors.Hand));
+    }
+
     // The language is set before anything is built, App.xaml's own resources included (it changes on restart).
     // Demo and dev modes start from fresh settings, so they're in the default language unless --lang says otherwise.
     static App()
     {
+        HandCursors();
         var args = Environment.GetCommandLineArgs();
         var sandboxed = args.Contains("--demo");
 #if DEBUG
