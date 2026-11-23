@@ -60,7 +60,7 @@ public static class Appearance
         Apply(s.Theme, s.AccentColor, s.UiFont, s.MessageZoom, s.MessageFont, s.MessageTextSize, s.AccentHighlights, s.DarkMessages);
 
     public static void Apply(string? mode, string accentHex, string? font, double messageZoom, string? messageFont = null,
-        double messageTextSize = Plicbox.Mail.MessageRenderer.DefaultTextSize, bool accentHighlights = false, bool darkMessages = true)
+        double messageTextSize = Plicbox.Mail.MessageRenderer.DefaultTextSize, bool accentHighlights = true, bool darkMessages = true)
     {
         _mode = mode;
         Theme.Apply(Theme.WantsDark(mode));
