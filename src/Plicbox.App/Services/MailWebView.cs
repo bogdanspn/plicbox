@@ -78,6 +78,10 @@ public static partial class MailWebView
             context.Links = new Dictionary<string, string>();
             _ = Task.Run(() => LinkSafety.ExtractLinks(html)).ContinueWith(t => context.Links = t.Result, TaskScheduler.Default);
         }
+        // A message shown dark (dark mode, a plain message) on a dark backing, so switching to it doesn't flash white.
+        var backing = MessageRenderer.IsDarkPage(html) ? Theme.Color("SurfaceBrush") : Colors.White;
+        view.DefaultBackgroundColor = System.Drawing.Color.FromArgb(backing.R, backing.G, backing.B);
+        if (VisualTreeHelper.GetParent(view) is Panel { Parent: Border frame }) frame.Background = new SolidColorBrush(backing);
         // The file of the big message shown before (if any) isn't needed once the next one is on its way.
         if (RenderFiles.TryGetValue(view, out var previous))
         {

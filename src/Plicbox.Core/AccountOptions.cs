@@ -78,6 +78,10 @@ public sealed record AppSettings
     public string Theme { get; init; } = "system";
     /// <summary>Appearance: the accent colour (New, Send, Save…), "#RRGGBB".</summary>
     public string AccentColor { get; init; } = "#F7931E";
+    /// <summary>Appearance: links, selections, counts and the unread dot in the accent colour too (in a readable shade), not blue.</summary>
+    public bool AccentHighlights { get; init; }
+    /// <summary>Appearance: in dark mode, plain messages (no colours or pictures of their own) are shown dark too.</summary>
+    public bool DarkMessages { get; init; } = true;
     /// <summary>Appearance: the app's font; null for Segoe UI.</summary>
     public string? UiFont { get; init; }
     /// <summary>Appearance: how large messages are shown (1 = 100%).</summary>

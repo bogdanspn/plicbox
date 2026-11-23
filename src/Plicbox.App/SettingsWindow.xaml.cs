@@ -151,6 +151,8 @@ public partial class SettingsWindow : Window
     {
         _accent = s.AccentColor;
         Fill(ThemeBox, [new(Theme.System, L.T("Match Windows")), new("light", L.T("Light")), new("dark", L.T("Dark"))], s.Theme);
+        DarkMessages.IsChecked = s.DarkMessages;
+        AccentHighlights.IsChecked = s.AccentHighlights;
         BuildSwatches();
         UiFontBox.ItemsSource = Appearance.Fonts;
         UiFontBox.SelectedItem = Appearance.Fonts.Contains(s.UiFont ?? "") ? s.UiFont : Appearance.DefaultFont;
@@ -343,10 +345,16 @@ public partial class SettingsWindow : Window
         PreviewAppearance();
     }
 
+    private void AppearanceToggle_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_appearanceLoaded) PreviewAppearance();
+    }
+
     private void PreviewAppearance()
     {
         Appearance.Apply(Picked(ThemeBox, Theme.System), _accent, UiFontBox.SelectedItem as string, Picked(MessageZoomBox, 1.0),
-            MessageFontBox.SelectedItem as string, Picked(MessageTextSizeBox, MessageRenderer.DefaultTextSize));
+            MessageFontBox.SelectedItem as string, Picked(MessageTextSizeBox, MessageRenderer.DefaultTextSize),
+            AccentHighlights.IsChecked == true, DarkMessages.IsChecked == true);
         BuildReadingPaneChoices(); // its pictures are drawn in the accent colour and the mode's greys
     }
 
@@ -440,6 +448,8 @@ public partial class SettingsWindow : Window
             StartupView = (StartupView.SelectedItem as ViewChoice)?.Key ?? "unified",
             Theme = Picked(ThemeBox, Theme.System),
             AccentColor = _accent,
+            AccentHighlights = AccentHighlights.IsChecked == true,
+            DarkMessages = DarkMessages.IsChecked == true,
             UiFont = UiFontBox.SelectedItem as string is { } font && font != Appearance.DefaultFont ? font : null,
             MessageZoom = Picked(MessageZoomBox, 1.0),
             ReadingPane = _readingPane,

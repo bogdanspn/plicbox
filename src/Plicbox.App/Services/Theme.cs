@@ -100,6 +100,10 @@ public static class Theme
 
     public static IEnumerable<string> Keys => Palette.Keys;
 
+    /// <summary>A colour as the palette has it for the current mode (before the accent setting recolours anything).</summary>
+    public static Color PaletteColor(string key) =>
+        (Color)ColorConverter.ConvertFromString(IsDark ? Palette[key].Dark : Palette[key].Light);
+
     public static bool IsDark { get; private set; }
 
     /// <summary>Raised after the mode changed (on the UI thread), for views that draw their own colours.</summary>

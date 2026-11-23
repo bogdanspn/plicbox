@@ -70,7 +70,9 @@ public sealed partial class MessageRenderer
         // Allowing tracking (but not pictures) lets exactly the tracker hosts through, nothing else.
         var trackerSources = allowTracking && !allowRemoteContent ? string.Concat(trackerOrigins.Select(o => " " + o)) : "";
         var csp = $"default-src 'none'; img-src data:{remote}{trackerSources}; style-src 'unsafe-inline'{remote}; font-src data:{remote}";
+        var dark = Dark is { } colours && LooksPlain(doc) ? colours : null; // checked before our own styles go in
         InstallHead(doc, csp);
+        if (dark is not null) AddDarkStyle(doc, dark);
         return new RenderedMessage(doc.ToHtml(), hasRemote, trackers.Count > 0 && !allowTracking ? Trackers.Describe(trackers) : null);
     }
 
@@ -171,7 +173,7 @@ public sealed partial class MessageRenderer
         var style = doc.CreateElement("style");
         style.TextContent = $$"""
             :where(body) { margin: 0; padding: 16px 20px; {{TextCss}}; color: #1f1f1f; overflow-wrap: break-word; }
-            :where(a) { color: #1a73e8; }
+            :where(a) { color: {{LinkColor}}; }
             {{MissingPictureCss}}
             {{ScrollbarCss}}
             """;
@@ -317,6 +319,7 @@ public sealed partial class MessageRenderer
     /// </summary>
     public static string ForPrint(string renderedHtml, string title, IEnumerable<(string Label, string Value)> header)
     {
+        renderedHtml = WithoutDarkStyle(renderedHtml);
         var rows = string.Concat(header.Where(h => !string.IsNullOrWhiteSpace(h.Value)).Select(h =>
             $"<tr><th>{WebUtility.HtmlEncode(h.Label)}</th><td>{WebUtility.HtmlEncode(h.Value)}</td></tr>"));
         var head = $$"""
@@ -341,7 +344,7 @@ public sealed partial class MessageRenderer
         return body.Success ? html.Insert(body.Index + body.Length, block) : html;
     }
 
-    /// <summary>The pane's page around plain text (and its notices): our font and spacing, as nothing of the sender's is there.</summary>
+    /// <summary>The pane's page around plain text (and its notices): our font and spacing, as nothing of the sender's is there; dark in dark mode.</summary>
     private static string WrapDocument(string body, string csp) => $$"""
         <!doctype html>
         <html><head>
@@ -350,9 +353,10 @@ public sealed partial class MessageRenderer
         <style>
           html, body { margin: 0; padding: 0; }
           body { {{TextCss}}; line-height: 1.5; color: #1f1f1f; padding: 16px 20px; word-wrap: break-word; }
-          a { color: #1a73e8; }
+          a { color: {{LinkColor}}; }
         {{ScrollbarCss}}
         </style>
+        {{(Dark is { } dark ? DarkStyle(dark) : "")}}
         </head><body>{{body}}</body></html>
         """;
 

@@ -133,11 +133,19 @@
                         <ComboBox x:Name="ThemeBox" MinWidth="220" DisplayMemberPath="Label" SelectionChanged="Appearance_Changed" />
                     </StackPanel>
                     <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,4,0,0" TextWrapping="Wrap"
-                               Text="{local:T 'Match Windows switches along with Windows\' light or dark mode. Messages stay on a white page, as most are designed for one.'}" />
+                               Text="{local:T 'Match Windows switches along with Windows\' light or dark mode.'}" />
+                    <CheckBox x:Name="DarkMessages" Content="{local:T 'Show plain messages dark in dark mode'}" Margin="10,10,10,0"
+                              Checked="AppearanceToggle_Changed" Unchecked="AppearanceToggle_Changed" />
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="38,2,0,0" TextWrapping="Wrap"
+                               Text="{local:T 'Plain text, and messages without colours or pictures of their own. Designed messages, like newsletters, stay on a white page.'}" />
                     <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Accent colour'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
                     <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,0,0,8" TextWrapping="Wrap"
                                Text="{local:T 'Used for New, Send, Save and other main buttons, and small highlights. The first one follows your Windows accent colour, also when you change it there.'}" />
                     <WrapPanel x:Name="AccentSwatches" Margin="6,0,0,0" />
+                    <CheckBox x:Name="AccentHighlights" Content="{local:T 'Use it for links, selections and counts too'}" Margin="10,8,10,0"
+                              Checked="AppearanceToggle_Changed" Unchecked="AppearanceToggle_Changed" />
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="38,2,0,0" TextWrapping="Wrap"
+                               Text="{local:T 'Instead of blue. Its shade is adjusted so text stays readable in light and dark mode.'}" />
 
                     <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Font'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
                     <StackPanel Orientation="Horizontal" Margin="10,4">
