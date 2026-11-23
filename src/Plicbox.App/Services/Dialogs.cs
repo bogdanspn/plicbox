@@ -275,7 +275,7 @@ public sealed class Dialogs(IServiceProvider services)
     }
 
     /// <summary>The antivirus (or a Windows policy) removed a file as it was saved.</summary>
-    private void ReportBlocked(string name) =>
+    public void ReportBlocked(string name) =>
         MessageDialog.Show(null, L.F("{0} was blocked", name),
             L.T("Your antivirus or a Windows security policy removed it as it was being saved, because it may be harmful."), DialogKind.Danger);
 

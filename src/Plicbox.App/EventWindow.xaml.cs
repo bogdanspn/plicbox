@@ -36,7 +36,7 @@ public partial class EventWindow : Window
     {
         InitializeComponent();
         (_request, _engine, _calendar, _dialogs, _existing) = (request, engine, calendar, dialogs, request.Existing);
-        Owner = Application.Current.MainWindow;
+        Services.FreeWindows.Place(this); // centred on the main window, but not kept in front of it
         Icon = WindowIcons.Calendar;
         Title = _existing is null ? L.T("New event") : _existing.Title;
 

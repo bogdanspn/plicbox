@@ -15,7 +15,7 @@ public partial class TaskWindow : Window
         InitializeComponent();
         Icon = Services.WindowIcons.Tasks;
         DataContext = _editor = editor;
-        Owner = Application.Current.MainWindow;
+        Services.FreeWindows.Place(this); // centred on the main window, but not kept in front of it
         Loaded += (_, _) =>
         {
             TitleBox.Focus();

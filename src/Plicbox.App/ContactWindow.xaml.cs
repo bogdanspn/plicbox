@@ -15,7 +15,7 @@ public partial class ContactWindow : Window
         InitializeComponent();
         Icon = Services.WindowIcons.Contact;
         DataContext = _editor = editor;
-        Owner = Application.Current.MainWindow;
+        Services.FreeWindows.Place(this); // centred on the main window, but not kept in front of it
         // Start typing straight away: in the first name for a new contact.
         Loaded += (_, _) =>
         {

@@ -142,7 +142,7 @@ public partial class ComposeWindow : Window
         RecipientSuggestions.Attach(BccBox, addressBook);
         Icon = Services.WindowIcons.Message; // the plain envelope, as for reading a message
         (_draft, _engine, _accounts) = (draft, engine, accounts);
-        Owner = Application.Current.MainWindow;
+        Services.FreeWindows.Place(this); // centred on the main window, but not kept in front of it
 
         ToBox.Text = draft.To;
         CcBox.Text = draft.Cc;
@@ -670,6 +670,53 @@ public partial class ComposeWindow : Window
         var warnings = AttachmentWarnings();
         AttachmentWarningList.ItemsSource = warnings;
         AttachmentWarningList.Visibility = warnings.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void AttachmentChip_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ClickCount != 2 || (sender as FrameworkElement)?.DataContext is not AttachmentEntry entry) return;
+        e.Handled = true;
+        OpenAttachment(entry);
+    }
+
+    /// <summary>
+    /// Double-click: a file from this PC opens as Explorer would open it (a program asks first); one carried over from
+    /// a forwarded message goes the reading pane's way (saved apart, marked as from the internet, checked, then opened).
+    /// </summary>
+    private void OpenAttachment(AttachmentEntry entry)
+    {
+        try
+        {
+            switch (entry)
+            {
+                case { Path: { } path }:
+                    if (AttachmentSafety.NeedsConfirmation(entry.Name)
+                        && !MessageDialog.Ask(this, L.F("Open {0}?", entry.Name), L.T("It's a program: opening it runs it."), L.T("Open anyway"), L.T("Cancel"), DialogKind.Warning))
+                        return;
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = true });
+                    break;
+                case { Forwarded: MimePart part }:
+                    (App.Services?.GetService(typeof(Services.Dialogs)) as Services.Dialogs)?.OpenAttachment(part);
+                    break;
+                case { Forwarded: MessagePart { Message: { } message } }:
+                    var dir = Path.Combine(Path.GetTempPath(), "Plicbox", Guid.NewGuid().ToString("N"));
+                    Directory.CreateDirectory(dir);
+                    var eml = Path.Combine(dir, string.Concat((Path.GetFileNameWithoutExtension(entry.Name) is { Length: > 0 } stem ? stem : "message")
+                        .Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c)) + ".eml");
+                    message.WriteTo(eml);
+                    if (AttachmentQuarantine.Mark(eml, entry.Name) == QuarantineResult.Blocked)
+                    {
+                        (App.Services?.GetService(typeof(Services.Dialogs)) as Services.Dialogs)?.ReportBlocked(entry.Name);
+                        return;
+                    }
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(eml) { UseShellExecute = true });
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageDialog.Show(this, L.T("Something didn't work"), L.F("Couldn't open {0}: {1}", entry.Name, ex.Message), DialogKind.Warning);
+        }
     }
 
     private void RemoveAttachment_Click(object sender, RoutedEventArgs e)

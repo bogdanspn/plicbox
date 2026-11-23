@@ -1646,5 +1646,6 @@
   "This folder is empty": "Esta carpeta está vacía",
   "Free software under the GNU GPL, version 3.": "Software libre bajo la GNU GPL, versión 3.",
   "Licence": "Licencia",
-  "Third-party licences": "Licencias de terceros"
+  "Third-party licences": "Licencias de terceros",
+  "It's a program: opening it runs it.": "Es un programa: abrirlo lo ejecuta."
 }

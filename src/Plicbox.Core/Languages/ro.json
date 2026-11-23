@@ -1646,5 +1646,6 @@
   "This folder is empty": "Acest dosar este gol",
   "Free software under the GNU GPL, version 3.": "Software liber, sub licența GNU GPL, versiunea 3.",
   "Licence": "Licență",
-  "Third-party licences": "Licențe terțe"
+  "Third-party licences": "Licențe terțe",
+  "It's a program: opening it runs it.": "Este un program: dacă îl deschizi, pornește."
 }

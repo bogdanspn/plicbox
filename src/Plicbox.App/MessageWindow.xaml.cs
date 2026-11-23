@@ -31,7 +31,7 @@ public partial class MessageWindow : Window
     {
         InitializeComponent();
         (_item, _mime, _account, _reader, _main, _renderer, _bodies, _dialogs) = (item, mime, account, reader, main, renderer, bodies, dialogs);
-        Owner = Application.Current.MainWindow;
+        Services.FreeWindows.Place(this); // centred on the main window, but not kept in front of it
         Icon = Services.WindowIcons.Message; // the same plain glyphs as the other popups
         Title = item.Subject;
 

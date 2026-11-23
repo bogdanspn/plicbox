@@ -106,7 +106,7 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border x:Name="Chip" Background="{DynamicResource SubtleFillBrush}" BorderBrush="Transparent" BorderThickness="1" CornerRadius="4"
-                                Padding="10,4,4,4" Margin="4" ToolTip="{Binding Warning.Text}">
+                                Padding="10,4,4,4" Margin="4" ToolTip="{Binding Warning.Text}" MouseLeftButtonDown="AttachmentChip_MouseLeftButtonDown">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock x:Name="ChipIcon" Style="{StaticResource Icon}" Text="&#xE723;" FontSize="13" Margin="0,0,6,0" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
