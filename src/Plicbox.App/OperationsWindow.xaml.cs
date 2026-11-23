@@ -111,7 +111,7 @@ public partial class OperationsWindow : Window
                 _ => L.T("Sending changes"),
             };
             var running = Duration(DateTimeOffset.Now - now.Started);
-            body.Children.Add(Line("", $"{kind} · {StepText(now)} · {L.F("running for {0}", running)}", Theme.Brush("TextBrush")));
+            body.Children.Add(Line("", $"{kind}, {StepText(now)}, {L.F("running for {0}", running)}", Theme.Brush("TextBrush")));
             if (now is { Step: SyncStep.NewMessages, Total: > 0 }) body.Children.Add(Progress(now.Done, now.Total));
         }
         else if (sync.LastPass is { } last)

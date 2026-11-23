@@ -286,7 +286,7 @@
                     <StackPanel Orientation="Horizontal" Margin="4,5,0,0" Visibility="{Binding QuickHint, Converter={StaticResource NullToCollapsed}}">
                         <TextBlock Style="{StaticResource Icon}" Text="&#xE787;" FontSize="11" Foreground="{DynamicResource LinkBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
                         <TextBlock Text="{Binding QuickHint}" FontSize="12.5" Foreground="{DynamicResource LinkBrush}" />
-                        <TextBlock Text="{local:T ' · Enter to add'}" FontSize="12.5" Foreground="{DynamicResource MutedTextBrush}" />
+                        <TextBlock Text="{local:T ' (Enter to add)'}" FontSize="12.5" Foreground="{DynamicResource MutedTextBrush}" />
                     </StackPanel>
                 </StackPanel>
 
@@ -409,7 +409,7 @@
             <Grid x:Name="DetailPane" Grid.Column="4" Margin="1,0,0,0" Background="{DynamicResource SurfaceBrush}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" DataContext="{Binding Editor}" Visibility="{Binding Converter={StaticResource NullToCollapsed}}">
                     <StackPanel Margin="18,14,18,20">
-                        <!-- Done? · title · close -->
+                        <!-- Done?, title, close -->
                         <Border Style="{StaticResource Panel}" Margin="0" BorderThickness="0" Padding="0,0,0,4">
                             <Grid>
                                 <Grid.ColumnDefinitions>

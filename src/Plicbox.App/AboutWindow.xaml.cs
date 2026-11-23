@@ -18,15 +18,15 @@ public partial class AboutWindow : Window
         // Product names stay as they are; only what each is used for is translated.
         TechList.ItemsSource = new Tech[]
         {
-            new(".NET 10 · WPF", L.T("The app and its windows")),
-            new("MailKit · MimeKit", L.T("Fetching, sending and reading mail (IMAP, SMTP, MIME)")),
-            new("SQLite · Dapper", L.T("Storing mail on this computer, with full-text search")),
+            new(".NET 10, WPF", L.T("The app and its windows")),
+            new("MailKit, MimeKit", L.T("Fetching, sending and reading mail (IMAP, SMTP, MIME)")),
+            new("SQLite, Dapper", L.T("Storing mail on this computer, with full-text search")),
             new("WebView2", L.T("Showing and writing messages")),
             new("HtmlSanitizer", L.T("Cleaning message HTML before it's shown")),
-            new("MSAL · Google APIs", L.T("Signing in with Microsoft and Google")),
+            new("MSAL, Google APIs", L.T("Signing in with Microsoft and Google")),
             new("DnsClient", L.T("Finding an address's mail servers")),
             new("Velopack", L.T("Installing and updating")),
-            new("malware-filter · OpenPhish · PhishTank · IPThreat · URLhaus", L.T("Lists of reported phishing and malware sites (CC BY-SA 4.0, CC0)")),
+            new("malware-filter, OpenPhish, PhishTank, IPThreat, URLhaus", L.T("Lists of reported phishing and malware sites (CC BY-SA 4.0, CC0)")),
             new("H.NotifyIcon", L.T("The icon in the notification area")),
             new("Serilog", L.T("Logs")),
             new("SharpVectors", L.T("SVG images")),

@@ -75,10 +75,10 @@ public static partial class TaskPhrases
         yield return (new Regex(lead + @"\b(?<d>\d{1,2})[./](?<m>\d{1,2})[./](?<y>\d{4}|\d{2})\b\.?", o), Numeric);
         yield return (new Regex(lead + @"\b(?<d>\d{1,2})\.(?<m>\d{1,2})\.(?=\s|$|[,;])", o), Numeric);
         yield return (new Regex(leadRequired + @"(?<d>\d{1,2})[./](?<m>\d{1,2})(?<y>)\b", o), Numeric);
-        // 15 Nov · 15. November · 15th of November · 15 noiembrie · 15 de noviembre
+        // 15 Nov, 15. November, 15th of November, 15 noiembrie, 15 de noviembre
         yield return (new Regex(lead + @"\b(\d{1,2})(?:st|nd|rd|th)?\.?\s+(?:of\s+|de\s+)?([a-zäöăâîșț]{3,10})\b\.?(?:\s+(?:de\s+)?(\d{4}))?", o), m =>
             Months.TryGetValue(m.Groups[2].Value, out var month) ? Date(today, int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), month, m.Groups[3].Value) : null);
-        // Nov 15 · November 15th. Not "mai 2": in Romanian that's "2 more", and May-first isn't how it writes dates.
+        // Nov 15, November 15th. Not "mai 2": in Romanian that's "2 more", and May-first isn't how it writes dates.
         yield return (new Regex(lead + @"\b([a-zäöăâîșț]{3,10})\.?\s+(\d{1,2})(?:st|nd|rd|th)?\b(?:,?\s+(\d{4}))?", o), m =>
             !m.Groups[1].Value.Equals("mai", StringComparison.OrdinalIgnoreCase) && Months.TryGetValue(m.Groups[1].Value, out var month)
                 ? Date(today, int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture), month, m.Groups[3].Value) : null);

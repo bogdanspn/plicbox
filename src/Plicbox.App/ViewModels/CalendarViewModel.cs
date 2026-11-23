@@ -185,7 +185,7 @@ public sealed partial class CalendarViewModel : ObservableObject
             var local = await Task.Run(() => _engine.SearchAsync(text, cts.Token));
             if (cts.IsCancellationRequested) return;
             SearchResults = local;
-            SearchStatus = local.Count == 0 ? L.T("Looking further back…") : Describe(local.Count) + " · " + L.T("looking further back…");
+            SearchStatus = local.Count == 0 ? L.T("Looking further back…") : Describe(local.Count) + ", " + L.T("looking further back…");
             SearchChanged?.Invoke();
 
             // Then the years before the synced window, straight from Google.
@@ -393,7 +393,7 @@ public sealed partial class CalendarViewModel : ObservableObject
                     var due = e.Start.AddMinutes(-e.ReminderMinutes!.Value);
                     var key = $"{e.CalendarId}:{e.RemoteId}:{e.Start:O}";
                     if (now >= due && now < e.Start.AddMinutes(1) && _reminded.Add(key))
-                        ReminderDue?.Invoke(e.Title, $"{DescribeWhen(e, now)}{(e.Location is { Length: > 0 } l ? " · " + l : "")}");
+                        ReminderDue?.Invoke(e.Title, $"{DescribeWhen(e, now)}{(e.Location is { Length: > 0 } l ? ", " + l : "")}");
                 }
             }
         }
@@ -403,12 +403,12 @@ public sealed partial class CalendarViewModel : ObservableObject
         }
     }
 
-    /// <summary>"Now · until 10:00", "In 12 min", "Today 14:00", "Tomorrow 09:30", "Mon 09:00".</summary>
+    /// <summary>"Now, until 10:00", "In 12 min", "Today 14:00", "Tomorrow 09:30", "Mon 09:00".</summary>
     public static string DescribeWhen(CalendarEvent e, DateTimeOffset now)
     {
         var culture = CultureInfo.CurrentCulture;
         var start = e.Start.LocalDateTime;
-        if (e.Start <= now) return L.F("Now · until {0}", e.End.LocalDateTime.ToString("t", culture));
+        if (e.Start <= now) return L.F("Now, until {0}", e.End.LocalDateTime.ToString("t", culture));
         var minutes = (int)Math.Ceiling((e.Start - now).TotalMinutes);
         if (minutes <= 60) return L.F("In {0} min", minutes);
         var day = DateOnly.FromDateTime(start);
@@ -423,8 +423,8 @@ public sealed partial class CalendarViewModel : ObservableObject
     {
         var problem = _engine.Statuses.FirstOrDefault(s => s.Value.State is CalendarSyncState.NeedsPermission or CalendarSyncState.NeedsSignIn or CalendarSyncState.Error);
         IsBusy = _engine.Statuses.Values.Any(s => s.State == CalendarSyncState.Syncing);
-        RefreshToolTip = IsBusy ? L.T("Refresh (F5) · Syncing…")
-            : _engine.Statuses.Values.Select(s => s.LastSync).Where(t => t.HasValue).Min() is { } last ? L.F("Refresh (F5) · Updated {0:t}", last.LocalDateTime)
+        RefreshToolTip = IsBusy ? L.T("Refresh (F5), syncing…")
+            : _engine.Statuses.Values.Select(s => s.LastSync).Where(t => t.HasValue).Min() is { } last ? L.F("Refresh (F5), updated {0:t}", last.LocalDateTime)
             : L.T("Refresh (F5)");
         if (problem.Value is null)
         {

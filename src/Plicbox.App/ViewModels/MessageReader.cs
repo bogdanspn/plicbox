@@ -42,7 +42,7 @@ public sealed partial class MessageReader(
 
     [ObservableProperty, NotifyPropertyChangedFor(nameof(HasSelection))] private MessageItemViewModel? _selectedMessage;
     public bool HasSelection => SelectedMessage is not null;
-    /// <summary>The header's folder chip: the folder, and its account when the list mixes accounts ("Trash · you@work.example").</summary>
+    /// <summary>The header's folder chip: the folder, and its account when the list mixes accounts ("Trash, you@work.example").</summary>
     [ObservableProperty] private string? _selectedFolderName;
     /// <summary>The message's own folder name (Gmail labels with the same name aren't shown twice).</summary>
     private string? _folderName;

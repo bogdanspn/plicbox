@@ -68,7 +68,7 @@
             <RowDefinition />
         </Grid.RowDefinitions>
 
-        <!-- ═══ Title bar: menu · centered search · caption buttons ═══ -->
+        <!-- ═══ Title bar: menu, centered search, caption buttons ═══ -->
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -122,13 +122,13 @@
             </StackPanel>
         </Grid>
 
-        <!-- ═══ Toolbar: New · Refresh · sync status on the left, message actions on the right ═══
+        <!-- ═══ Toolbar: New, Refresh and sync status on the left, message actions on the right ═══
              Snooze and Quick Actions live in ⋯; as the window narrows, more actions fold into it (see FitToolbar), least important first. -->
         <Border x:Name="ToolbarLine" Grid.Row="1" BorderBrush="{DynamicResource ToolbarLineBrush}" BorderThickness="0,0,0,1" />
         <DockPanel x:Name="ToolbarRow" Grid.Row="1" Margin="12,0,16,0" LastChildFill="True">
             <StackPanel x:Name="LeftTools" DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Height="{StaticResource ToolbarItemHeight}">
                 <Button x:Name="MailNewButton" Style="{StaticResource AccentButton}" Tag="&#xE710;" Content="{local:T 'New'}" Click="MailNew_Click" Padding="12,6"
-                        ToolTip="{local:T 'New mail (Ctrl+N) · the arrow has everything else'}" />
+                        ToolTip="{local:T 'New mail (Ctrl+N). The arrow has everything else'}" />
                 <Button Style="{StaticResource RefreshButton}" Content="{local:T 'Refresh'}" Command="{Binding RefreshCommand}" Margin="10,0,0,0"
                         local:Spin.IsSpinning="{Binding IsSyncing}" ToolTip="{Binding RefreshToolTip}" />
                 <Button Style="{StaticResource DropButton}" Tag="Refresh" Click="Dropdown_Click" ToolTip="{local:T 'More sync options'}" />

@@ -57,7 +57,7 @@ public sealed class TrayService : IDisposable
         _plainIcon ??= AppIcon.CreateTrayIcon();
         _newMailIcon ??= NewMailBadge.TrayIcon(_plainIcon);
         _icon.Icon = (System.Drawing.Icon)(waiting ? _newMailIcon : _plainIcon).Clone();
-        _icon.ToolTipText = waiting ? $"{AppName} · {L.T("New mail")}" : AppName;
+        _icon.ToolTipText = waiting ? $"{AppName}: {L.T("New mail")}" : AppName;
     }
 
     public void Notify(string title, string message) =>

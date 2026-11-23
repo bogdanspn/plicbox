@@ -3,8 +3,8 @@
 A calm, fast and free email client for Windows. Mail, calendar, contacts and tasks in one window.
 Your mail stays on your PC.
 
-**[plicbox.bogdanrosu.net](https://plicbox.bogdanrosu.net/)** · [How it works](https://plicbox.bogdanrosu.net/docs.html) ·
-[Privacy](https://plicbox.bogdanrosu.net/privacy.html) · [Release notes](https://plicbox.bogdanrosu.net/changes.html)
+**[plicbox.bogdanrosu.net](https://plicbox.bogdanrosu.net/)** | [How it works](https://plicbox.bogdanrosu.net/docs.html) |
+[Privacy](https://plicbox.bogdanrosu.net/privacy.html) | [Release notes](https://plicbox.bogdanrosu.net/changes.html)
 
 ## Download
 
@@ -122,7 +122,7 @@ Message HTML is sanitized, scripts are disabled, and remote images/fonts (tracki
 
 ## Pictures
 
-Senders show a coloured letter by default. You can give each of your accounts its own picture (Accounts → General → Picture), shown on mail you send. With **Settings → Pictures** on (the default), Plicbox also looks senders up once: the person's Gravatar, a company's verified BIMI logo (the one Gmail shows), or — for automated senders like `noreply@` — the website's icon. Free-mail domains never get a company logo, mail in Junk is never looked up, results are cached for a month, and a sender flagged as possibly forged never gets a picture in the reading pane.
+Senders show a coloured letter by default. You can give each of your accounts its own picture (Accounts → General → Picture), shown on mail you send. With **Settings → Pictures** on (the default), Plicbox also looks senders up once: the person's Gravatar, a company's verified BIMI logo (the one Gmail shows), or, for automated senders like `noreply@`, the website's icon. Free-mail domains never get a company logo, mail in Junk is never looked up, results are cached for a month, and a sender flagged as possibly forged never gets a picture in the reading pane.
 
 ## Writing mail
 
@@ -141,7 +141,7 @@ Sent mail goes through a local **Outbox** (a folder per account with role `Outbo
 
 ## Shortcuts
 
-`Ctrl+F` search · `Del` delete · `Ctrl+Q` toggle read · `Ctrl+E` archive · `F5` sync now
+`Ctrl+F` search, `Del` delete, `Ctrl+Q` toggle read, `Ctrl+E` archive, `F5` sync now
 
 Select several messages with `Shift`/`Ctrl`+click (or `Ctrl+A`), then drag them onto a folder or use Delete, Archive, Move to Folder…, Copy to Folder…, Junk, flag and read/unread on all of them at once.
 
@@ -151,7 +151,7 @@ Right-click a folder for New Folder, Rename, Move Folder, Delete, Empty Trash/Ju
 
 Right-click inside a message for Copy, Select All, Find (`F4`), link actions, reply/forward, flags, Save As / Save Attachments, folder moves, Print, **Format › Plain Text** (shows just the text, handy for suspicious mail), Properties, the raw header/source and Zoom.
 
-Compose: `Ctrl+Enter` send · `Ctrl+S` save draft · `Ctrl+K` link · `Ctrl+P` print
+Compose: `Ctrl+Enter` send, `Ctrl+S` save draft, `Ctrl+K` link, `Ctrl+P` print
 
 ## Licence
 

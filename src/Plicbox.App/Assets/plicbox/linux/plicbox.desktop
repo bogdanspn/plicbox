@@ -1,4 +1,4 @@
-# plicbox.desktop — copy to ~/.local/share/applications/ (all users:
+# plicbox.desktop: copy to ~/.local/share/applications/ (all users:
 # /usr/share/applications/) and copy the hicolor/ tree next to your theme
 # icons (~/.local/share/icons/ or /usr/share/icons/). Adjust Exec to the
 # real command that starts the application.

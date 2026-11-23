@@ -53,9 +53,9 @@ public sealed partial class PersonViewModel : ObservableObject
     [ObservableProperty] private ImageSource? _photo;
 
     public string Subtitle =>
-        Contact is { JobTitle: { Length: > 0 } title } && CompanyName is { Length: > 0 } company ? $"{title} · {company}"
+        Contact is { JobTitle: { Length: > 0 } title } && CompanyName is { Length: > 0 } company ? $"{title}, {company}"
         : Contact?.JobTitle is { Length: > 0 } t ? t
-        : CompanyName is { Length: > 0 } c ? $"{c} · {Email}"
+        : CompanyName is { Length: > 0 } c ? $"{c}, {Email}"
         : Email ?? "";
 
     /// <summary>"3 days ago" on the right of the row.</summary>
@@ -347,7 +347,7 @@ public sealed partial class ContactsViewModel : ObservableObject
             _own = accounts.SelectMany(a => a.Identities.Select(i => (i.Address, a.Id)).Append((a.Email, a.Id)))
                 .GroupBy(x => x.Item1, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First().Item2, StringComparer.OrdinalIgnoreCase);
             SaveTargets.Clear();
-            foreach (var a in accounts.Where(a => a.Auth == AuthKind.GoogleOAuth)) SaveTargets.Add(new Option<long?>(a.Id, $"Google · {a.SidebarTitle}"));
+            foreach (var a in accounts.Where(a => a.Auth == AuthKind.GoogleOAuth)) SaveTargets.Add(new Option<long?>(a.Id, $"Google ({a.SidebarTitle})"));
             SaveTargets.Add(new Option<long?>(null, L.T("Only in Plicbox")));
 
             var snapshot = await _peopleData.GetAsync();
@@ -641,7 +641,7 @@ public sealed partial class ContactsViewModel : ObservableObject
             {
                 var start = next.Start.LocalDateTime;
                 var day = start.ToString("ddd d MMM", CultureInfo.CurrentCulture);
-                card.MeetingText = next.IsAllDay ? $"{day} · {next.Title}" : $"{day}, {start.ToString("t", CultureInfo.CurrentCulture)} · {next.Title}";
+                card.MeetingText = next.IsAllDay ? $"{day}: {next.Title}" : $"{day}, {start.ToString("t", CultureInfo.CurrentCulture)}: {next.Title}";
             }
 
             var name = person.FoldedName;
@@ -715,8 +715,8 @@ public sealed partial class ContactsViewModel : ObservableObject
         if (p.Stats is { } s)
         {
             if (s.Last is { } last)
-                card.LastText = $"{Ago(last)} · {(s.LastSent == last ? L.T("you wrote") : L.T("they wrote"))}";
-            card.CountsText = L.F("{0} from them · {1} from you", s.Received, s.Sent);
+                card.LastText = $"{Ago(last)}, {(s.LastSent == last ? L.T("you wrote") : L.T("they wrote"))}";
+            card.CountsText = L.F("{0} from them, {1} from you", s.Received, s.Sent);
             if (s.First is { } first && s.Total >= 4 && (s.Last - first)?.TotalDays is > 14 and var span)
             {
                 var gap = span / (s.Total - 1);
@@ -741,8 +741,8 @@ public sealed partial class ContactsViewModel : ObservableObject
         {
             var days = b.DayNumber - DateOnly.FromDateTime(DateTime.Today).DayNumber;
             var when = days switch { 0 => L.T("today") + " 🎂", 1 => L.T("tomorrow"), _ => L.F("in {0} days", days) };
-            var age = p.Contact!.BirthdayHasYear ? " · " + L.F("turns {0}", b.Year - p.Contact.Birthday!.Value.Year) : "";
-            card.BirthdayText = $"{b.ToString("d MMMM", CultureInfo.CurrentCulture)} · {when}{age}";
+            var age = p.Contact!.BirthdayHasYear ? ", " + L.F("turns {0}", b.Year - p.Contact.Birthday!.Value.Year) : "";
+            card.BirthdayText = $"{b.ToString("d MMMM", CultureInfo.CurrentCulture)}, {when}{age}";
         }
     }
 
@@ -1096,8 +1096,8 @@ public sealed partial class ContactsViewModel : ObservableObject
     {
         var problem = _engine.Statuses.FirstOrDefault(s => s.Value.State is CalendarSyncState.NeedsPermission or CalendarSyncState.NeedsSignIn or CalendarSyncState.Error);
         IsBusy = _engine.Statuses.Values.Any(s => s.State == CalendarSyncState.Syncing);
-        RefreshToolTip = IsBusy ? L.T("Refresh (F5) · Syncing…")
-            : _engine.Statuses.Values.Select(s => s.LastSync).Where(t => t.HasValue).Min() is { } last ? L.F("Refresh (F5) · Updated {0:t}", last.LocalDateTime)
+        RefreshToolTip = IsBusy ? L.T("Refresh (F5), syncing…")
+            : _engine.Statuses.Values.Select(s => s.LastSync).Where(t => t.HasValue).Min() is { } last ? L.F("Refresh (F5), updated {0:t}", last.LocalDateTime)
             : L.T("Refresh (F5)");
         _bannerAccountId = problem.Value is null ? null : problem.Key;
         Banner = problem.Value?.State == CalendarSyncState.NeedsPermission

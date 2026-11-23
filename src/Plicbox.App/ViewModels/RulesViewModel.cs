@@ -248,7 +248,7 @@ public sealed partial class RulesViewModel : ObservableObject
         if (a.FolderAccountId is not { } id || a.FolderPath is null) return null;
         var folder = _foldersByAccount.GetValueOrDefault(id)?.FirstOrDefault(f => f.Path == a.FolderPath);
         var name = folder?.Name ?? a.FolderPath;
-        return _accountNames.Count > 1 ? $"{name} · {_accountNames.GetValueOrDefault(id)}" : name;
+        return _accountNames.Count > 1 ? $"{name} ({_accountNames.GetValueOrDefault(id)})" : name;
     }
 
     private string SummaryOf(RuleEditor r) => RuleMatcher.Summary(r.ToModel(), FolderLabel);

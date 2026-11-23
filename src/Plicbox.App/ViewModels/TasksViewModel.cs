@@ -86,7 +86,7 @@ public sealed partial class TaskEditor : ObservableObject
     public IReadOnlyList<Option<long>> Lists { get; init; } = [];
     public ObservableCollection<TaskRow> Steps { get; } = [];
     public string? MessageRef { get; init; }
-    /// <summary>The email it was made from: "Invoice 2026-10 · Ana Popescu".</summary>
+    /// <summary>The email it was made from: "Invoice 2026-10 (Ana Popescu)".</summary>
     [ObservableProperty] private string? _emailText;
     public bool HasEmail => MessageRef is not null;
     public bool IsNew => Original is null;
@@ -158,7 +158,7 @@ public static class TaskDates
         };
     }
 
-    /// <summary>"Tomorrow, Saturday 17 October" · "Overdue: Monday 12 October".</summary>
+    /// <summary>"Tomorrow, Saturday 17 October" or "Overdue: Monday 12 October".</summary>
     public static string Long(DateOnly due, DateOnly today)
     {
         var c = CultureInfo.CurrentCulture;
@@ -267,7 +267,7 @@ public sealed partial class TasksViewModel : ObservableObject
         var today = DateOnly.FromDateTime(DateTime.Today);
         var (_, due) = TaskPhrases.Parse(value, today);
         var list = TargetList();
-        var where = SelectedList.Kind == TaskView.List || list is null ? "" : " · " + L.F("in {0}", ListName(list));
+        var where = SelectedList.Kind == TaskView.List || list is null ? "" : ", " + L.F("in {0}", ListName(list));
         QuickHint = value.Trim().Length == 0 ? null
             : due is { } d ? L.F("Due {0}", TaskDates.Long(d, today)) + where
             : DefaultDue() is { } dd ? L.F("Due {0}", TaskDates.Long(dd, today)) + where
@@ -354,7 +354,7 @@ public sealed partial class TasksViewModel : ObservableObject
     }
 
     private string AccountHint(TaskList list) =>
-        list.AccountId is { } id ? $"Google Tasks · {_accountNames.GetValueOrDefault(id, "")}" : L.T("Kept only in Plicbox");
+        list.AccountId is { } id ? $"Google Tasks ({_accountNames.GetValueOrDefault(id, "")})" : L.T("Kept only in Plicbox");
 
     private void UpdateCounts()
     {
@@ -484,7 +484,7 @@ public sealed partial class TasksViewModel : ObservableObject
     /// <summary>A list's name; with its account when another account has a list of the same name (both have "My Tasks").</summary>
     private string ListName(TaskList list) =>
         list.AccountId is { } id && _taskLists.Any(l => l.Id != list.Id && l.AccountId != list.AccountId && l.Title == list.Title)
-            ? $"{list.Title} · {_accountNames.GetValueOrDefault(id, "Google")}" : list.Title;
+            ? $"{list.Title} ({_accountNames.GetValueOrDefault(id, "Google")})" : list.Title;
 
     // ───────── quick add, ticking off ─────────
 
@@ -603,7 +603,7 @@ public sealed partial class TasksViewModel : ObservableObject
     {
         var multipleAccounts = _taskLists.Select(l => l.AccountId).Distinct().Count() > 1;
         return _taskLists.Select(l => new Option<long>(l.Id,
-            multipleAccounts ? $"{l.Title} · {(l.AccountId is { } a ? _accountNames.GetValueOrDefault(a, "Google") : L.T("this computer"))}" : l.Title)).ToList();
+            multipleAccounts ? $"{l.Title} ({(l.AccountId is { } a ? _accountNames.GetValueOrDefault(a, "Google") : L.T("this computer"))})" : l.Title)).ToList();
     }
 
     private async Task DescribeEmailAsync(TaskEditor editor)
@@ -611,7 +611,7 @@ public sealed partial class TasksViewModel : ObservableObject
         if (editor.MessageRef is not { } reference) return;
         var message = await _messages.GetByMessageIdAsync(reference);
         editor.EmailText = message is null ? L.T("The email isn't in Plicbox (anymore)")
-            : $"{message.Subject} · {(message.FromName.Length > 0 ? message.FromName : message.FromAddress)}";
+            : $"{message.Subject} ({(message.FromName.Length > 0 ? message.FromName : message.FromAddress)})";
     }
 
     private void Editor_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -769,7 +769,7 @@ public sealed partial class TasksViewModel : ObservableObject
     public async Task CreateFromMessageAsync(MessageSummary message)
     {
         var from = message.FromName.Length > 0 ? message.FromName : message.FromAddress;
-        await OpenNewTaskAsync(RuleMatcher.CleanSubject(message.Subject), message.MessageId, $"{message.Subject} · {from}");
+        await OpenNewTaskAsync(RuleMatcher.CleanSubject(message.Subject), message.MessageId, $"{message.Subject} ({from})");
     }
 
     private async Task OpenNewTaskAsync(string? title, string? messageRef, string? emailText)
@@ -899,8 +899,8 @@ public sealed partial class TasksViewModel : ObservableObject
     {
         var problem = _engine.Statuses.FirstOrDefault(s => s.Value.State is CalendarSyncState.NeedsPermission or CalendarSyncState.NeedsSignIn or CalendarSyncState.Error);
         IsBusy = _engine.Statuses.Values.Any(s => s.State == CalendarSyncState.Syncing);
-        RefreshToolTip = IsBusy ? L.T("Refresh (F5) · Syncing…")
-            : _engine.Statuses.Values.Select(s => s.LastSync).Where(t => t.HasValue).Min() is { } last ? L.F("Refresh (F5) · Updated {0:t}", last.LocalDateTime)
+        RefreshToolTip = IsBusy ? L.T("Refresh (F5), syncing…")
+            : _engine.Statuses.Values.Select(s => s.LastSync).Where(t => t.HasValue).Min() is { } last ? L.F("Refresh (F5), updated {0:t}", last.LocalDateTime)
             : L.T("Refresh (F5)");
         _bannerAccountId = problem.Value is null ? null : problem.Key;
         Banner = problem.Value?.State == CalendarSyncState.NeedsPermission

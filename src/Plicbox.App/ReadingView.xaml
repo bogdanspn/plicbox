@@ -192,7 +192,7 @@
                         </InlineUIContainer>
                         <Run Text="{Binding SelectedMessage.Model.FromAddress, StringFormat='&lt;{0}&gt;', Mode=OneWay}" Foreground="{DynamicResource MutedTextBrush}" FontSize="13" />
                         <!-- A quiet note, not a warning: most first messages are fine, but it's worth knowing. -->
-                        <Run Text="{Binding FirstContactNote, StringFormat=' · {0}', Mode=OneWay}" Foreground="{DynamicResource HintBrush}" FontSize="12.5" FontStyle="Italic" />
+                        <Run Text="{Binding FirstContactNote, StringFormat='  ({0})', Mode=OneWay}" Foreground="{DynamicResource HintBrush}" FontSize="12.5" FontStyle="Italic" />
                     </TextBlock>
                     <TextBlock Grid.Column="1" Text="{Binding SelectedMessage.FullDate}" Foreground="{DynamicResource MutedTextBrush}" Margin="12,0,0,0"
                                HorizontalAlignment="Right" VerticalAlignment="Bottom" />

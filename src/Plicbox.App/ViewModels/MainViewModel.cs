@@ -1185,8 +1185,8 @@ public sealed partial class MainViewModel : ObservableObject
         // Syncing shows on the Refresh button itself (its arrows turn); "Updated 21:04" is in its tooltip. Worked
         // out first, so an account's error never leaves the arrows turning.
         IsSyncing = statuses.Values.Any(s => s.State == SyncState.Syncing);
-        RefreshToolTip = IsSyncing ? L.T("Refresh (F5) · Syncing…")
-            : statuses.Values.Select(s => s.LastSync).Where(t => t.HasValue).Min() is { } last ? L.F("Refresh (F5) · Updated {0:t}", last.LocalDateTime)
+        RefreshToolTip = IsSyncing ? L.T("Refresh (F5), syncing…")
+            : statuses.Values.Select(s => s.LastSync).Where(t => t.HasValue).Min() is { } last ? L.F("Refresh (F5), updated {0:t}", last.LocalDateTime)
             : L.T("Refresh (F5)");
         // An account that needs signing in again goes first: the line then offers the fix.
         var error = statuses.Where(s => s.Value.State == SyncState.Error).OrderBy(s => !s.Value.NeedsSignIn).FirstOrDefault();

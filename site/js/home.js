@@ -82,7 +82,7 @@ const ground = (u, z) =>
   + .015 * Math.sin(u * 5 + z * 1.7);
 
 // Perspective: a dot k columns from the centre, z deep, standing g high, is drawn at
-// (cx + k·step/z, horizon + depth·(1 − g)/z): raised ground comes up the screen, and less so the farther away it is.
+// (cx + k*step/z, horizon + depth*(1 - g)/z): raised ground comes up the screen, and less so the farther away it is.
 const yAt = (k, z) => horizon + depth * (1 - ground(k * step / cx, z)) / z;
 function layout() {
   const r = canvas.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);

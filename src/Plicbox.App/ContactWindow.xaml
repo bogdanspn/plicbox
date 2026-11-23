@@ -65,7 +65,7 @@
             </DataTemplate>
         </Grid.Resources>
 
-        <!-- Save & Close · Cancel · where to save, as in the other editors -->
+        <!-- Save & Close, Cancel and where to save, as in the other editors -->
         <Border Background="{DynamicResource ChromeBrush}" BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,0,0,1" Padding="20,10">
             <StackPanel Orientation="Horizontal">
                 <Button Style="{StaticResource PrimaryButton}" Padding="14,7" Click="Save_Click" ToolTip="{local:T 'Save &amp; Close (Ctrl+S)'}">

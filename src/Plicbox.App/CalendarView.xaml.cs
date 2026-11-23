@@ -284,7 +284,7 @@ public partial class CalendarView : UserControl
         };
         var details = new TextBlock
         {
-            Text = $"{start.ToString("t", Culture)} – {end.ToString("t", Culture)}" + (e.Location is { Length: > 0 } l ? $" · {l}" : ""),
+            Text = $"{start.ToString("t", Culture)} – {end.ToString("t", Culture)}" + (e.Location is { Length: > 0 } l ? $", {l}" : ""),
             FontSize = 11.5, Foreground = text, Opacity = 0.85, TextTrimming = TextTrimming.CharacterEllipsis,
         };
         var compact = end - start < TimeSpan.FromMinutes(45);
@@ -504,7 +504,7 @@ public partial class CalendarView : UserControl
 
         var when = new TextBlock
         {
-            Text = $"{start.ToString("dddd, d. MMMM", Culture)} · {start.ToString("t", Culture)} – {end.ToString("t", Culture)}",
+            Text = $"{start.ToString("dddd, d. MMMM", Culture)}, {start.ToString("t", Culture)} – {end.ToString("t", Culture)}",
             Foreground = (Brush)FindResource("MutedTextBrush"), FontSize = 12, Margin = new Thickness(0, 0, 0, 8),
         };
         var card = new StackPanel { Width = 320 };
@@ -881,7 +881,7 @@ public partial class CalendarView : UserControl
                     Text = e.Title, FontSize = 14.5, TextTrimming = TextTrimming.CharacterEllipsis,
                     TextDecorations = e.MyResponse == "declined" ? TextDecorations.Strikethrough : null,
                 });
-                var sub = string.Join(" · ", new[]
+                var sub = string.Join(", ", new[]
                 {
                     e.Location,
                     e.Attendees.Count > 1 ? L.F("{0} people", e.Attendees.Count) : null,
@@ -994,7 +994,7 @@ public partial class CalendarView : UserControl
             Text = e.Title, FontSize = 14.5, TextTrimming = TextTrimming.CharacterEllipsis,
             TextDecorations = e.MyResponse == "declined" ? TextDecorations.Strikethrough : null,
         });
-        var sub = string.Join(" · ", new[] { e.Location, e.Attendees.Count > 1 ? L.F("{0} people", e.Attendees.Count) : null, _vm.CalendarOf(e)?.Name }
+        var sub = string.Join(", ", new[] { e.Location, e.Attendees.Count > 1 ? L.F("{0} people", e.Attendees.Count) : null, _vm.CalendarOf(e)?.Name }
             .Where(s => !string.IsNullOrWhiteSpace(s)));
         if (sub.Length > 0) text.Children.Add(new TextBlock { Text = sub, Foreground = muted, FontSize = 12.5, TextTrimming = TextTrimming.CharacterEllipsis });
         Grid.SetColumn(text, 2);
@@ -1033,7 +1033,7 @@ public partial class CalendarView : UserControl
         var showWeeks = Prefs.ShowWeekNumbers;
         var collapsed = Prefs.MiniMonthCollapsed;
 
-        // Heading: the month (opens it), back · this month · forward, and the fold arrow.
+        // Heading: the month (opens it), back, this month, forward, and the fold arrow.
         var root = new StackPanel();
         var head = new DockPanel();
         Button Small(string glyph, string tip, Action click)

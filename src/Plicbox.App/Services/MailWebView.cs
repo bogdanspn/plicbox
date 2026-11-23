@@ -313,13 +313,13 @@ public static partial class MailWebView
 
         var line = new TextBlock { FontSize = 12.5, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
         line.Inlines.Add(new System.Windows.Documents.Run(v.Headline) { FontWeight = FontWeights.SemiBold, Foreground = B(accent) });
-        line.Inlines.Add(new System.Windows.Documents.Run("  ·  ") { Foreground = Theme.Brush("HintBrush") });
+        line.Inlines.Add(new System.Windows.Documents.Run(":  ") { Foreground = B(accent) });
         line.Inlines.Add(new System.Windows.Documents.Run(v.Host) { FontWeight = FontWeights.SemiBold, Foreground = Theme.Brush("TextBrush") });
         if (v.Destination is { } dest)
             line.Inlines.Add(new System.Windows.Documents.Run($"  →  {dest}") { Foreground = Theme.Brush("TextBrush") });
         if (v.Risk is LinkRisk.Caution or LinkRisk.Danger && v.Reasons.FirstOrDefault() is { } reason)
-            line.Inlines.Add(new System.Windows.Documents.Run($"  ·  {reason}") { Foreground = Theme.Brush("SecondaryTextBrush") });
-        line.Inlines.Add(new System.Windows.Documents.Run($"  ·  {ShortUrl(v.Url)}") { Foreground = muted });
+            line.Inlines.Add(new System.Windows.Documents.Run($", {reason}") { Foreground = Theme.Brush("SecondaryTextBrush") });
+        line.Inlines.Add(new System.Windows.Documents.Run($"   {ShortUrl(v.Url)}") { Foreground = muted });
         line.ToolTip = null;
 
         var row = new DockPanel();

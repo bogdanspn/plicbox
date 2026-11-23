@@ -49,7 +49,7 @@ $date = ([datetime]$latest.publishedAt).ToLocalTime().ToString("d MMMM yyyy", $e
 $index = Join-Path $site "index.html"
 $text = [IO.File]::ReadAllText($index) -replace "`r`n", "`n"
 $text = [regex]::Replace($text, '(?s)(<!-- version -->).*?(<!-- /version -->)',
-    { param($m) $m.Groups[1].Value + "Version $version · $date · <a href=`"changes.html`">What's new</a>" + $m.Groups[2].Value })
+    { param($m) $m.Groups[1].Value + "Version $version, $date. <a href=`"changes.html`">What's new</a>" + $m.Groups[2].Value })
 Write-Utf8 $index $text
 
 $sitemap = Join-Path $site "sitemap.xml"

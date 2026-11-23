@@ -27,4 +27,4 @@ listed with their notices in [src/Plicbox.App/THIRD-PARTY-NOTICES.txt](src/Plicb
 
 ## Contact
 
-contact@bogdanrosu.com · https://bogdanrosu.com · https://plicbox.bogdanrosu.net
+contact@bogdanrosu.com, https://bogdanrosu.com, https://plicbox.bogdanrosu.net

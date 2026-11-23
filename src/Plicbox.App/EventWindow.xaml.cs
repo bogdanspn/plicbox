@@ -89,7 +89,7 @@ public partial class EventWindow : Window
             var me = e.Attendees.FirstOrDefault(a => a.IsSelf);
             GuestsBox.Text = string.Join(", ", e.Attendees.Where(a => !a.IsSelf && !a.IsOrganizer).Select(a => a.Email));
             AttendeeList.ItemsSource = e.Attendees.Select(a => new AttendeeRow(
-                (a.IsSelf ? L.T("You") : string.IsNullOrWhiteSpace(a.Name) ? a.Email : a.Name) + (a.IsOrganizer ? " · " + L.T("organiser") : ""),
+                (a.IsSelf ? L.T("You") : string.IsNullOrWhiteSpace(a.Name) ? a.Email : a.Name) + (a.IsOrganizer ? " (" + L.T("organiser") + ")" : ""),
                 a.Response switch { "accepted" => "", "declined" => "", "tentative" => "", _ => "" },
                 CalendarBrushes.For(a.Response switch { "accepted" => "#10B981", "declined" => "#C42B1C", "tentative" => "#D97706", _ => "#8C8C8C" })))
                 .ToList();

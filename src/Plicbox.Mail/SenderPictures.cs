@@ -10,7 +10,7 @@ namespace Plicbox.Mail;
 /// <summary>
 /// Finds a picture for a sender, the way eM Client fills in contact images, without inventing one:
 /// the person's Gravatar, else the company's verified brand logo (BIMI, the DNS-published logo Gmail shows),
-/// else — only for addresses like noreply@ or news@ — the website's touch icon. Free-mail domains never get a company logo.
+/// else (only for addresses like noreply@ or news@) the website's touch icon. Free-mail domains never get a company logo.
 /// Results (and misses) are cached on disk, so each sender is looked up at most about once a month; nothing about the
 /// message itself is sent anywhere.
 /// </summary>

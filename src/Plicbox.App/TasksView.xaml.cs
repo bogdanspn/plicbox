@@ -123,7 +123,7 @@ public partial class TasksView : UserControl
         var targets = _vm.MoveTargets(row).ToList();
         var move = Item(L.T("Move to"), "", () => { }, targets.Count > 0);
         foreach (var target in targets)
-            move.Items.Add(Item(target.Group.Length == 0 || target.Group == L.T("Lists") ? target.Title : $"{target.Title} · {target.Group}", "", () => _ = _vm.MoveRowAsync(row, target.List!.Id)));
+            move.Items.Add(Item(target.Group.Length == 0 || target.Group == L.T("Lists") ? target.Title : $"{target.Title} ({target.Group})", "", () => _ = _vm.MoveRowAsync(row, target.List!.Id)));
         menu.Items.Add(move);
         if (row.HasEmail) menu.Items.Add(Item(L.T("Open Email"), "", () => _ = _vm.OpenRowEmailAsync(row)));
         menu.Items.Add(new Separator());
@@ -149,7 +149,7 @@ public partial class TasksView : UserControl
         if (_vm.Selected is not { } row) return;
         var menu = new ContextMenu { PlacementTarget = MoveButton, Placement = PlacementMode.Bottom };
         foreach (var target in _vm.MoveTargets(row))
-            menu.Items.Add(Item(target.Group.Length == 0 || target.Group == L.T("Lists") ? target.Title : $"{target.Title} · {target.Group}", "\uE8FD", () => _ = _vm.MoveRowAsync(row, target.List!.Id)));
+            menu.Items.Add(Item(target.Group.Length == 0 || target.Group == L.T("Lists") ? target.Title : $"{target.Title} ({target.Group})", "\uE8FD", () => _ = _vm.MoveRowAsync(row, target.List!.Id)));
         if (menu.Items.Count == 0) menu.Items.Add(Item(L.T("No other lists"), null, () => { }, false));
         menu.IsOpen = true;
     }

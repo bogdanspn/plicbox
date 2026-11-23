@@ -37,7 +37,7 @@ public sealed partial class AccountEditor : ObservableObject
     [ObservableProperty] private ImageSource? _picture;
     public bool IsGoogle => Original.Auth == AuthKind.GoogleOAuth;
     public string SignInMethod => IsGoogle ? L.T("Google sign-in (OAuth)") : L.T("Password");
-    public string Summary => IsGoogle ? L.T("Mail · Google") : L.T("Mail · IMAP");
+    public string Summary => IsGoogle ? L.T("Mail (Google)") : L.T("Mail (IMAP)");
 
     [ObservableProperty] private string _label = "";
     [ObservableProperty] private string _displayName = "";
