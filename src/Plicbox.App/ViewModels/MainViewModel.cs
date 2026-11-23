@@ -412,30 +412,89 @@ public sealed partial class MainViewModel : ObservableObject
         MarkUnreadCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(SelectedInJunk));
         OnPropertyChanged(nameof(SelectedInOutbox));
-        RuleSender = SelectedMessage?.Model is { } m ? (m.FromName.Length > 0 ? m.FromName : m.FromAddress) : L.T("this sender");
-        // Whole domains only for companies: blocking @gmail.com would block half the world.
-        var domain = SelectedMessage?.Model.FromAddress is { } from && from.Contains('@') ? from[(from.LastIndexOf('@') + 1)..].ToLowerInvariant() : null;
-        BlockDomain = domain is null || SenderCheck.IsFreeMail(domain) ? null : "@" + domain;
+        // Several messages picked: the menu speaks of all their senders ("Block 4 senders…").
+        var senders = TargetSenders();
+        RuleSender = senders.Count > 1 ? L.F("{0} senders", senders.Count)
+            : (senders.FirstOrDefault() ?? SelectedMessage?.Model) is { } m ? NameOf(m) : L.T("this sender");
+        var domains = TargetDomains(senders);
+        BlockDomain = domains.Count switch { 0 => null, 1 => domains[0], _ => L.F("{0} domains", domains.Count) };
+        RuleSubjectHeader = TargetSubjects().Count > 1 ? L.T("Move mail with these subjects to…") : L.T("Move mail with this subject to…");
     }
+
+    /// <summary>"Move mail with this subject to…", or "these subjects" when the picked messages have several.</summary>
+    [ObservableProperty] private string _ruleSubjectHeader = L.T("Move mail with this subject to…");
+
+    /// <summary>
+    /// The senders of the messages an action applies to (all the selected ones), each address once; your own
+    /// addresses left out (Sent mail in the selection), unless that's all there is.
+    /// </summary>
+    private List<MessageSummary> TargetSenders()
+    {
+        var all = Targets().Select(r => r.Model).Where(m => m.FromAddress.Contains('@'))
+            .GroupBy(m => m.FromAddress.Trim(), StringComparer.OrdinalIgnoreCase).Select(g => g.First()).ToList();
+        var others = all.Where(m => !_accountsById.Values.Any(a => a.Identities.Any(i => i.Address.Equals(m.FromAddress.Trim(), StringComparison.OrdinalIgnoreCase)))).ToList();
+        return others.Count > 0 ? others : all;
+    }
+
+    /// <summary>"@shop.example" for each company domain among these senders. Never free mail: blocking @gmail.com would block half the world.</summary>
+    private static List<string> TargetDomains(IEnumerable<MessageSummary> senders) =>
+        senders.Select(m => m.FromAddress.Trim()).Where(a => a.Contains('@')).Select(a => a[(a.LastIndexOf('@') + 1)..].ToLowerInvariant())
+            .Where(d => d.Length > 0 && !SenderCheck.IsFreeMail(d)).Distinct().Select(d => "@" + d).ToList();
+
+    /// <summary>The picked messages' subjects, without Re:/Fwd:, each once.</summary>
+    private List<string> TargetSubjects() =>
+        Targets().Select(r => RuleMatcher.CleanSubject(r.Model.Subject)).Where(t => t.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+    /// <summary>"Ana", "Ana, Shop", "Ana, Shop and 3 more": for titles and rule names.</summary>
+    private static string ListNames(IReadOnlyList<string> names) => names.Count switch
+    {
+        0 => "",
+        1 => names[0],
+        2 => $"{names[0]}, {names[1]}",
+        _ => L.F("{0}, {1} and {2} more", names[0], names[1], names.Count - 2),
+    };
+
+    private static string NameOf(MessageSummary m) => m.FromName.Length > 0 ? m.FromName : m.FromAddress;
 
     /// <summary>"@shop.example" for the Block menu; null for free mail providers.</summary>
     [ObservableProperty] private string? _blockDomain;
 
     /// <summary>Block the selected message's sender (or their whole domain), offering to move what's already in the inbox.</summary>
+    /// <remarks>With several messages picked: all their senders, or all their company domains, in one go.</remarks>
     [RelayCommand]
-    private Task BlockSender(string scope) => SelectedMessage?.Model is { } m ? BlockSenderAsync(m, scope) : Task.CompletedTask;
+    private Task BlockSender(string scope)
+    {
+        var senders = TargetSenders();
+        if (senders.Count > 1)
+        {
+            if (scope == "domain")
+            {
+                var domains = TargetDomains(senders);
+                return domains.Count == 0 ? Task.CompletedTask : BlockAsync(domains, L.F("everyone at {0}", ListNames(domains)));
+            }
+            return BlockAsync(senders.Select(m => m.FromAddress.Trim().ToLowerInvariant()).ToList(), ListNames(senders.Select(NameOf).ToList()));
+        }
+        return (senders.FirstOrDefault() ?? SelectedMessage?.Model) is { } one ? BlockSenderAsync(one, scope) : Task.CompletedTask;
+    }
 
     /// <summary>Blocks a message's sender ("sender") or their company's domain ("domain").</summary>
-    public async Task BlockSenderAsync(MessageSummary m, string scope)
+    public Task BlockSenderAsync(MessageSummary m, string scope)
     {
-        var entry = scope == "domain" && BlockDomain is { } d ? d : m.FromAddress.Trim().ToLowerInvariant();
-        var who = scope == "domain" ? L.F("everyone at {0}", entry) : (m.FromName.Length > 0 ? $"{m.FromName} ({m.FromAddress})" : m.FromAddress);
+        var domain = TargetDomains([m]).FirstOrDefault();
+        var entry = scope == "domain" && domain is not null ? domain : m.FromAddress.Trim().ToLowerInvariant();
+        var who = entry == domain ? L.F("everyone at {0}", entry) : (m.FromName.Length > 0 ? $"{m.FromName} ({m.FromAddress})" : m.FromAddress);
+        return BlockAsync([entry], who);
+    }
+
+    /// <summary>Adds addresses or "@domain"s to the blocked senders, offering to move what's already in the inboxes.</summary>
+    private async Task BlockAsync(IReadOnlyList<string> entries, string who)
+    {
         var where = _settings.Current.BlockedToTrash ? L.T("Trash") : L.T("Junk");
 
         var inboxes = _foldersByAccount.Values.Select(f => f.FirstOrDefault(x => x.Role == FolderRole.Inbox)).OfType<Folder>().ToList();
         var already = 0;
         foreach (var inbox in inboxes)
-            already += (await _messages.GetByFolderAsync(inbox.Id, 5000)).Count(x => Addresses.Covers(entry, x.FromAddress));
+            already += (await _messages.GetByFolderAsync(inbox.Id, 5000)).Count(x => entries.Any(e => Addresses.Covers(e, x.FromAddress)));
 
         bool move;
         if (already > 0)
@@ -454,14 +513,15 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         var list = _settings.Current.BlockedSenders;
-        if (!list.Contains(entry, StringComparer.OrdinalIgnoreCase)) _settings.Save(_settings.Current with { BlockedSenders = [.. list, entry] });
+        var added = entries.Where(e => !list.Contains(e, StringComparer.OrdinalIgnoreCase)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (added.Count > 0) _settings.Save(_settings.Current with { BlockedSenders = [.. list, .. added] });
         if (move)
         {
             foreach (var inbox in inboxes) await _engine.MoveBlockedAsync(inbox);
             await RefreshCountsAsync();
             await ReloadMessagesAsync(preserveSelection: false);
         }
-        StatusText = L.F("Blocked {0}", entry);
+        StatusText = L.F("Blocked {0}", entries.Count == 1 ? entries[0] : who);
     }
 
     [RelayCommand]
@@ -1716,9 +1776,14 @@ public sealed partial class MainViewModel : ObservableObject
     private async Task CreateRule(string kind)
     {
         if (SelectedMessage?.Model is not { } m) return;
-        var who = m.FromName.Length > 0 ? m.FromName : m.FromAddress;
-        var fromSender = new RuleCondition { Field = RuleField.From, Operator = RuleOperator.Is, Values = [m.FromAddress] };
-        var subject = RuleMatcher.CleanSubject(m.Subject);
+        // Several messages picked: one rule for all their senders (or subjects), a condition listing each.
+        var senders = TargetSenders();
+        if (senders.Count == 0) senders = [m];
+        var who = ListNames(senders.Select(NameOf).ToList());
+        var fromSender = new RuleCondition { Field = RuleField.From, Operator = RuleOperator.Is, Values = senders.Select(x => x.FromAddress.Trim()).ToList() };
+        var subjects = TargetSubjects();
+        if (subjects.Count == 0) subjects = [RuleMatcher.CleanSubject(m.Subject)];
+        var subject = subjects.Count == 1 ? subjects[0] : L.F("{0} subjects", subjects.Count);
 
         if (kind == "custom")
         {
@@ -1731,13 +1796,14 @@ public sealed partial class MainViewModel : ObservableObject
         if (kind is "move-sender" or "move-subject")
         {
             var folders = (_foldersByAccount.GetValueOrDefault(m.AccountId) ?? []).Where(f => !f.IsVirtual && f.Role != FolderRole.Outbox);
-            var heading = kind == "move-sender" ? L.F("Move mail from {0} to", who) : L.F("Move mail about “{0}” to", subject);
+            var heading = kind == "move-sender" ? L.F("Move mail from {0} to", who)
+                : subjects.Count == 1 ? L.F("Move mail about “{0}” to", subject) : L.T("Move mail with these subjects to");
             if (_dialogs.PickFolder(heading, L.T("Create rule"), folders, AccountTitle) is not { } folder) return;
             rule = new MailRule
             {
-                Name = kind == "move-sender" ? $"{who} → {folder.Name}" : $"“{subject}” → {folder.Name}",
+                Name = kind == "move-sender" ? $"{who} → {folder.Name}" : subjects.Count == 1 ? $"“{subject}” → {folder.Name}" : $"{subject} → {folder.Name}",
                 AccountId = m.AccountId,
-                Conditions = [kind == "move-sender" ? fromSender : new RuleCondition { Field = RuleField.Subject, Values = [subject] }],
+                Conditions = [kind == "move-sender" ? fromSender : new RuleCondition { Field = RuleField.Subject, Values = subjects }],
                 Actions = [new RuleAction { Kind = RuleActionKind.MoveTo, FolderAccountId = folder.AccountId, FolderPath = folder.Path }],
             };
         }
@@ -1747,7 +1813,8 @@ public sealed partial class MainViewModel : ObservableObject
         }
         else
         {
-            if (!_dialogs.Confirm(L.F("Delete all mail from {0}?", who), L.F("New mail from {0} will go straight to Trash.", m.FromAddress), L.T("Create rule"), DialogKind.Danger)) return;
+            var addresses = ListNames(senders.Select(x => x.FromAddress.Trim()).ToList());
+            if (!_dialogs.Confirm(L.F("Delete all mail from {0}?", who), L.F("New mail from {0} will go straight to Trash.", addresses), L.T("Create rule"), DialogKind.Danger)) return;
             rule = new MailRule { Name = L.F("Delete mail from {0}", who), Conditions = [fromSender], Actions = [new RuleAction { Kind = RuleActionKind.Delete }] };
         }
 

@@ -1647,5 +1647,11 @@
   "Free software under the GNU GPL, version 3.": "Freie Software unter der GNU GPL, Version 3.",
   "Licence": "Lizenz",
   "Third-party licences": "Lizenzen von Drittanbietern",
-  "It's a program: opening it runs it.": "Es ist ein Programm: Öffnen startet es."
+  "It's a program: opening it runs it.": "Es ist ein Programm: Öffnen startet es.",
+  "{0} senders": "{0} Absender",
+  "{0} domains": "{0} Domains",
+  "Move mail with these subjects to…": "Nachrichten mit diesen Betreffs verschieben nach…",
+  "{0}, {1} and {2} more": "{0}, {1} und {2} weitere",
+  "{0} subjects": "{0} Betreffs",
+  "Move mail with these subjects to": "Nachrichten mit diesen Betreffs verschieben nach"
 }

@@ -576,7 +576,7 @@
                                 <MenuItem Header="{Binding RuleSender}" HeaderStringFormat="{local:T 'Move mail from {0} to…'}" Command="{Binding CreateRuleCommand}" CommandParameter="move-sender">
                                     <MenuItem.Icon><TextBlock Style="{StaticResource Icon}" Text="&#xE8DE;" FontSize="16" /></MenuItem.Icon>
                                 </MenuItem>
-                                <MenuItem Header="{local:T 'Move mail with this subject to…'}" Command="{Binding CreateRuleCommand}" CommandParameter="move-subject">
+                                <MenuItem Header="{Binding RuleSubjectHeader}" Command="{Binding CreateRuleCommand}" CommandParameter="move-subject">
                                     <MenuItem.Icon><TextBlock Style="{StaticResource Icon}" Text="&#xE8BD;" FontSize="16" /></MenuItem.Icon>
                                 </MenuItem>
                                 <MenuItem Header="{Binding RuleSender}" HeaderStringFormat="{local:T 'Always mark mail from {0} as read'}" Command="{Binding CreateRuleCommand}" CommandParameter="read-sender">

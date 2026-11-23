@@ -1647,5 +1647,11 @@
   "Free software under the GNU GPL, version 3.": "Software liber, sub licența GNU GPL, versiunea 3.",
   "Licence": "Licență",
   "Third-party licences": "Licențe terțe",
-  "It's a program: opening it runs it.": "Este un program: dacă îl deschizi, pornește."
+  "It's a program: opening it runs it.": "Este un program: dacă îl deschizi, pornește.",
+  "{0} senders": "{0} expeditori",
+  "{0} domains": "{0} domenii",
+  "Move mail with these subjects to…": "Mută mesajele cu aceste subiecte în…",
+  "{0}, {1} and {2} more": "{0}, {1} și încă {2}",
+  "{0} subjects": "{0} subiecte",
+  "Move mail with these subjects to": "Mută mesajele cu aceste subiecte în"
 }
