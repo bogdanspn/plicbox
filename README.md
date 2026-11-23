@@ -25,3 +25,11 @@ Windows 10 and 11, 64-bit.
 
 This repository holds the installers and the update feed. Which providers work and how is on the
 [documentation page](https://plicbox.bogdanrosu.net/docs.html).
+
+## Licence
+
+Plicbox is free software: Copyright (C) 2026 Cristian Bogdan Rosu, under the
+[GNU General Public License, version 3](LICENSE), with the additional terms in [NOTICE.md](NOTICE.md).
+A changed version you share must say it's changed and use its own name and icon; the Plicbox name and logo aren't
+licensed. The libraries it includes are under their own licences (MIT, Apache 2.0, BSD), listed in the app under
+About Plicbox → Third-party licences.
