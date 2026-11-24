@@ -2,7 +2,10 @@
 .SYNOPSIS
     Measures a Plicbox build and compares it with the last release: download and install size, how long until the
     mail list is up, and memory (Plicbox itself and the WebView2 processes that show messages), all with the demo's
-    data. release.ps1 runs it on every release and records the numbers in perf\history.csv.
+    data. release.ps1 runs it on every release and records the numbers in perf\history.csv, and the website shows them.
+
+    Start time and memory are the median of several runs. The first run of a new build is left out: it takes over twice
+    as long as any later one. Rows with runs = 1 (up to 0.1.18) are that single first run, so they don't compare.
 .EXAMPLE
     .\perf\measure.ps1 -Version 0.1.9 -PublishDir artifacts\publish -ReleasesDir artifacts\releases -Record
 #>
@@ -10,6 +13,7 @@ param(
     [Parameter(Mandatory)] [string]$Version,
     [Parameter(Mandatory)] [string]$PublishDir,
     [string]$ReleasesDir,
+    [int]$Runs = 5,
     [switch]$Record
 )
 
@@ -33,6 +37,7 @@ $now = [ordered]@{
     appPrivateMb = ''
     webViewPrivateMb = ''
     managedMb = ''
+    runs = ''
 }
 if ($ReleasesDir) {
     $setup = Get-ChildItem $ReleasesDir -Filter '*-Setup.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -41,18 +46,27 @@ if ($ReleasesDir) {
     if ($package) { $now.packageMb = Mb $package.Length }
 }
 
-# ─── Start time and memory: the build itself, run with the demo's data (a window opens for about 20 seconds) ───
+# ─── Start time and memory: the build itself, run with the demo's data (a window opens for about 20 seconds each time) ───
 $report = Join-Path ([IO.Path]::GetTempPath()) "plicbox-measure-$PID.json"
-Remove-Item $report -ErrorAction SilentlyContinue
-$app = Start-Process (Join-Path $PublishDir 'Plicbox.App.exe') -ArgumentList @('--demo', '--measure', $report) -PassThru
-if (-not $app.WaitForExit(120000)) { $app.Kill(); Write-Host '  The measuring run didn''t finish within 2 minutes.' -ForegroundColor Yellow }
-if (Test-Path $report) {
-    $m = Get-Content $report -Raw | ConvertFrom-Json
-    Remove-Item $report
-    $now.startupMs = Num $m.startupMs
-    $now.appPrivateMb = Num $m.appPrivateMb
-    $now.webViewPrivateMb = Num $m.webViewPrivateMb
-    $now.managedMb = Num $m.managedMb
+$measured = @(foreach ($run in 0..$Runs) {
+    Remove-Item $report -ErrorAction SilentlyContinue
+    $app = Start-Process (Join-Path $PublishDir 'Plicbox.App.exe') -ArgumentList @('--demo', '--measure', $report) -PassThru
+    if (-not $app.WaitForExit(120000)) { $app.Kill(); Write-Host '  A measuring run didn''t finish within 2 minutes.' -ForegroundColor Yellow }
+    if (Test-Path $report) {
+        $result = Get-Content $report -Raw | ConvertFrom-Json
+        Remove-Item $report
+        if ($run -gt 0) { $result } # run 0 only warms up
+    }
+})
+function Median([string]$name) {
+    $sorted = @($measured.$name | Sort-Object)
+    $middle = [math]::Floor($sorted.Count / 2)
+    [math]::Round($(if ($sorted.Count % 2) { $sorted[$middle] } else { ($sorted[$middle - 1] + $sorted[$middle]) / 2 }), 1)
+}
+if ($measured.Count) {
+    $now.runs = $measured.Count
+    foreach ($key in 'startupMs', 'appPrivateMb', 'webViewPrivateMb', 'managedMb') { $now[$key] = Num (Median $key) }
+    Write-Host "  Median of $($measured.Count) runs; message display ranged $(($measured.webViewPrivateMb | Measure-Object -Minimum).Minimum) to $(($measured.webViewPrivateMb | Measure-Object -Maximum).Maximum) MB." -ForegroundColor DarkGray
 }
 else {
     Write-Host '  No memory figures: the demo didn''t report back (is a Plicbox demo already open?).' -ForegroundColor Yellow
@@ -73,7 +87,9 @@ foreach ($key in $limits.Keys) {
     $label, $unit, $limit = $limits[$key]
     $value = $now[$key]
     if ($value -eq '') { continue }
-    $was = if ($before -and $before.$key) { [double]::Parse($before.$key, $invariant) } else { $null }
+    # One first run (runs = 1) and a median of warm ones don't compare; sizes always do.
+    $comparable = $key -in 'setupMb', 'packageMb', 'appFolderMb' -or [int]('0' + $before.runs) -gt 1
+    $was = if ($before -and $comparable -and $before.$key) { [double]::Parse($before.$key, $invariant) } else { $null }
     $change = if ($was) { ([double]::Parse($value, $invariant) - $was) / $was } else { $null }
     $line = "  {0,-28}{1,12}{2,12}" -f $label, $(if ($null -ne $was) { "$was $unit" } else { '' }), "$value $unit"
     if ($null -ne $change) { $line += "  {0:+0.0;-0.0;0}%" -f ($change * 100) }

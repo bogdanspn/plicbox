@@ -36,6 +36,9 @@ and `changes.html` lists every version with its release notes. Both are written 
 GitHub releases (needs `gh`). `release.ps1` runs it after each upload; commit the result and deploy. The release notes
 are the `-Notes` given to `release.ps1`: one `- change` per line.
 
+The same script fills the home page's "Measured, every release" (between the `<!-- perf -->` markers) from
+`perf/history.csv`. Start time and memory show only for versions measured over several runs (the `runs` column).
+
 ## Publishing
 
 `webdisk/deploy.ps1` publishes the site through cPanel Web Disk (WebDAV), the same way wallnode's `tools/deploy.ps1` does:

@@ -93,8 +93,9 @@ the app, never the mail data. The installer isn't signed, so Windows asks once (
 
 Each release is also measured (`perf\measure.ps1`): download and install size, how long until the mail list is up, and
 memory for Plicbox and its message display, with the demo's data (`--demo --measure`, a window opens for about 20
-seconds). The figures are printed next to the last release's, with a warning when one grew noticeably, and kept in
-`perf\history.csv`, committed with the release.
+seconds, six times: the first run only warms up, the others' median counts). The figures are printed next to the last
+release's, with a warning when one grew noticeably, and kept in `perf\history.csv`, committed with the release. The
+website's home page shows them.
 
 A build from `run.cmd` is a **dev build** (a DEV tag by the title): it shares the installed app's mail, settings and
 sign-ins but runs beside it, never updates, and leaves starting with Windows to the installed one. Its log is
