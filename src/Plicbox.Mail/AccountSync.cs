@@ -296,7 +296,7 @@ internal sealed class AccountSync : IAsyncDisposable
         catch (OperationCanceledException) { }
     }
 
-    // ───────────────────────── pending local changes → server ─────────────────────────
+    // ───────────────────────── pending local changes -> server ─────────────────────────
 
     private async Task RunPendingOpsAsync(ImapClient client, CancellationToken ct)
     {
@@ -440,7 +440,7 @@ internal sealed class AccountSync : IAsyncDisposable
         return true;
     }
 
-    // ───────────────────────── server → local ─────────────────────────
+    // ───────────────────────── server -> local ─────────────────────────
 
     private async Task<int> SyncFoldersAsync(ImapClient client, SyncScope scope, CancellationToken ct)
     {

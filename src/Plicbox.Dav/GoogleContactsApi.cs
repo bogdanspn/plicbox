@@ -222,7 +222,7 @@ public sealed class GoogleContactsApi(HttpClient http, GoogleAuth google)
             HttpStatusCode.Forbidden when reason is "insufficientPermissions" or "ACCESS_TOKEN_SCOPE_INSUFFICIENT" or "PERMISSION_DENIED" && !text.Contains("SERVICE_DISABLED", StringComparison.Ordinal) =>
                 new CalendarPermissionException(L.F("{0} hasn't given Plicbox access to contacts yet.", account.Email)),
             HttpStatusCode.Forbidden when reason is "accessNotConfigured" or "SERVICE_DISABLED" || text.Contains("SERVICE_DISABLED", StringComparison.Ordinal) =>
-                new CalendarApiDisabledException(L.T("The Google People API is switched off in your Google Cloud project. Enable it under APIs & Services → Library → Google People API.")),
+                new CalendarApiDisabledException(L.T("The Google People API is switched off in your Google Cloud project. Enable it under APIs & Services > Library > Google People API.")),
             _ => new HttpRequestException(L.F("Google Contacts answered {0}: {1}", (int)response.StatusCode, ErrorMessage(text) ?? response.ReasonPhrase), null, response.StatusCode),
         };
     }

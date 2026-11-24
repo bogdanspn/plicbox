@@ -46,7 +46,7 @@ public static class L
     /// <summary><see cref="T"/> of a format string ("Block {0}…"), filled in.</summary>
     public static string F(string english, params object?[] args) => string.Format(CultureInfo.CurrentCulture, T(english), args);
 
-    /// <summary>The phrases of a language, English → translation (for tests and tools).</summary>
+    /// <summary>The phrases of a language, English -> translation (for tests and tools).</summary>
     public static IReadOnlyDictionary<string, string> Load(string language)
     {
         using var stream = typeof(L).Assembly.GetManifestResourceStream($"Plicbox.Core.Languages.{language}.json");

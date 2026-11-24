@@ -60,7 +60,7 @@ public sealed partial class MessageReader(
     public bool HasBlockedTracking => BlockedTracking is not null;
     public string BlockedTrackingText => BlockedTracking is { } who ? L.F("{0} was blocked to preserve privacy.", who) : "";
 
-    /// <summary>Settings → Mail → Reading: the notices as one row of chips (read for each message shown).</summary>
+    /// <summary>Settings > Mail > Reading: the notices as one row of chips (read for each message shown).</summary>
     [ObservableProperty, NotifyPropertyChangedFor(nameof(FullNotices), nameof(ShowWarningBanner), nameof(ShowWarningChip))] private bool _compactNotices = true;
     public bool FullNotices => !CompactNotices;
     // The sender warning: a banner with the reasons, or (compact) a chip leading the notices row, reasons on hover.
@@ -93,7 +93,7 @@ public sealed partial class MessageReader(
     private bool _watching;
 
     /// <summary>
-    /// Settings → Mail → Reading changed: the message on screen follows at once. Held weakly, so a closed message
+    /// Settings > Mail > Reading changed: the message on screen follows at once. Held weakly, so a closed message
     /// window's reader can go.
     /// </summary>
     private void WatchSettings()
@@ -109,7 +109,7 @@ public sealed partial class MessageReader(
             ui?.BeginInvoke(() => reader.CompactNotices = s.CompactNotices);
         };
         settings.Changed += handler;
-        // Settings → Appearance → Message text (also its live preview): the message on screen shows again in it.
+        // Settings > Appearance > Message text (also its live preview): the message on screen shows again in it.
         Action? textChanged = null;
         textChanged = () =>
         {

@@ -214,7 +214,7 @@
                                         Visibility="{Binding IsGoogle, Converter={StaticResource BoolToVisibility}}" />
                             </StackPanel>
                             <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"
-                                       Text="{local:T 'Pick these in the From field when writing. New mail uses the one with the star, or the account\'s own address. Replies use the alias the message was sent to. Gmail only sends from addresses set up under Gmail → Settings → Accounts → Send mail as.'}" />
+                                       Text="{local:T 'Pick these in the From field when writing. New mail uses the one with the star, or the account\'s own address. Replies use the alias the message was sent to. Gmail only sends from addresses set up under Gmail > Settings > Accounts > Send mail as.'}" />
 
                             <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Signature'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
                             <TextBox Text="{Binding Signature, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap"

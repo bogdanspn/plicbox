@@ -172,7 +172,7 @@ public sealed partial class ThreatLists
         return found;
     }
 
-    // "a.b.example.com" → itself, "b.example.com", "example.com" (an entry for a site covers its subdomains).
+    // "a.b.example.com" -> itself, "b.example.com", "example.com" (an entry for a site covers its subdomains).
     private static IEnumerable<string> Suffixes(string host)
     {
         yield return host;

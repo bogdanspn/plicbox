@@ -40,7 +40,7 @@ internal sealed class DemoData(IAccountRepository accounts, IFolderRepository fo
             Simple("Dear customer,", "We're updating our terms for bank transfers from 1 December.", "The updated terms are attached as a PDF."),
             attachment: ("Transfer-Terms-2026.pdf", "application/pdf"));
         await AddAsync(p[FolderRole.Inbox], "Tailspin Travel", "trips@tailspin.example", "Your boarding pass for Friday", now.AddHours(-7),
-            Simple("Ready for take-off,", "Your boarding pass for <b>OTP → MUC</b> on Friday 08:40 is ready.", "Gate opens 40 minutes before departure."),
+            Simple("Ready for take-off,", "Your boarding pass for <b>OTP to MUC</b> on Friday 08:40 is ready.", "Gate opens 40 minutes before departure."),
             flagged: true, read: true, important: true);
 
         await AddAsync(p[FolderRole.Inbox], "Alpine Ski House", "hello@alpineski.example", "Finish setting up your account to unlock member benefits", now.AddDays(-1).AddHours(-1),

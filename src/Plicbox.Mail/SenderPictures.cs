@@ -71,7 +71,7 @@ public sealed partial class SenderPictures
         return RoleAddress().IsMatch(local) ? await CachedAsync("icon:" + org, () => TouchIconAsync(org, ct)) : null;
     }
 
-    /// <summary>The registrable domain: mail.news.example.co.uk → example.co.uk.</summary>
+    /// <summary>The registrable domain: mail.news.example.co.uk -> example.co.uk.</summary>
     public static string OrganizationalDomain(string domain)
     {
         var labels = domain.Split('.', StringSplitOptions.RemoveEmptyEntries);
@@ -90,7 +90,7 @@ public sealed partial class SenderPictures
             return t.IsCompletedSuccessfully ? t.Result : null;
         }, TaskScheduler.Default);
 
-    // What's in the cache folder (file name without extension → path), listed once: looking a file up by pattern
+    // What's in the cache folder (file name without extension -> path), listed once: looking a file up by pattern
     // would scan the folder (thousands of files) for every sender, several times, on every folder switch.
     private Dictionary<string, string>? _cached;
     private readonly object _cachedLock = new();
@@ -158,7 +158,7 @@ public sealed partial class SenderPictures
     private async Task<(byte[], string)?> GravatarAsync(string address, CancellationToken ct)
     {
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(address))).ToLowerInvariant();
-        return await DownloadImageAsync($"https://gravatar.com/avatar/{hash}?s=128&d=404", ct); // d=404: no picture → nothing
+        return await DownloadImageAsync($"https://gravatar.com/avatar/{hash}?s=128&d=404", ct); // d=404: no picture -> nothing
     }
 
     private async Task<(byte[], string)?> BimiAsync(string domain, string org, CancellationToken ct)

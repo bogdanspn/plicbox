@@ -27,7 +27,7 @@ $blocks = foreach ($release in $releases) {
     foreach ($line in ($body -split "`r?`n")) {
         $line = $line.Trim()
         if (-not $line) { continue }
-        $text = Html (($line -replace '^[-*]\s+', '') -replace ' > ', ' → ')
+        $text = Html (($line -replace '^[-*]\s+', '') -replace ' [\u2192] ', ' > ')
         if ($line -match '^[-*]\s+') { $items += "      <li>$text</li>" } else { $paragraphs += "    <p>$text</p>" }
     }
     $notes = ($paragraphs + $(if ($items) { @("    <ul>") + $items + @("    </ul>") })) -join "`n"

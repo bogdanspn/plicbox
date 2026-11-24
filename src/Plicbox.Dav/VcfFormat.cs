@@ -235,7 +235,7 @@ public static class VcfFormat
         if (current.Length > 0) yield return current.ToString();
     }
 
-    /// <summary>"item1.EMAIL;TYPE=work:a@b.c" → EMAIL, its parameters (2.1's bare HOME/WORK kept as keys), the value.</summary>
+    /// <summary>"item1.EMAIL;TYPE=work:a@b.c" -> EMAIL, its parameters (2.1's bare HOME/WORK kept as keys), the value.</summary>
     private static (string Name, Dictionary<string, string> Params, string Value) Split(string line)
     {
         var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

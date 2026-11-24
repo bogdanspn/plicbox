@@ -76,7 +76,7 @@ public sealed class AccountDiscovery(HttpClient http, ILogger<AccountDiscovery> 
             $"https://{domain}/.well-known/autoconfig/mail/config-v1.1.xml",
             $"https://autoconfig.thunderbird.net/v1.1/{domain}",
         ];
-        // Mozilla's database also knows hosting companies by the domain their mail servers are in (e.g. mx00.ionos.de → ionos.de).
+        // Mozilla's database also knows hosting companies by the domain their mail servers are in (e.g. mx00.ionos.de -> ionos.de).
         foreach (var mailDomain in mx.Select(BaseDomain).OfType<string>().Distinct().Where(d => d != domain).Take(2))
             urls.Add($"https://autoconfig.thunderbird.net/v1.1/{mailDomain}");
         foreach (var url in urls)
@@ -116,7 +116,7 @@ public sealed class AccountDiscovery(HttpClient http, ILogger<AccountDiscovery> 
                 return Microsoft with { Source = "Microsoft 365" };
             if (h.EndsWith(".messagingengine.com", StringComparison.Ordinal))
                 return new(ProviderKind.Imap, "imap.fastmail.com", 993, "smtp.fastmail.com", 465, "%EMAILADDRESS%", "Fastmail", TlsMode.Tls, TlsMode.Tls);
-            // Zoho runs a region per country: mx.zoho.eu → imap.zoho.eu.
+            // Zoho runs a region per country: mx.zoho.eu -> imap.zoho.eu.
             if (System.Text.RegularExpressions.Regex.Match(h, @"(?:^|\.)(zoho(?:\.com(?:\.au)?|\.eu|\.in|\.jp|\.sa|\.uk))$") is { Success: true } zoho)
             {
                 var region = zoho.Groups[1].Value;
@@ -137,7 +137,7 @@ public sealed class AccountDiscovery(HttpClient http, ILogger<AccountDiscovery> 
         return null;
     }
 
-    /// <summary>"mx00.ionos.de" → "ionos.de", "mx1.host.co.uk" → "host.co.uk".</summary>
+    /// <summary>"mx00.ionos.de" -> "ionos.de", "mx1.host.co.uk" -> "host.co.uk".</summary>
     public static string? BaseDomain(string host)
     {
         var parts = host.TrimEnd('.').Split('.');
@@ -317,7 +317,7 @@ public sealed class AccountDiscovery(HttpClient http, ILogger<AccountDiscovery> 
             return new("Google", true, L.T("Turn on 2-Step Verification for your Google account, then create one and paste it here."),
                 "https://myaccount.google.com/apppasswords");
         if (h.EndsWith(".mail.me.com", StringComparison.Ordinal))
-            return new("Apple", true, L.T("At account.apple.com: Sign-In and Security → App-Specific Passwords. It needs two-factor authentication."),
+            return new("Apple", true, L.T("At account.apple.com: Sign-In and Security > App-Specific Passwords. It needs two-factor authentication."),
                 "https://account.apple.com/");
         if (h.EndsWith(".yahoo.com", StringComparison.Ordinal))
             return new("Yahoo", true, L.F("On {0}'s Account Security page, create an app password and paste it here.", "Yahoo"),
@@ -326,18 +326,18 @@ public sealed class AccountDiscovery(HttpClient http, ILogger<AccountDiscovery> 
             return new("AOL", true, L.F("On {0}'s Account Security page, create an app password and paste it here.", "AOL"),
                 "https://login.aol.com/account/security");
         if (h.EndsWith(".fastmail.com", StringComparison.Ordinal))
-            return new("Fastmail", true, L.T("In Fastmail: Settings → Privacy & Security → Manage app passwords and access → New app password."),
+            return new("Fastmail", true, L.T("In Fastmail: Settings > Privacy & Security > Manage app passwords and access > New app password."),
                 "https://app.fastmail.com/settings/security");
         // GMX and WEB.DE switch mail apps off for new accounts; their settings are in German.
         if (h.EndsWith(".web.de", StringComparison.Ordinal) || h.EndsWith(".gmx.net", StringComparison.Ordinal))
         {
             var name = h.EndsWith(".web.de", StringComparison.Ordinal) ? "WEB.DE" : "GMX";
-            return new(name, false, L.F("{0} only lets mail apps in once you allow it: Einstellungen → E-Mail → POP3/IMAP Abruf, then tick POP3 und IMAP Zugriff erlauben.", name), null);
+            return new(name, false, L.F("{0} only lets mail apps in once you allow it: Einstellungen > E-Mail > POP3/IMAP Abruf, then tick POP3 und IMAP Zugriff erlauben.", name), null);
         }
         // Zoho: IMAP has to be switched on, and with two-factor sign-in only an app-specific password works (each region
         // has its own accounts site: accounts.zoho.eu, accounts.zoho.in, ...).
         if (System.Text.RegularExpressions.Regex.Match(h, @"\.(zoho(?:\.com(?:\.au)?|\.eu|\.in|\.jp|\.sa|\.uk))$") is { Success: true } zoho)
-            return new("Zoho", false, L.T("Zoho Mail needs IMAP switched on first: Settings → Mail Accounts → IMAP Access. With two-factor authentication on, use an app-specific password here, not your normal one. Zoho's free plan may not offer IMAP."),
+            return new("Zoho", false, L.T("Zoho Mail needs IMAP switched on first: Settings > Mail Accounts > IMAP Access. With two-factor authentication on, use an app-specific password here, not your normal one. Zoho's free plan may not offer IMAP."),
                 $"https://accounts.{zoho.Groups[1].Value}/home#security/app_password");
         return null;
     }

@@ -215,7 +215,7 @@
                         </ItemsControl>
                     </DockPanel>
                 </Grid>
-                    <!-- Compact (Settings → Mail → Reading): every notice as a small chip, on a row of their own starting under the
+                    <!-- Compact (Settings > Mail > Reading): every notice as a small chip, on a row of their own starting under the
                          name; hover for the full sentence -->
                     <WrapPanel Grid.Row="1" Grid.ColumnSpan="2"
                            Visibility="{Binding CompactNotices, Converter={StaticResource BoolToVisibility}}">

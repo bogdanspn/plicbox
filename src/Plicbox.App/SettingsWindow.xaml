@@ -290,7 +290,7 @@
                         </Grid>
                     </Border>
                     <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,8,0,0" TextWrapping="Wrap"
-                               Text="{local:T 'How much mail each account keeps here is chosen under Accounts → Sync options → Offline mail.'}" />
+                               Text="{local:T 'How much mail each account keeps here is chosen under Accounts > Sync options > Offline mail.'}" />
 
                     <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Notifications'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
                     <CheckBox x:Name="NotifyNewMail" Content="{local:T 'Show a desktop notification when new mail arrives'}" />
@@ -303,7 +303,7 @@
                     <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Phishing and malware'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
                     <CheckBox x:Name="ThreatLists" Content="{local:T 'Warn about senders and links on public lists of phishing and malware sites'}" />
                     <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,0,0,0" TextWrapping="Wrap"
-                               Text="{local:T 'The lists (from OpenPhish, PhishTank, IPThreat and URLhaus, via malware-filter) are downloaded twice a day and checked here: nothing about your mail is sent anywhere. Rules can move such mail to Junk (Sender or links → are on a phishing or malware list).'}" />
+                               Text="{local:T 'The lists (from OpenPhish, PhishTank, IPThreat and URLhaus, via malware-filter) are downloaded twice a day and checked here: nothing about your mail is sent anywhere. Rules can move such mail to Junk (Sender or links > are on a phishing or malware list).'}" />
                     <TextBlock x:Name="ThreatListsStatus" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,4,0,0" TextWrapping="Wrap" />
                 </StackPanel>
 

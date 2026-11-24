@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Translations, English → language (see L.cs); read as Plicbox.Core.Languages.<code>.json -->
+    <!-- Translations, English to language (see L.cs); read as Plicbox.Core.Languages.<code>.json -->
     <EmbeddedResource Include="Languages\*.json" />
   </ItemGroup>
 

@@ -179,7 +179,7 @@ public sealed partial class MainViewModel : ObservableObject
     public MessageSortColumn SortColumn => _sortColumn;
     public bool SortDescending => _sortDescending;
 
-    // The caret beside the active column header: down = descending (newest, Z→A, flagged/unread first), up = ascending.
+    // The caret beside the active column header: down = descending (newest, Z to A, flagged/unread first), up = ascending.
     public string FlagCaret => Caret(MessageSortColumn.Flag);
     public string ReadStatusCaret => Caret(MessageSortColumn.ReadStatus);
     public string FromCaret => Caret(MessageSortColumn.From);
@@ -197,7 +197,7 @@ public sealed partial class MainViewModel : ObservableObject
         else
         {
             _sortColumn = picked;
-            // Newest, flagged, unread and with-attachments first; names and subjects A→Z.
+            // Newest, flagged, unread and with-attachments first; names and subjects A to Z.
             _sortDescending = picked is not (MessageSortColumn.From or MessageSortColumn.Subject);
         }
         foreach (var name in new[] { nameof(SortColumn), nameof(SortDescending), nameof(FlagCaret), nameof(ReadStatusCaret), nameof(FromCaret),
@@ -508,7 +508,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
         else
         {
-            if (!_dialogs.Confirm(L.F("Block {0}?", who), L.F("New mail from them goes to {0} as it arrives. You can unblock them in Settings → Senders.", where), L.T("Block"), DialogKind.Warning)) return;
+            if (!_dialogs.Confirm(L.F("Block {0}?", who), L.F("New mail from them goes to {0} as it arrives. You can unblock them in Settings > Senders.", where), L.T("Block"), DialogKind.Warning)) return;
             move = false;
         }
 
@@ -563,7 +563,7 @@ public sealed partial class MainViewModel : ObservableObject
         UpdateStatus();
     }
 
-    /// <summary>The folder chosen under Settings → Show on startup ("unified" or "inbox:{accountId}").</summary>
+    /// <summary>The folder chosen under Settings > Show on startup ("unified" or "inbox:{accountId}").</summary>
     private SidebarNode? StartupNode() =>
         _settings.Current.StartupView.StartsWith("inbox:", StringComparison.Ordinal)
         && long.TryParse(_settings.Current.StartupView["inbox:".Length..], out var accountId)
@@ -806,7 +806,7 @@ public sealed partial class MainViewModel : ObservableObject
         _ => new SearchScope(IncludeTrashAndJunk: SearchIncludesTrash),
     };
 
-    // ───────── Reading pane layout (Settings → Appearance) ─────────
+    // ───────── Reading pane layout (Settings > Appearance) ─────────
 
     /// <summary>"bottom", "right", "full" (the list fills the area; a message opens in its place) or "popout" (no pane).</summary>
     [ObservableProperty] private string _readingLayout = "bottom";
@@ -875,7 +875,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (value is null && Reader.ShownId is null) return;
         _ = Reader.ShowAsync(value);
         _engine.SetInView(value?.Model.Id); // new mail being read stays put until it's left, even if a rule files it away
-        // Settings → Mail → Reading: how long a message stays open before it counts as read (or never by itself).
+        // Settings > Mail > Reading: how long a message stays open before it counts as read (or never by itself).
         if (value is { IsRead: false } && _settings.Current.MarkReadAfterSeconds >= 0)
         {
             var cts = _readCts = new CancellationTokenSource();
@@ -1076,7 +1076,7 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>One row's sender picture; the row keeps its coloured letter until (unless) one arrives.</summary>
-    /// <summary>The picture chosen for one of your accounts (Accounts → picture), or null.</summary>
+    /// <summary>The picture chosen for one of your accounts (Accounts > picture), or null.</summary>
     public System.Windows.Media.ImageSource? AccountPicture(long accountId) => _pictures.ForAccount(accountId);
 
     /// <summary>An account's colour, as set in Accounts.</summary>
@@ -1477,7 +1477,7 @@ public sealed partial class MainViewModel : ObservableObject
             await SetFlagsAsync(item, !item.IsRead, item.IsFlagged);
             return;
         }
-        // Several rows: anything unread → mark them all read; all read → mark them all unread.
+        // Several rows: anything unread -> mark them all read; all read -> mark them all unread.
         var targets = Targets();
         var read = targets.Any(m => !m.IsRead);
         if (!read) _readCts?.Cancel();
@@ -1801,7 +1801,7 @@ public sealed partial class MainViewModel : ObservableObject
             if (_dialogs.PickFolder(heading, L.T("Create rule"), folders, AccountTitle) is not { } folder) return;
             rule = new MailRule
             {
-                Name = kind == "move-sender" ? $"{who} → {folder.Name}" : subjects.Count == 1 ? $"“{subject}” → {folder.Name}" : $"{subject} → {folder.Name}",
+                Name = kind == "move-sender" ? $"{who} > {folder.Name}" : subjects.Count == 1 ? $"“{subject}” > {folder.Name}" : $"{subject} > {folder.Name}",
                 AccountId = m.AccountId,
                 Conditions = [kind == "move-sender" ? fromSender : new RuleCondition { Field = RuleField.Subject, Values = subjects }],
                 Actions = [new RuleAction { Kind = RuleActionKind.MoveTo, FolderAccountId = folder.AccountId, FolderPath = folder.Path }],
@@ -2036,7 +2036,7 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Favorites → Trash → Empty All Trash: every account's Trash, after one clear question. An account that fails
+    /// Favorites > Trash > Empty All Trash: every account's Trash, after one clear question. An account that fails
     /// says so; the others are still emptied.
     /// </summary>
     [RelayCommand]

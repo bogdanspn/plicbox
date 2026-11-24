@@ -63,7 +63,7 @@ public sealed class Pictures(SenderPictures senders, ISettingsStore settings, st
     /// <summary>
     /// A sender's picture: your account's own picture for your addresses; otherwise one found online, when enabled in Settings.
     /// </summary>
-    /// <param name="ownAccounts">Your addresses → account id.</param>
+    /// <param name="ownAccounts">Your addresses -> account id.</param>
     /// <param name="mayLookUp">False for mail in Junk: never contact a spammer's servers.</param>
     public async Task<ImageSource?> ForSenderAsync(string address, IReadOnlyDictionary<string, long> ownAccounts, bool mayLookUp)
     {

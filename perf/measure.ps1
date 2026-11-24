@@ -94,7 +94,7 @@ foreach ($key in $limits.Keys) {
     $line = "  {0,-28}{1,12}{2,12}" -f $label, $(if ($null -ne $was) { "$was $unit" } else { '' }), "$value $unit"
     if ($null -ne $change) { $line += "  {0:+0.0;-0.0;0}%" -f ($change * 100) }
     if ($null -ne $change -and $change -gt $limit) {
-        Write-Host "$line  ← grew more than $($limit * 100)%" -ForegroundColor Yellow
+        Write-Host "$line  (!) grew more than $($limit * 100)%" -ForegroundColor Yellow
         $warnings++
     }
     else { Write-Host $line }

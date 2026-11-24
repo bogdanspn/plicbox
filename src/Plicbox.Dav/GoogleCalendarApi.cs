@@ -370,7 +370,7 @@ public sealed partial class GoogleCalendarApi(HttpClient http, GoogleAuth google
             HttpStatusCode.Forbidden when reason is "insufficientPermissions" or "ACCESS_TOKEN_SCOPE_INSUFFICIENT" =>
                 new CalendarPermissionException(L.F("{0} hasn't given Plicbox calendar access yet.", account.Email)),
             HttpStatusCode.Forbidden when reason is "accessNotConfigured" or "SERVICE_DISABLED" =>
-                new CalendarApiDisabledException(L.T("The Google Calendar API is switched off in your Google Cloud project. Enable it under APIs & Services → Library → Google Calendar API.")),
+                new CalendarApiDisabledException(L.T("The Google Calendar API is switched off in your Google Cloud project. Enable it under APIs & Services > Library > Google Calendar API.")),
             _ => new HttpRequestException(L.F("Google Calendar answered {0}: {1}", (int)response.StatusCode, ErrorMessage(text) ?? response.ReasonPhrase), null, response.StatusCode),
         };
     }

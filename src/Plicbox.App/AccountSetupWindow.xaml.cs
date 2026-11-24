@@ -513,7 +513,7 @@ public partial class AccountSetupWindow : Window
             // mailbox, or IMAP not allowed for it); MailKit's own message only says the sign-in failed.
             var notConnected = System.Text.Encoding.UTF8.GetString(imapTalk.ToArray()).Contains("authenticated but not connected", StringComparison.OrdinalIgnoreCase);
             ShowError(notConnected
-                ? L.F("Microsoft signed you in, but Outlook isn't letting mail apps into the mailbox of {0}. Outlook.com keeps this off until you allow it: at outlook.com, open Settings → Mail → Forwarding and IMAP, turn on “Let devices and apps use IMAP” and select Save (a new account is asked to verify itself there first). If it's on already, confirm the sign-in from Plicbox with “This was me” at account.live.com/activity. Then try again.", login.Username)
+                ? L.F("Microsoft signed you in, but Outlook isn't letting mail apps into the mailbox of {0}. Outlook.com keeps this off until you allow it: at outlook.com, open Settings > Mail > Forwarding and IMAP, turn on “Let devices and apps use IMAP” and select Save (a new account is asked to verify itself there first). If it's on already, confirm the sign-in from Plicbox with “This was me” at account.live.com/activity. Then try again.", login.Username)
                 : L.F("Incoming mail: {0}", AccountDiscovery.Explain(ex, s.ImapHost, auth)));
             OfferCertificateFix(ex, s.ImapHost);
             if (_step == Step.Password) ServerExpander.IsExpanded = true;

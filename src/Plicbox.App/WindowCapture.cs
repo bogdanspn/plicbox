@@ -64,7 +64,7 @@ internal static partial class WindowCapture
             DeleteDC(memDc);
             ReleaseDC(IntPtr.Zero, screenDc);
         }
-        return $"window {r.Left},{r.Top} → {r.Right},{r.Bottom}  frame {frame.Left},{frame.Top} → {frame.Right},{frame.Bottom}  (grab starts at {r.Right - size + 20},{r.Bottom - size + 20})";
+        return $"window {r.Left},{r.Top} > {r.Right},{r.Bottom}  frame {frame.Left},{frame.Top} > {frame.Right},{frame.Bottom}  (grab starts at {r.Right - size + 20},{r.Bottom - size + 20})";
     }
 
     private const uint PW_RENDERFULLCONTENT = 2, SRCCOPY = 0x00CC0020;

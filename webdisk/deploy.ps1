@@ -41,7 +41,7 @@
         pwsh -File webdisk\deploy.ps1 -InstallHook    # deploy by itself after each commit that touches site/
         pwsh -File webdisk\deploy.ps1 -RemoveHook
 
-    Optional: set CLOUDFLARE_API_TOKEN (Zone → Cache Purge) and CLOUDFLARE_ZONE_ID, and Cloudflare forgets its cached
+    Optional: set CLOUDFLARE_API_TOKEN (Zone > Cache Purge) and CLOUDFLARE_ZONE_ID, and Cloudflare forgets its cached
     copies of the files a deploy changed (it keeps pictures and videos for days otherwise).
 #>
 
@@ -94,7 +94,7 @@ function Invoke-Git {
     return $out
 }
 
-# site/docs.html → docs.html; anything outside site/ → $null.
+# site/docs.html > docs.html; anything outside site/ > $null.
 function Get-SitePath([string] $repoPath) {
     if ($repoPath -like "$siteRel/*") { return $repoPath.Substring($siteRel.Length + 1) }
     return $null
@@ -187,7 +187,7 @@ function Get-EffectiveFile([string] $rel) {
     return $path
 }
 
-# PROPFIND → @{ name = size } for a folder's entries (folders map to -1), or one file at Depth 0; $null if missing.
+# PROPFIND > @{ name = size } for a folder's entries (folders map to -1), or one file at Depth 0; $null if missing.
 function Get-DavListing([string] $rel, [switch] $Folder) {
     $response = Invoke-Dav PROPFIND (Get-DavUri $rel -Folder:$Folder) -Depth $(if ($Folder) { '1' } else { '0' })
     if ($response.StatusCode -eq 404) { return $null }

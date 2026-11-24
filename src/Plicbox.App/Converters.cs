@@ -56,7 +56,7 @@ public sealed class EnumToBoolConverter : IValueConverter
         value is true ? Enum.Parse(targetType, (string)parameter) : Binding.DoNothing;
 }
 
-/// <summary>"#RRGGBB" → brush (calendar colours in templates).</summary>
+/// <summary>"#RRGGBB" -> brush (calendar colours in templates).</summary>
 public sealed class HexToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>

@@ -20,7 +20,7 @@ public sealed class KnownCorrespondents
 {
     private readonly HashSet<string> _trusted = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _domains = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, List<string>> _byName = new(StringComparer.Ordinal); // normalised name → addresses
+    private readonly Dictionary<string, List<string>> _byName = new(StringComparer.Ordinal); // normalised name -> addresses
     private readonly HashSet<string> _ownNames = new(StringComparer.Ordinal);
     private readonly Dictionary<string, PersonStats> _stats = new(StringComparer.OrdinalIgnoreCase);
 
@@ -121,7 +121,7 @@ public sealed class KnownCorrespondents
 
     private static string Site(string address) => LinkSafety.RegistrableDomain(address[(address.LastIndexOf('@') + 1)..].Trim());
 
-    // "contoso.co.uk" → ("contoso", "co.uk").
+    // "contoso.co.uk" -> ("contoso", "co.uk").
     private static (string Label, string Suffix) Split(string site)
     {
         var dot = site.IndexOf('.');
@@ -164,7 +164,7 @@ public sealed class KnownCorrespondents
 
     private static bool IsGeneric(string name) => name.Split(' ').All(GenericWords.Contains);
 
-    /// <summary>"  Ána  Popescu " → "ana popescu"; null for names too short to recognise anyone by (one short word).</summary>
+    /// <summary>"  Ána  Popescu " -> "ana popescu"; null for names too short to recognise anyone by (one short word).</summary>
     internal static string? NormalizeName(string? name)
     {
         if (string.IsNullOrWhiteSpace(name)) return null;

@@ -1,8 +1,9 @@
 namespace Plicbox.Tests;
 
 /// <summary>
-/// House style for anything people read (the app, its translations, the website, the README): no middots (U+00B7) and
-/// no em dashes (U+2014). Use a comma, a colon, parentheses or a full stop instead. Comments follow it too.
+/// House style for anything people read (the app, its translations, the website, the README): no middots (U+00B7), no
+/// em dashes (U+2014) and no arrows (U+2190, U+2192). Use a comma, a colon, parentheses or a full stop instead, and "&gt;"
+/// for a place in the settings (Settings &gt; Mail). Comments follow it too.
 /// </summary>
 public sealed class WritingStyleTests
 {
@@ -12,7 +13,7 @@ public sealed class WritingStyleTests
     private static readonly string[] Allowed = [Path.Combine("src", "Plicbox.Mail", "SignatureReader.cs")];
 
     [Fact]
-    public void No_middots_or_em_dashes()
+    public void No_middots_em_dashes_or_arrows()
     {
         var root = RepoRoot();
         var files = new[] { "src", "site", "tests" }
@@ -28,10 +29,10 @@ public sealed class WritingStyleTests
         {
             var lines = File.ReadAllLines(file);
             for (var i = 0; i < lines.Length; i++)
-                if (lines[i].Contains((char)0xB7) || lines[i].Contains((char)0x2014))
+                if (lines[i].IndexOfAny([(char)0xB7, (char)0x2014, (char)0x2190, (char)0x2192]) >= 0)
                     found.Add($"{Path.GetRelativePath(root, file)}:{i + 1}: {lines[i].Trim()}");
         }
-        Assert.True(found.Count == 0, "Middots or em dashes (use a comma, colon, parentheses or full stop):\n" + string.Join("\n", found));
+        Assert.True(found.Count == 0, "Middots, em dashes or arrows (use a comma, colon, parentheses, full stop or >):\n" + string.Join("\n", found));
     }
 
     private static string RepoRoot()

@@ -95,10 +95,10 @@
                 <TextBlock Style="{StaticResource Hint}" Margin="0,2,0,6"
                            Text="{local:T 'Plicbox signs in through your own Google Cloud project, so it doesn\'t depend on anyone else\'s servers. You do this once; every Google account then uses it.'}" />
                 <TextBlock Style="{StaticResource Step}" Text="{local:T '1.  In Google Cloud Console, create a project (e.g. &quot;Plicbox&quot;).'}" />
-                <TextBlock Style="{StaticResource Step}" Text="{local:T '2.  APIs &amp; Services → Library → Gmail API → Enable.'}" />
-                <TextBlock Style="{StaticResource Step}" Text="{local:T '3.  Google Auth Platform → Branding: app name &quot;Plicbox&quot;, your email. Audience: External, then Publish app (In production).'}" />
-                <TextBlock Style="{StaticResource Step}" Text="{local:T '4.  Data Access → Add scope: https://mail.google.com/'}" />
-                <TextBlock Style="{StaticResource Step}" Text="{local:T '5.  Clients → Create client → Desktop app → Download JSON.'}" />
+                <TextBlock Style="{StaticResource Step}" Text="{local:T '2.  APIs &amp; Services > Library > Gmail API > Enable.'}" />
+                <TextBlock Style="{StaticResource Step}" Text="{local:T '3.  Google Auth Platform > Branding: app name &quot;Plicbox&quot;, your email. Audience: External, then Publish app (In production).'}" />
+                <TextBlock Style="{StaticResource Step}" Text="{local:T '4.  Data Access > Add scope: https://mail.google.com/'}" />
+                <TextBlock Style="{StaticResource Step}" Text="{local:T '5.  Clients > Create client > Desktop app > Download JSON.'}" />
                 <TextBlock Style="{StaticResource Step}" Text="{local:T '6.  Choose that file below.'}" />
                 <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                     <Button Content="{local:T 'Open Google Cloud Console'}" Padding="12,5" Click="OpenConsole_Click" />
@@ -107,7 +107,7 @@
             </StackPanel>
 
             <TextBlock Style="{StaticResource Hint}" Margin="0,14,0,0"
-                       Text="{local:T 'Google may warn that it hasn\'t verified Plicbox yet: choose Advanced → Go to Plicbox.'}" />
+                       Text="{local:T 'Google may warn that it hasn\'t verified Plicbox yet: choose Advanced > Go to Plicbox.'}" />
             <TextBlock Margin="0,10,0,0" FontSize="13">
                 <Hyperlink Click="UseAppPassword_Click" Style="{StaticResource QuietLink}"><Run Text="{local:T 'Use an app password instead'}" /></Hyperlink>
             </TextBlock>

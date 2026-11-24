@@ -52,7 +52,7 @@ public sealed class Dialogs(IServiceProvider services)
         new ContactWindow(editor).Show();
     }
 
-    /// <summary>The new-task window (New → Task…, or Create Task on a message).</summary>
+    /// <summary>The new-task window (New > Task…, or Create Task on a message).</summary>
     public void EditTask(ViewModels.TaskEditor editor) => new TaskWindow(editor).Show();
 
     /// <summary>The Rules window; <paramref name="start"/> is a new rule to begin with (made from a message). True if saved.</summary>

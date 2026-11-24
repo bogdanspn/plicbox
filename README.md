@@ -10,7 +10,7 @@ Your mail stays on your PC.
 
 Download **Plicbox.App-win-Setup.exe** from the [latest release](https://github.com/bogdanspn/plicbox/releases/latest)
 and run it. Plicbox then keeps itself up to date.
-The installer is not code-signed yet, so Windows asks once: **More info → Run anyway**.
+The installer is not code-signed yet, so Windows asks once: **More info > Run anyway**.
 
 Windows 10 and 11, 64-bit.
 
@@ -32,7 +32,7 @@ Everything below is for building Plicbox from source: .NET 10, WPF and MailKit.
 Double-click `run.cmd`, or from a terminal in this folder:
 
 ```powershell
-.\run.ps1              # build and start with your real accounts (menu ☰ → Add account…)
+.\run.ps1              # build and start with your real accounts (menu ☰ > Add account…)
 .\run.ps1 -Demo        # fictional sample mail, throwaway database, no syncing
 .\run.ps1 -Test        # unit tests (integration test skipped)
 ```
@@ -40,7 +40,7 @@ Double-click `run.cmd`, or from a terminal in this folder:
 The same by hand:
 
 ```powershell
-dotnet run --project src/Plicbox.App             # your real accounts (menu ☰ → Add account…)
+dotnet run --project src/Plicbox.App             # your real accounts (menu ☰ > Add account…)
 dotnet run --project src/Plicbox.App -- --demo   # fictional sample mail, throwaway database, no syncing
 dotnet test                                       # unit tests (integration test skipped)
 ```
@@ -53,14 +53,14 @@ Detected automatically, including custom domains on Workspace (via MX records). 
 browser (OAuth), through **your own** Google Cloud OAuth client. One-time setup:
 
 1. [Google Cloud Console](https://console.cloud.google.com/projectcreate): create a project, e.g. "Plicbox".
-2. APIs & Services → Library → **Gmail API** → Enable.
-3. Google Auth Platform → Branding: app name, your email. Audience: **External**, then **Publish app** (In production).
+2. APIs & Services > Library > **Gmail API** > Enable.
+3. Google Auth Platform > Branding: app name, your email. Audience: **External**, then **Publish app** (In production).
    Leaving it in "Testing" works too, but Google then expires the sign-in every 7 days.
-4. Data Access → add scope `https://mail.google.com/`.
-5. Clients → Create client → **Desktop app** → Download JSON.
+4. Data Access > add scope `https://mail.google.com/`.
+5. Clients > Create client > **Desktop app** > Download JSON.
 6. In Plicbox's Add account dialog, **Choose client file…** (copied to `%LOCALAPPDATA%\Plicbox\google-client.json`).
 
-On first sign-in Google warns the app is unverified. It's your own app: Advanced → Go to Plicbox.
+On first sign-in Google warns the app is unverified. It's your own app: Advanced > Go to Plicbox.
 Company Workspace accounts may need their admin to allow the app. App passwords remain available as a fallback.
 iCloud and Yahoo use app passwords.
 
@@ -87,9 +87,9 @@ Data lives in `%LOCALAPPDATA%\Plicbox` (`plicbox.db`, `bodies\`, `logs\`). Demo 
 
 Releases go to this repository's [GitHub releases](https://github.com/bogdanspn/plicbox/releases) (installer and
 update packages; each `vX.Y.Z` tag is also the source of that version). Install once with `Plicbox.App-win-Setup.exe` from there; the app lives in
-`%LOCALAPPDATA%\Plicbox.App`, checks for a new version a minute after start and every 4 hours (Settings → General →
+`%LOCALAPPDATA%\Plicbox.App`, checks for a new version a minute after start and every 4 hours (Settings > General >
 Updates), downloads only what changed, and installs it when it quits or on **Restart to update**. Uninstalling removes
-the app, never the mail data. The installer isn't signed, so Windows asks once (More info → Run anyway).
+the app, never the mail data. The installer isn't signed, so Windows asks once (More info > Run anyway).
 
 Each release is also measured (`perf\measure.ps1`): download and install size, how long until the mail list is up, and
 memory for Plicbox and its message display, with the demo's data (`--demo --measure`, a window opens for about 20
@@ -123,7 +123,7 @@ Message HTML is sanitized, scripts are disabled, and remote images/fonts (tracki
 
 ## Pictures
 
-Senders show a coloured letter by default. You can give each of your accounts its own picture (Accounts → General → Picture), shown on mail you send. With **Settings → Pictures** on (the default), Plicbox also looks senders up once: the person's Gravatar, a company's verified BIMI logo (the one Gmail shows), or, for automated senders like `noreply@`, the website's icon. Free-mail domains never get a company logo, mail in Junk is never looked up, results are cached for a month, and a sender flagged as possibly forged never gets a picture in the reading pane.
+Senders show a coloured letter by default. You can give each of your accounts its own picture (Accounts > General > Picture), shown on mail you send. With **Settings > Pictures** on (the default), Plicbox also looks senders up once: the person's Gravatar, a company's verified BIMI logo (the one Gmail shows), or, for automated senders like `noreply@`, the website's icon. Free-mail domains never get a company logo, mail in Junk is never looked up, results are cached for a month, and a sender flagged as possibly forged never gets a picture in the reading pane.
 
 ## Writing mail
 
@@ -131,13 +131,13 @@ The compose window has an eM Client–style toolbar (attach, importance, signatu
 
 Drafts are saved with `Ctrl+S`, automatically every minute, or when you close the window and choose **Save draft**. They're stored on this PC first, then uploaded to the account's Drafts folder (a `SaveDraft` pending op, so it works offline); each save replaces the previous copy. Opening a message in Drafts continues editing it, and sending it removes the draft.
 
-Sent mail goes through a local **Outbox** (a folder per account with role `Outbox`, never synced; shown once under Favorites). A message waits there for the undo-send delay (Settings → Mail → Sending, 30 s by default; **Undo** appears next to Refresh), or until the time chosen with **Send later**, then goes out when the server can be reached and is filed in Sent. A message the server refuses stays in the Outbox with the reason.
+Sent mail goes through a local **Outbox** (a folder per account with role `Outbox`, never synced; shown once under Favorites). A message waits there for the undo-send delay (Settings > Mail > Sending, 30 s by default; **Undo** appears next to Refresh), or until the time chosen with **Send later**, then goes out when the server can be reached and is filed in Sent. A message the server refuses stays in the Outbox with the reason.
 
 ## Offline and backups
 
-- New accounts download whole messages for the last year (Accounts → Sync options → Offline mail: a month, 6 months, a year, everything, or only when opened).
+- New accounts download whole messages for the last year (Accounts > Sync options > Offline mail: a month, 6 months, a year, everything, or only when opened).
 - Mail actions, Google calendar changes (`calendar_changes`) and contact changes (`contact_changes`) are queued while offline and sent before the next sync reads anything back.
-- Settings → Backup: a daily zip of everything that exists only here (the database without mail, plus `settings.json`) into `OneDrive\Plicbox Backups` or `Documents\Plicbox Backups`, the newest 10 kept. A restore is staged and applied on the next start.
+- Settings > Backup: a daily zip of everything that exists only here (the database without mail, plus `settings.json`) into `OneDrive\Plicbox Backups` or `Documents\Plicbox Backups`, the newest 10 kept. A restore is staged and applied on the next start.
 - Calendars import and export `.ics` (right-click a calendar; **Add to Calendar** on `.ics` attachments), contacts `.vcf` (the **…** button in Contacts).
 
 ## Shortcuts

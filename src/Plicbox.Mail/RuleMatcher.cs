@@ -59,7 +59,7 @@ public static class RuleMatcher
         return c.Operator == RuleOperator.DoesNotContain ? !any : any;
     }
 
-    /// <summary>"Re: Fwd: Your order" → "Your order", for subject rules made from a message.</summary>
+    /// <summary>"Re: Fwd: Your order" -> "Your order", for subject rules made from a message.</summary>
     public static string CleanSubject(string subject)
     {
         var s = subject.Trim();
@@ -114,7 +114,7 @@ public static class RuleMatcher
         _ => k.ToString(),
     };
 
-    /// <summary>"From contains ana@x.com → Move to Family, mark as read".</summary>
+    /// <summary>"From contains ana@x.com -> Move to Family, mark as read".</summary>
     public static string Summary(MailRule rule, Func<RuleAction, string?> folderName)
     {
         var conditions = rule.Conditions.Where(IsComplete).Select(c => c.Field switch
@@ -127,7 +127,7 @@ public static class RuleMatcher
         var when = conditions.Count == 0 ? L.T("Every message") : string.Join(rule.MatchAll ? L.T(" and ") : L.T(" or "), conditions);
         var then = rule.Actions.Count == 0 ? L.T("nothing yet")
             : string.Join(", ", rule.Actions.Select(a => a.NeedsFolder ? $"{ActionName(a.Kind).ToLower(CultureInfo.CurrentCulture)} {folderName(a) ?? "…"}" : ActionName(a.Kind).ToLower(CultureInfo.CurrentCulture)));
-        return $"{char.ToUpper(when[0], CultureInfo.CurrentCulture)}{when[1..]} → {then}";
+        return $"{char.ToUpper(when[0], CultureInfo.CurrentCulture)}{when[1..]} > {then}";
     }
 
     private static string Quote(List<string> values)

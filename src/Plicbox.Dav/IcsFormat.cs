@@ -296,7 +296,7 @@ public static class IcsFormat
         if (current.Length > 0) yield return current.ToString();
     }
 
-    /// <summary>"DTSTART;TZID=Europe/Berlin:20261116T090000" → name, parameters (quoted values may hold ':' and ';'), value.</summary>
+    /// <summary>"DTSTART;TZID=Europe/Berlin:20261116T090000" -> name, parameters (quoted values may hold ':' and ';'), value.</summary>
     private static (string Name, Dictionary<string, string> Params, string Value) Split(string line)
     {
         var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

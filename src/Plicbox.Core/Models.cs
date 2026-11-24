@@ -16,7 +16,7 @@ public enum ListSortKey { Date, Sender, Subject, Flag, ReadStatus, Attachments }
 
 /// <summary>
 /// The message list's order, worked out by the database so the list can load a page at a time in any order.
-/// Descending means: newest, Z→A, flagged, unread or with attachments first. Ties go newest first.
+/// Descending means: newest, Z to A, flagged, unread or with attachments first. Ties go newest first.
 /// </summary>
 public sealed record ListSort(ListSortKey Key = ListSortKey.Date, bool Descending = true);
 
@@ -74,7 +74,7 @@ public sealed record Account
     public int OfflineDays { get; init; } = 365;
     /// <summary>JSON: extra From identities. Use <see cref="Aliases"/>.</summary>
     public string? AliasesJson { get; init; }
-    /// <summary>JSON: role → server path, overriding automatic special-folder detection. Use <see cref="FolderOverrides"/>.</summary>
+    /// <summary>JSON: role -> server path, overriding automatic special-folder detection. Use <see cref="FolderOverrides"/>.</summary>
     public string? FolderOverridesJson { get; init; }
     /// <summary>JSON: server paths (and their subfolders) that are neither shown nor synced. Use <see cref="IgnoredPaths"/>.</summary>
     public string? IgnoredPathsJson { get; init; }

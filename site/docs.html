@@ -62,7 +62,7 @@
       <tr><td>Outlook.com, Hotmail, Microsoft 365</td><td>Sign in with Microsoft. Mail only. Some work accounts need their IT
         administrator to approve Plicbox first.</td></tr>
       <tr><td>iCloud, Yahoo, AOL, Fastmail</td><td>An app password, created on the provider's website. Plicbox links to the page.</td></tr>
-      <tr><td>Zoho Mail</td><td>Switch IMAP on first (Settings → Mail Accounts → IMAP Access). With two-factor sign-in, use an
+      <tr><td>Zoho Mail</td><td>Switch IMAP on first (Settings &gt; Mail Accounts &gt; IMAP Access). With two-factor sign-in, use an
         app-specific password. Every Zoho region works (zoho.com, .eu, .in, .com.au, .jp, .sa, .uk). Zoho's free plan may not include IMAP.</td></tr>
       <tr><td>GMX, WEB.DE</td><td>Allow POP3/IMAP access in their settings first; then your normal password.</td></tr>
       <tr><td>Your own domain at Google, iCloud+, Zoho, Fastmail or Microsoft</td><td>Recognised from the domain, so it's set up like the provider itself.</td></tr>
@@ -137,7 +137,7 @@
     <li><strong>New mail:</strong> arrives as it lands when the server supports push (IMAP IDLE, which most do); otherwise Plicbox
       checks every two minutes. Every folder is refreshed every few minutes (5 by default, set in Settings).</li>
     <li><strong>Undo send:</strong> a message you send waits in the Outbox for 30 seconds first. <strong>Undo</strong>, next to
-      Refresh, brings it back to edit. The wait can be 5 seconds to 5 minutes, or off (Settings → Mail → Sending).</li>
+      Refresh, brings it back to edit. The wait can be 5 seconds to 5 minutes, or off (Settings &gt; Mail &gt; Sending).</li>
     <li><strong>Send later:</strong> the arrow next to Send picks a time (later today, tomorrow morning, Monday, or any date).
       The message waits in the Outbox until then. Plicbox sends it itself, so it needs to be running at that time (in the
       notification area is enough); otherwise it goes as soon as Plicbox starts.</li>
@@ -157,7 +157,7 @@
       they've never used, gets a warning. The first message from an address is noted quietly.</li>
     <li><strong>Phishing and malware lists:</strong> senders and links on public lists of reported sites (OpenPhish, PhishTank, IPThreat and
       URLhaus, through malware-filter) are flagged in red. The lists download twice a day and are checked on your PC. Can be turned off
-      (Settings → Mail → Phishing and malware).</li>
+      (Settings &gt; Mail &gt; Phishing and malware).</li>
     <li><strong>Attachments you receive:</strong> zips are judged by what's inside, before you open them. What you open or save is marked as
       from the internet, so Office uses Protected View and your antivirus checks it first.</li>
     <li><strong>Rules and blocked senders:</strong> run on your PC as new mail arrives, so they work with any provider. They run
@@ -175,7 +175,7 @@
   <ul>
     <li><strong>Mail to read:</strong> new accounts download whole messages for the last year, attachments included, not just the
       list. Each account can keep the last month, 6 months, a year or everything, or download a message only when you open it
-      (Accounts → Sync options → Offline mail). Settings → Mail shows how much space this takes.</li>
+      (Accounts &gt; Sync options &gt; Offline mail). Settings &gt; Mail shows how much space this takes.</li>
     <li><strong>Mail you send</strong> waits in the <strong>Outbox</strong>, under Favorites in the sidebar, and goes out on its
       own when the connection is back. If a server refuses a message, it stays there with the reason; open it to fix it.</li>
     <li><strong>Drafts</strong> are saved on your PC first and copied to the account's Drafts folder when it can be reached.</li>
@@ -196,7 +196,7 @@
     <li><strong>Daily backup:</strong> once a day, Plicbox saves what exists only on your PC: calendars, contacts and tasks kept
       locally, your accounts and their settings, rules and signatures. Passwords aren't included (they stay in Windows Credential Manager), so on a new PC you sign in again. Mail isn't either: it stays on your mail servers and downloads again.</li>
     <li>Backups go to a <em>Plicbox Backups</em> folder in OneDrive when you have it (so they're safe even if your PC isn't), otherwise
-      in Documents. The newest 10 are kept. Change the folder, back up now or restore in Settings → Backup.</li>
+      in Documents. The newest 10 are kept. Change the folder, back up now or restore in Settings &gt; Backup.</li>
     <li><strong>Calendars:</strong> export any calendar as an <code>.ics</code> file, or import one into it: right-click the calendar in the sidebar.
       An <code>.ics</code> file attached to an email has <strong>Add to Calendar</strong>.</li>
     <li><strong>Contacts:</strong> export to or import from a <code>.vcf</code> file (vCard 2.1, 3.0 and 4.0), from the <strong>…</strong>
@@ -206,11 +206,11 @@
   <h2 id="updates">Installing and updates</h2>
   <ul>
     <li>One installer, no administrator rights needed: Plicbox installs for your Windows user only.</li>
-    <li>The installer isn't code-signed yet, so Windows SmartScreen may warn you once: choose <strong>More info</strong> →
+    <li>The installer isn't code-signed yet, so Windows SmartScreen may warn you once: choose <strong>More info</strong> &gt;
       <strong>Run anyway</strong>.</li>
     <li>Plicbox checks GitHub for new versions and downloads them in the background; they install when Plicbox restarts. You can
       turn this off in Settings and check by hand. <a href="https://github.com/bogdanspn/plicbox/releases">Release notes</a>.</li>
-    <li>To remove it: Windows Settings → Apps. To remove your data too, delete <code>%LOCALAPPDATA%\Plicbox</code>.</li>
+    <li>To remove it: Windows Settings &gt; Apps. To remove your data too, delete <code>%LOCALAPPDATA%\Plicbox</code>.</li>
   </ul>
 
   <h2 id="language">Language and look</h2>
@@ -234,7 +234,7 @@
       <tr><td><kbd>F4</kbd></td><td>Find in the open message</td></tr>
       <tr><td><kbd>F5</kbd></td><td>Refresh</td></tr>
       <tr><td><kbd>Enter</kbd></td><td>Open the selected message</td></tr>
-      <tr><td><kbd>→</kbd> <kbd>←</kbd></td><td>Open or fold a conversation in the list</td></tr>
+      <tr><td><kbd>Right</kbd> <kbd>Left</kbd></td><td>Open or fold a conversation in the list</td></tr>
       <tr><td><kbd>Esc</kbd></td><td>Back to the list, when messages fill the screen</td></tr>
       <tr><td><kbd>Delete</kbd></td><td>Delete</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>Q</kbd></td><td>Mark read or unread</td></tr>

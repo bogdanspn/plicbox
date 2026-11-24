@@ -90,7 +90,7 @@ public sealed record AppSettings
     /// <summary>Appearance: how large messages are shown (1 = 100%).</summary>
     public double MessageZoom { get; init; } = 1.0;
     /// <summary>
-    /// Appearance → Reading pane: "bottom" (under the list), "right" (beside it), "full" (the list fills the area and a
+    /// Appearance > Reading pane: "bottom" (under the list), "right" (beside it), "full" (the list fills the area and a
     /// message opens in its place) or "popout" (no reading pane: messages open in their own window).
     /// </summary>
     public string ReadingPane { get; init; } = "bottom";
@@ -114,7 +114,7 @@ public sealed record AppSettings
     public DateTimeOffset? LastBackup { get; init; }
 }
 
-/// <summary>Calendar preferences (Settings → Calendar).</summary>
+/// <summary>Calendar preferences (Settings > Calendar).</summary>
 public sealed record CalendarPrefs
 {
     public DayOfWeek FirstDayOfWeek { get; init; } = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek;

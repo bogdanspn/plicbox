@@ -22,7 +22,7 @@ public sealed record RenderedMessage(string Html, bool HasRemoteContent, string?
 public sealed partial class MessageRenderer
 {
     /// <summary>
-    /// Settings → Appearance → Message text: the font (a CSS font-family list) and size in CSS pixels for mail that
+    /// Settings > Appearance > Message text: the font (a CSS font-family list) and size in CSS pixels for mail that
     /// doesn't choose its own (plain text, and HTML without a font). A sender's own fonts and sizes still win.
     /// </summary>
     public static string TextFont { get; set; } = "'Segoe UI', sans-serif";
@@ -273,7 +273,7 @@ public sealed partial class MessageRenderer
     {
         var encoded = WebUtility.HtmlEncode(text);
         var linked = Url().Replace(encoded, m => $"<a href=\"{m.Value}\">{m.Value}</a>");
-        // The font is the page's (Settings → Appearance), or the editor's when quoted into a reply.
+        // The font is the page's (Settings > Appearance), or the editor's when quoted into a reply.
         return $"<div style=\"white-space:pre-wrap\">{linked}</div>";
     }
 

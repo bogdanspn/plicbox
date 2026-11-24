@@ -746,7 +746,7 @@
   // underlined as a highlight: the message's own HTML is never touched. Your text is checked, not the signature or
   // the quoted original, except where you write in it.
   const SPELLING = {{SPELLING}};
-  const known = new Map();            // word → right or wrong; undefined while being checked
+  const known = new Map();            // word -> right or wrong; undefined while being checked
   const wrongWords = new Highlight();
   const touched = new Set();          // blocks typed in
   let spellTimer = 0, typing = false, clicked = null;

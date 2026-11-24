@@ -199,7 +199,7 @@ public sealed class MailEngine(
     /// </summary>
     public event Action<long, string, string>? SendFailed;
 
-    // Outbox messages the server refused (id → why); left alone until the user retries.
+    // Outbox messages the server refused (id -> why); left alone until the user retries.
     private readonly ConcurrentDictionary<long, (long AccountId, string Why)> _refused = new();
     // Accounts whose outgoing sign-in was turned down: no retrying on our own (servers lock out repeated failures).
     private readonly ConcurrentDictionary<long, byte> _sendPaused = new();
@@ -212,7 +212,7 @@ public sealed class MailEngine(
 
     /// <summary>
     /// Sends a message: it's kept in the account's Outbox first (on disk, so nothing is lost offline or in a crash)
-    /// and goes out at <paramref name="sendAt"/>, or else after the few seconds Undo send allows (Settings → Mail);
+    /// and goes out at <paramref name="sendAt"/>, or else after the few seconds Undo send allows (Settings > Mail);
     /// when the server can't be reached then, as soon as it can. Sent mail is filed in Sent.
     /// </summary>
     /// <param name="sendAt">Send later; <see cref="DateTimeOffset.Now"/> for no Undo delay.</param>
@@ -679,7 +679,7 @@ public sealed class MailEngine(
     // on to another message, and goes through the rules then.
     private readonly Lock _viewLock = new();
     private long? _inView;
-    private readonly Dictionary<long, long> _heldBack = []; // message id → the folder it was in when held
+    private readonly Dictionary<long, long> _heldBack = []; // message id -> the folder it was in when held
 
     /// <summary>The reading pane shows this message now (null: none). A message the rules held back while it was shown
     /// goes through them once the pane leaves it.</summary>

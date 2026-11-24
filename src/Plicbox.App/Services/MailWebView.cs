@@ -65,7 +65,7 @@ public static partial class MailWebView
             window.Deactivated += (_, _) => HideBubble(context);
             window.LocationChanged += (_, _) => HideBubble(context);
         }
-        view.ZoomFactor = Appearance.MessageZoom; // Settings → Appearance → Message text
+        view.ZoomFactor = Appearance.MessageZoom; // Settings > Appearance > Message text
     }
 
     /// <param name="senderAddress">The message's From address, for judging its links.</param>
@@ -320,7 +320,7 @@ public static partial class MailWebView
         line.Inlines.Add(new System.Windows.Documents.Run(":  ") { Foreground = B(accent) });
         line.Inlines.Add(new System.Windows.Documents.Run(v.Host) { FontWeight = FontWeights.SemiBold, Foreground = Theme.Brush("TextBrush") });
         if (v.Destination is { } dest)
-            line.Inlines.Add(new System.Windows.Documents.Run($"  →  {dest}") { Foreground = Theme.Brush("TextBrush") });
+            line.Inlines.Add(new System.Windows.Documents.Run($"  >  {dest}") { Foreground = Theme.Brush("TextBrush") });
         if (v.Risk is LinkRisk.Caution or LinkRisk.Danger && v.Reasons.FirstOrDefault() is { } reason)
             line.Inlines.Add(new System.Windows.Documents.Run($", {reason}") { Foreground = Theme.Brush("SecondaryTextBrush") });
         line.Inlines.Add(new System.Windows.Documents.Run($"   {ShortUrl(v.Url)}") { Foreground = muted });

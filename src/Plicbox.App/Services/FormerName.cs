@@ -29,7 +29,7 @@ internal static class FormerName
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             MessageBox.Show($"Plicbox (formerly Mailroom) needs to move its data to {now}, but the old folder is in use.\n\n" +
-                "Quit Mailroom (tray icon → Exit) and start Plicbox again.\n\n" + ex.Message, "Plicbox", MessageBoxButton.OK, MessageBoxImage.Warning);
+                "Quit Mailroom (tray icon > Exit) and start Plicbox again.\n\n" + ex.Message, "Plicbox", MessageBoxButton.OK, MessageBoxImage.Warning);
             return false;
         }
         foreach (var suffix in new[] { "", "-wal", "-shm" })

@@ -41,7 +41,7 @@ public partial class SettingsWindow : Window
         Loaded += async (_, _) => await ShowSpaceAsync(db.FilePath, (bodies as Plicbox.Storage.FileBodyStore)?.Root);
     }
 
-    /// <summary>Settings → Mail: how much room the mail kept on this computer takes.</summary>
+    /// <summary>Settings > Mail: how much room the mail kept on this computer takes.</summary>
     private async Task ShowSpaceAsync(string dbFile, string? bodiesRoot)
     {
         static long Size(string path) => File.Exists(path) ? new FileInfo(path).Length : 0;

@@ -48,7 +48,7 @@ public static class FolderRoles
         {
             if (string.Equals(f.FullName, inbox.FullName, StringComparison.OrdinalIgnoreCase)) { result[f] = FolderRole.Inbox; taken.Add(FolderRole.Inbox); }
         }
-        // Folders the user picked by hand in Accounts → IMAP → Special folders win over detection.
+        // Folders the user picked by hand in Accounts > IMAP > Special folders win over detection.
         foreach (var (role, path) in overrides ?? new Dictionary<FolderRole, string>())
         {
             var f = list.FirstOrDefault(x => x.FullName == path && result[x] == FolderRole.Other);

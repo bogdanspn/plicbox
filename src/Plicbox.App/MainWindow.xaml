@@ -297,7 +297,7 @@
             <!-- Message list over reading pane -->
 <!-- A divider line along its edge, as between the other panes; the content starts after it (the message view is a browser window, which nothing can be drawn over) -->
             <Border Grid.Column="2" Width="1" HorizontalAlignment="Left" Background="{DynamicResource DividerBrush}" />
-            <!-- Rows and columns are set for the reading pane layout (Settings → Appearance) in ApplyReadingLayout:
+            <!-- Rows and columns are set for the reading pane layout (Settings > Appearance) in ApplyReadingLayout:
                  under the list (rows 2-3), beside it (columns 1-2), in its place, or none. -->
             <Grid x:Name="MailPane" Grid.Column="2" Margin="1,0,0,0" Background="{DynamicResource SurfaceBrush}">
                 <Grid.RowDefinitions>
@@ -441,7 +441,7 @@
                                     <TextBlock x:Name="AttachGlyph" Style="{StaticResource Icon}" Text="&#xE723;" FontSize="13" Foreground="{DynamicResource MutedTextBrush}"
                                                VerticalAlignment="Center" Margin="0,0,8,0" Visibility="Collapsed" />
                                     <Button x:Name="ThreadBadge" Style="{StaticResource BareButton}" Margin="0,0,8,0" VerticalAlignment="Center"
-                                            Visibility="Collapsed" ToolTip="{local:T 'Show or hide the conversation (→ / ←)'}"
+                                            Visibility="Collapsed" ToolTip="{local:T 'Show or hide the conversation (right / left arrow)'}"
                                             Command="{Binding DataContext.ToggleThreadCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                             CommandParameter="{Binding}">
                                         <Border x:Name="BadgeBox" Background="#8C8C8C" CornerRadius="4" Height="18" MinWidth="32" Padding="6,0">
@@ -692,7 +692,7 @@
                                 <!-- The conversation count sits at the subject's right end, so only threaded rows give up room for it. -->
                                 <DockPanel Grid.Column="4" Margin="4,0,12,0" VerticalAlignment="Center">
                                     <Button x:Name="ThreadBadge" DockPanel.Dock="Right" Style="{StaticResource BareButton}" Margin="8,0,0,0" VerticalAlignment="Center"
-                                            Visibility="Collapsed" ToolTip="{local:T 'Show or hide the conversation (→ / ←)'}"
+                                            Visibility="Collapsed" ToolTip="{local:T 'Show or hide the conversation (right / left arrow)'}"
                                             Command="{Binding DataContext.ToggleThreadCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                             CommandParameter="{Binding}">
                                         <!-- Number and chevron centred by their ink, not their line boxes (which sit them low, by how much depends on the font). -->

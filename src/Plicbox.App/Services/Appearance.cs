@@ -6,14 +6,14 @@ using Microsoft.Web.WebView2.Wpf;
 namespace Plicbox.App.Services;
 
 /// <summary>
-/// The look the user picked in Settings → Appearance: accent colour, app font and the size of message text.
+/// The look the user picked in Settings > Appearance: accent colour, app font and the size of message text.
 /// Applied at start and again whenever settings change (also while Settings is open, as a live preview).
 /// </summary>
 public static class Appearance
 {
     public sealed record Swatch(string Hex, string Name);
 
-    /// <summary>The accent setting that follows Windows (Settings → Personalization → Colors).</summary>
+    /// <summary>The accent setting that follows Windows (Settings > Personalization > Colors).</summary>
     public const string WindowsAccent = "windows";
 
     /// <summary>Black buttons on the light page, near-white ones on the dark page (black would disappear there).</summary>

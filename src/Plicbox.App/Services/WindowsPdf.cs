@@ -33,7 +33,7 @@ public sealed class WindowsPdf : IDisposable
         var stream = StreamOver(pdf);
         var statics = Factory("Windows.Data.Pdf.PdfDocument", IPdfDocumentStatics);
         nint operation;
-        try { operation = Com.CallOut(statics, 8, stream); } // LoadFromStreamAsync(IRandomAccessStream) → IAsyncOperation<PdfDocument>
+        try { operation = Com.CallOut(statics, 8, stream); } // LoadFromStreamAsync(IRandomAccessStream) -> IAsyncOperation<PdfDocument>
         finally
         {
             Marshal.Release(statics);
@@ -67,7 +67,7 @@ public sealed class WindowsPdf : IDisposable
             options = Instance("Windows.Data.Pdf.PdfPageRenderOptions", IPdfPageRenderOptions);
             Com.SetUInt(options, 9, pixelWidth); // put_DestinationWidth
             Com.SetGuid(options, 17, BmpEncoder); // put_BitmapEncoderId (PNG otherwise: slower to make and to read)
-            action = Com.CallOut(page, 7, output, options); // RenderToStreamAsync(IRandomAccessStream, PdfPageRenderOptions) → IAsyncAction
+            action = Com.CallOut(page, 7, output, options); // RenderToStreamAsync(IRandomAccessStream, PdfPageRenderOptions) -> IAsyncAction
             await WaitAsync(action);
             Com.Call(action, 8); // GetResults
             Finish(action);

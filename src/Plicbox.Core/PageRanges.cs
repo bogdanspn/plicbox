@@ -24,7 +24,7 @@ public static partial class PageRanges
         return pages.Count == 0 ? null : [.. pages];
     }
 
-    /// <summary>Pages written as runs: [1,2,3,5] → "1-3,5".</summary>
+    /// <summary>Pages written as runs: [1,2,3,5] -> "1-3,5".</summary>
     public static string Format(IReadOnlyList<int> pages)
     {
         var runs = new List<string>();

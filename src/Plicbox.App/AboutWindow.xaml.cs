@@ -5,7 +5,7 @@ using Plicbox.Core;
 
 namespace Plicbox.App;
 
-/// <summary>☰ → About Plicbox: what the app is, its version, and the main pieces it's built from.</summary>
+/// <summary>☰ > About Plicbox: what the app is, its version, and the main pieces it's built from.</summary>
 public partial class AboutWindow : Window
 {
     public sealed record Tech(string Name, string Use);

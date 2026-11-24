@@ -28,7 +28,7 @@ public sealed class CalendarEngine(
     private readonly LocalCalendars _local = new(repo);
     private DateOnly _localWrittenFor;
     private readonly ConcurrentDictionary<long, CalendarAccountStatus> _status = new();
-    // calendar id → its default popup reminder, from the last calendar-list read
+    // calendar id -> its default popup reminder, from the last calendar-list read
     private readonly ConcurrentDictionary<long, int?> _defaultReminders = new();
     private readonly Channel<long?> _requests = Channel.CreateUnbounded<long?>();
     private readonly SemaphoreSlim _syncLock = new(1, 1);

@@ -40,7 +40,7 @@ public static partial class Addresses
         return domain.Equals(listed, StringComparison.OrdinalIgnoreCase) || domain.EndsWith("." + listed, StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>Tidies what someone typed into a sender list: "Shop.Example" or "*@shop.example" → "@shop.example"; addresses as they are.</summary>
+    /// <summary>Tidies what someone typed into a sender list: "Shop.Example" or "*@shop.example" -> "@shop.example"; addresses as they are.</summary>
     public static string? NormalizeEntry(string text)
     {
         var t = text.Trim().Trim('<', '>').TrimStart('*').ToLowerInvariant();

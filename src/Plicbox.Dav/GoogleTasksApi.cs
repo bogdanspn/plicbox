@@ -128,7 +128,7 @@ public sealed class GoogleTasksApi(HttpClient http, GoogleAuth google)
         {
             HttpStatusCode.Unauthorized => new GoogleSignInRequiredException(L.F("Google sign-in for {0} has expired. Right-click the account and choose \"Sign in again\".", account.Email)),
             HttpStatusCode.Forbidden when text.Contains("SERVICE_DISABLED", StringComparison.Ordinal) || text.Contains("accessNotConfigured", StringComparison.Ordinal) =>
-                new CalendarApiDisabledException(L.T("The Google Tasks API is switched off in your Google Cloud project. Enable it under APIs & Services → Library → Google Tasks API.")),
+                new CalendarApiDisabledException(L.T("The Google Tasks API is switched off in your Google Cloud project. Enable it under APIs & Services > Library > Google Tasks API.")),
             HttpStatusCode.Forbidden => new CalendarPermissionException(L.F("{0} hasn't given Plicbox access to tasks yet.", account.Email)),
             _ => new HttpRequestException(L.F("Google Tasks answered {0}: {1}", (int)response.StatusCode, ErrorMessage(text) ?? response.ReasonPhrase), null, response.StatusCode),
         };

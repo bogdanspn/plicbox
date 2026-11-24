@@ -34,7 +34,7 @@ public sealed class MailConnector(ICredentialStore credentials, GoogleAuth? goog
         SmtpAuthMode.Separate => new MailLogin(
             string.IsNullOrWhiteSpace(a.SmtpUsername) ? a.Username : a.SmtpUsername,
             credentials.GetSmtp(a.Id)
-            ?? throw new AuthenticationException(L.F("No password is saved for sending from {0}. Enter it under Accounts → SMTP.", a.Email))),
+            ?? throw new AuthenticationException(L.F("No password is saved for sending from {0}. Enter it under Accounts > SMTP.", a.Email))),
         _ => await LoginForAsync(a, ct),
     };
 

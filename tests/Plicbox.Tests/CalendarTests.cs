@@ -54,7 +54,7 @@ public sealed class CalendarLayoutTests
         var spans = CalendarLayout.LayoutSpans(
         [
             AllDay("Trip", monday.AddDays(1), monday.AddDays(4)),      // Tue–Thu
-            AllDay("Holiday", monday.AddDays(2), monday.AddDays(3)),   // Wed: collides with Trip → lane 1
+            AllDay("Holiday", monday.AddDays(2), monday.AddDays(3)),   // Wed: collides with Trip -> lane 1
             AllDay("Friday", monday.AddDays(4), monday.AddDays(5)),    // Fri: lane 0 is free again
             AllDay("Long", monday.AddDays(-3), monday.AddDays(9)),     // covers the whole week and beyond
         ], monday, 7).ToDictionary(s => s.Event.Title);

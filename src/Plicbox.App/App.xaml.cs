@@ -146,7 +146,7 @@ public partial class App : Application
             : sandbox is null ? FileBodyStore.DefaultRoot : Path.Combine(DataDir, sandbox, "bodies");
         if (sandbox is not null && Directory.Exists(Path.Combine(DataDir, sandbox)))
             Directory.Delete(Path.Combine(DataDir, sandbox), recursive: true);
-        // A backup chosen under Settings → Backup takes the place of this computer's data before anything opens it.
+        // A backup chosen under Settings > Backup takes the place of this computer's data before anything opens it.
         if (sandbox is null && devDb is null)
         {
             try { if (Backups.ApplyStaged(DataDir, dbPath, JsonSettingsStore.DefaultPath, bodyRoot)) Log.Information("Restored a backup"); }
@@ -243,7 +243,7 @@ public partial class App : Application
                     _host.Services.GetRequiredService<IMessageRepository>());
             }
 
-            // Settings → Appearance (accent, font, message size): now, and whenever settings change.
+            // Settings > Appearance (accent, font, message size): now, and whenever settings change.
             var settingsStore = _host.Services.GetRequiredService<ISettingsStore>();
             Theme.ForceDark = e.Args.Contains("--dark"); // dev aid: screenshots in dark mode
             MessageDialog.Unattended = e.Args.Any(a => a.StartsWith("--screenshot", StringComparison.Ordinal) || a.StartsWith("--dev-", StringComparison.Ordinal) || a == "--measure");

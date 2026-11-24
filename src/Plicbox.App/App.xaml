@@ -10,7 +10,7 @@
 
         <SolidColorBrush x:Key="AccentBrush" Color="#F7931E" />
         <SolidColorBrush x:Key="AccentHoverBrush" Color="#E5850F" />
-        <!-- Settings → Appearance changes these (Services/Appearance.cs) -->
+        <!-- Settings > Appearance changes these (Services/Appearance.cs) -->
         <SolidColorBrush x:Key="FreshGlowBrush" Color="#FFE6BF" />
         <FontFamily x:Key="UiFont">Segoe UI</FontFamily>
         <SolidColorBrush x:Key="LinkBrush" Color="#1A73E8" />
@@ -363,7 +363,7 @@
              menu itself would blur its text); the margin leaves it room inside the menu's popup. -->
         <Style TargetType="ContextMenu" BasedOn="{StaticResource {x:Type ContextMenu}}">
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
-            <!-- A menu is a window of its own and doesn't take the font from the one it opens over: Settings → Appearance's
+            <!-- A menu is a window of its own and doesn't take the font from the one it opens over: Settings > Appearance's
                  font is set here, and the windows' 14 (left alone it would fall back to WPF's 12). -->
             <Setter Property="FontFamily" Value="{DynamicResource UiFont}" />
             <Setter Property="FontSize" Value="14" />

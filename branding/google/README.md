@@ -27,13 +27,13 @@ The **Google account that owns the Cloud project** must be a verified owner of `
 
 - Open Search Console with that account. If `bogdanrosu.net` is already listed as a **Domain** property (it may be, because the
   domain is set up for Google mail), you're done.
-- If not: Add property → **Domain** → `bogdanrosu.net` → add the TXT record it shows to the domain's DNS → Verify.
+- If not: Add property > **Domain** > `bogdanrosu.net` > add the TXT record it shows to the domain's DNS > Verify.
   A Domain property covers every subdomain, so `plicbox.bogdanrosu.net` is included.
-- If the domain was verified by a different Google account, add the project owner as an **Owner** under Settings → Users and permissions.
+- If the domain was verified by a different Google account, add the project owner as an **Owner** under Settings > Users and permissions.
 
 ## 3. Branding page
 
-Google Auth Platform → **Branding**:
+Google Auth Platform > **Branding**:
 
 | Field | Value |
 |---|---|
@@ -50,20 +50,20 @@ Uploading a logo means the brand has to be verified before the logo shows (2–3
 
 ## 4. Publish (same day)
 
-Google Auth Platform → **Audience** → **Publish app** → confirm. It's no longer greyed out once Branding is filled in.
+Google Auth Platform > **Audience** > **Publish app** > confirm. It's no longer greyed out once Branding is filled in.
 
 What changes right away:
 
 - No test-user list: anyone can sign in.
 - **Sign-ins no longer expire after 7 days.** While an app is in Testing, Google expires its refresh tokens weekly.
-- Until verification passes, people see a "Google hasn't verified this app" screen (Advanced → Go to Plicbox), and at most
+- Until verification passes, people see a "Google hasn't verified this app" screen (Advanced > Go to Plicbox), and at most
   100 Google accounts can ever sign in.
 
 Existing testers should use **Sign in again** once after publishing, so they get a token that doesn't expire.
 
 ## 5. Submit for verification
 
-Google Auth Platform → **Data access**: the scopes must match what the app asks for (`src/Plicbox.Auth/GoogleAuth.cs`):
+Google Auth Platform > **Data access**: the scopes must match what the app asks for (`src/Plicbox.Auth/GoogleAuth.cs`):
 
 | Scope | Level |
 |---|---|
@@ -74,7 +74,7 @@ Google Auth Platform → **Data access**: the scopes must match what the app ask
 | `https://www.googleapis.com/auth/tasks` | Sensitive |
 | `openid`, `email`, `profile` | Basic |
 
-Then **Verification center** → Prepare for verification:
+Then **Verification center** > Prepare for verification:
 
 1. Paste the justifications from `scope-justifications.md`.
 2. Record and upload the video from `demo-video.md` (YouTube, **Unlisted**) and paste its link.
@@ -107,6 +107,6 @@ on it, switching is a small change in `GoogleAuth.cs` and `GoogleCalendarApi.cs`
 
 ## When something changes later
 
-- New scope in the app → add it under Data access and submit again before shipping it.
-- Privacy policy, home page or domain change → update Branding. Big changes trigger a new review.
+- New scope in the app > add it under Data access and submit again before shipping it.
+- Privacy policy, home page or domain change > update Branding. Big changes trigger a new review.
 - Restricted-scope apps are re-checked every year. Google emails the developer contact.

@@ -159,7 +159,7 @@ public sealed class ThreatListTests : IDisposable
         var negated = rule with { Conditions = [new RuleCondition { Field = RuleField.KnownThreat, Operator = RuleOperator.DoesNotContain }] };
         Assert.True(RuleMatcher.Matches(negated, mail, "", ["https://shop.example/"]));
 
-        Assert.Equal("On a phishing or malware list → move to junk", RuleMatcher.Summary(rule, _ => null));
+        Assert.Equal("On a phishing or malware list > move to junk", RuleMatcher.Summary(rule, _ => null));
     }
 
     // ───────── downloading ─────────

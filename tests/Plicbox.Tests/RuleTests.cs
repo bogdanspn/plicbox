@@ -59,7 +59,7 @@ public sealed class RuleTests
         {
             Actions = [new RuleAction { Kind = RuleActionKind.MoveTo, FolderAccountId = 1, FolderPath = "Family" }, new RuleAction { Kind = RuleActionKind.MarkRead }],
         };
-        Assert.Equal("From is “ana@family.example” → move to Family, mark as read", RuleMatcher.Summary(rule, a => a.FolderPath));
+        Assert.Equal("From is “ana@family.example” > move to Family, mark as read", RuleMatcher.Summary(rule, a => a.FolderPath));
     }
 
     [Theory]

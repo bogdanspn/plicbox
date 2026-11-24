@@ -123,7 +123,7 @@ public sealed class SyncIntegrationTests : IAsyncLifetime
         await _service.DeleteForeverAsync((await _messages.GetAsync(three.Id))!);
         await EventuallyAsync(async () => await ServerCountAsync("Trash") == 0);
 
-        // 7. Expunged elsewhere → disappears locally.
+        // 7. Expunged elsewhere -> disappears locally.
         await ExpungeOnServerAsync("INBOX", "Hello one");
         synced = WaitForSync();
         _service.RequestSync(_account.Id, userInitiated: true);

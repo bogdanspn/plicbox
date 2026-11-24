@@ -90,7 +90,7 @@ public partial class MainWindow : Window, IReaderHost
         MessageList.SelectionChanged += (_, _) =>
             _vm.SetSelectedMessages(MessageList.SelectedItems.OfType<MessageItemViewModel>().ToList());
         MessageList.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(MessageList_ScrollChanged));
-        // Settings → Appearance → Reading pane, and Fill screen's open message.
+        // Settings > Appearance > Reading pane, and Fill screen's open message.
         _vm.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(MainViewModel.ReadingLayout)) ApplyReadingLayout();
@@ -1137,7 +1137,7 @@ public partial class MainWindow : Window, IReaderHost
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // Dev aid: PLICBOX_TRASH_DROP=<dir> drops one message of each account (from All Inboxes) on Favorites → Trash, as a
+        // Dev aid: PLICBOX_TRASH_DROP=<dir> drops one message of each account (from All Inboxes) on Favorites > Trash, as a
         // drag would, logs where each went, captures the Trash view and the folded rail, then exits.
         if (Environment.GetEnvironmentVariable("PLICBOX_TRASH_DROP") is { Length: > 0 } dropDir)
         {
@@ -1679,13 +1679,13 @@ public partial class MainWindow : Window, IReaderHost
         foreach (var other in MessageList.SelectedItems.Cast<object>().Where(o => o != item).ToList()) MessageList.SelectedItems.Remove(other);
     }
 
-    // ───────── reading pane layout (Settings → Appearance) ─────────
+    // ───────── reading pane layout (Settings > Appearance) ─────────
 
     private DataTemplate? _wideRow;
     private Style? _wideRowStyle;
 
     /// <summary>
-    /// Places the reading pane as Settings → Appearance says: under the list, beside it (the list then gets compact
+    /// Places the reading pane as Settings > Appearance says: under the list, beside it (the list then gets compact
     /// two-line rows and a sort menu for a header), in the list's place once a message is opened (Fill screen), or
     /// nowhere (messages open in their own window).
     /// </summary>
@@ -2149,7 +2149,7 @@ public partial class MainWindow : Window, IReaderHost
     ];
 
     /// <summary>
-    /// Favorites → Trash: each account's own Trash to open, and to empty (one account at a time, as the folder's menu
+    /// Favorites > Trash: each account's own Trash to open, and to empty (one account at a time, as the folder's menu
     /// does, so nothing goes for good across all accounts with one click).
     /// </summary>
     private List<object> TrashMenu()
@@ -2592,7 +2592,7 @@ public partial class MainWindow : Window, IReaderHost
                     var e = Reading.Body.PointToScreen(new Point(Reading.Body.ActualWidth, Reading.Body.ActualHeight));
                     var end = shown.PointToScreen(new Point(shown.ActualWidth, shown.ActualHeight));
                     System.IO.File.AppendAllText(System.IO.Path.Combine(DialogScreenshotDir, "bubble-bounds.txt"),
-                        $"{name}: bubble {b.X:0},{b.Y:0} → {end.X:0},{end.Y:0}  pane {p.X:0},{p.Y:0} → {e.X:0},{e.Y:0}" + Environment.NewLine);
+                        $"{name}: bubble {b.X:0},{b.Y:0} > {end.X:0},{end.Y:0}  pane {p.X:0},{p.Y:0} > {e.X:0},{e.Y:0}" + Environment.NewLine);
                 }
                 WindowCapture.SavePng(this, System.IO.Path.Combine(DialogScreenshotDir, $"main-link-{name}.png"));
                 if (bubble is not null) bubble.IsOpen = false;
@@ -2737,7 +2737,7 @@ public partial class MainWindow : Window, IReaderHost
                 var archive = _vm.SidebarNodes.FirstOrDefault(n => n.Kind == NodeKind.Folder && n.AccountId == sample.AccountId && n.Title == "Archive");
                 rulesVm.StartWith = new Core.MailRule
                 {
-                    Name = $"{(sample.FromName.Length > 0 ? sample.FromName : sample.FromAddress)} → Archive", AccountId = sample.AccountId,
+                    Name = $"{(sample.FromName.Length > 0 ? sample.FromName : sample.FromAddress)} > Archive", AccountId = sample.AccountId,
                     Conditions = [new Core.RuleCondition { Field = Core.RuleField.From, Operator = Core.RuleOperator.Is, Values = [sample.FromAddress] },
                                   new Core.RuleCondition { Field = Core.RuleField.Subject, Values = ["account", "benefits"] }],
                     MatchAll = false,
@@ -2754,7 +2754,7 @@ public partial class MainWindow : Window, IReaderHost
                 var threatVm = Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<RulesViewModel>(services);
                 threatVm.StartWith = new Core.MailRule
                 {
-                    Name = "Reported phishing and malware → Junk",
+                    Name = "Reported phishing and malware > Junk",
                     Conditions = [new Core.RuleCondition { Field = Core.RuleField.KnownThreat }],
                     Actions = [new Core.RuleAction { Kind = Core.RuleActionKind.MoveToJunk }],
                     StopAfter = true,

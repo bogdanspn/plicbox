@@ -254,7 +254,7 @@ public static class LinkSafety
         a.Equals(b, StringComparison.OrdinalIgnoreCase)
         || Brands.Values.Any(owned => owned.Contains(a, StringComparer.OrdinalIgnoreCase) && owned.Contains(b, StringComparer.OrdinalIgnoreCase));
 
-    /// <summary>The name someone registered: "mail.google.com" → "google.com", "news.bbc.co.uk" → "bbc.co.uk".</summary>
+    /// <summary>The name someone registered: "mail.google.com" -> "google.com", "news.bbc.co.uk" -> "bbc.co.uk".</summary>
     public static string RegistrableDomain(string host)
     {
         host = host.Trim().TrimEnd('.').ToLowerInvariant();

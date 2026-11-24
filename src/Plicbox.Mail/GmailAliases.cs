@@ -7,7 +7,7 @@ using Plicbox.Core;
 namespace Plicbox.Mail;
 
 /// <summary>
-/// Reads Gmail's "Send mail as" addresses (Settings → Accounts) through the Gmail API, using the token the account
+/// Reads Gmail's "Send mail as" addresses (Settings > Accounts) through the Gmail API, using the token the account
 /// already has (the https://mail.google.com/ scope covers it). Only verified addresses are returned.
 /// </summary>
 public sealed class GmailAliases(HttpClient http, GoogleAuth google)

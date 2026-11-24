@@ -58,7 +58,7 @@ pwsh -File webdisk\deploy.ps1 -InstallHook    # publish automatically after each
   webdisk.…) can't be used: Cloudflare doesn't pass port 2078 through.
 - The address and the login (encrypted with DPAPI) are kept in `%APPDATA%\Plicbox\site-deploy`, not in the repository.
 - Cloudflare caches pictures and videos. To clear its copies of what a deploy changed, set `CLOUDFLARE_API_TOKEN` (a token
-  with Zone → Cache Purge) and `CLOUDFLARE_ZONE_ID`; otherwise purge in the Cloudflare dashboard, or wait.
+  with Zone > Cache Purge) and `CLOUDFLARE_ZONE_ID`; otherwise purge in the Cloudflare dashboard, or wait.
 
 ## Videos
 

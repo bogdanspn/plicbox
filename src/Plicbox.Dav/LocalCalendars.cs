@@ -179,7 +179,7 @@ public sealed class LocalCalendars(ICalendarRepository repo)
         ? e.StartDate < DateOnly.FromDateTime(to.LocalDateTime.AddTicks(-1)).AddDays(1) && e.EndDate > DateOnly.FromDateTime(from.LocalDateTime)
         : e.Start < to && e.End > from;
 
-    /// <summary>The series' first event, moved the way one of its occurrences was (<paramref name="before"/> → <paramref name="after"/>).</summary>
+    /// <summary>The series' first event, moved the way one of its occurrences was (<paramref name="before"/> -> <paramref name="after"/>).</summary>
     private static CalendarEvent Shift(CalendarEvent first, CalendarEvent before, CalendarEvent after)
     {
         static DateOnly DayOf(CalendarEvent e) => e.IsAllDay ? e.StartDate : DateOnly.FromDateTime(e.Start.LocalDateTime);

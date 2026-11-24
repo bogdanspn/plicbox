@@ -126,7 +126,7 @@ public static class Theme
     /// <summary>Dev aid (--dark): dark whatever the settings say, for screenshots.</summary>
     public static bool ForceDark { get; set; }
 
-    /// <summary>"system", "light" or "dark" → whether to draw dark now.</summary>
+    /// <summary>"system", "light" or "dark" -> whether to draw dark now.</summary>
     public static bool WantsDark(string? mode) => ForceDark || mode switch
     {
         "dark" => true,
@@ -162,7 +162,7 @@ public static class Theme
 
     private static bool _applied;
 
-    /// <summary>Windows' setting for apps (Settings → Personalization → Colors → Choose your mode).</summary>
+    /// <summary>Windows' setting for apps (Settings > Personalization > Colors > Choose your mode).</summary>
     public static bool WindowsIsDark()
     {
         try
