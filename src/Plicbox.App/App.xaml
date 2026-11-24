@@ -460,9 +460,8 @@
                 </Border>
                 <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsSubmenuOpen}" Placement="Right" VerticalOffset="-6" HorizontalOffset="-4"
                        PopupAnimation="None" AllowsTransparency="True" Focusable="False">
-                    <!-- Same shape as the context menu: a shadow layer behind, then the menu itself. A popup is a window of
-                         its own and doesn't take the menu's font: the same font and size as the menu it opens from. -->
-                    <Grid Margin="6,2,6,10" TextElement.FontFamily="{TemplateBinding FontFamily}" TextElement.FontSize="{TemplateBinding FontSize}">
+                    <!-- Same shape as the context menu: a shadow layer behind, then the menu itself. -->
+                    <Grid Margin="6,2,6,10">
                         <Border Background="{DynamicResource MenuBrush}" CornerRadius="8">
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Opacity="0.16" />
@@ -496,7 +495,11 @@
             </ControlTemplate.Triggers>
         </ControlTemplate>
 
+        <!-- Every menu row in the app font at the windows' 14, set on the row itself: a submenu is a popup window of its
+             own and doesn't pass the menu's font on (it fell back to Segoe UI 12). -->
         <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+            <Setter Property="FontFamily" Value="{DynamicResource UiFont}" />
+            <Setter Property="FontSize" Value="14" />
             <Style.Triggers>
                 <Trigger Property="Role" Value="SubmenuItem">
                     <Setter Property="Template" Value="{StaticResource CompactSubmenuItem}" />
