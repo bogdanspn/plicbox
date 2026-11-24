@@ -460,8 +460,9 @@
                 </Border>
                 <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsSubmenuOpen}" Placement="Right" VerticalOffset="-6" HorizontalOffset="-4"
                        PopupAnimation="None" AllowsTransparency="True" Focusable="False">
-                    <!-- Same shape as the context menu: a shadow layer behind, then the menu itself. -->
-                    <Grid Margin="6,2,6,10">
+                    <!-- Same shape as the context menu: a shadow layer behind, then the menu itself. A popup is a window of
+                         its own and doesn't take the menu's font: the same font and size as the menu it opens from. -->
+                    <Grid Margin="6,2,6,10" TextElement.FontFamily="{TemplateBinding FontFamily}" TextElement.FontSize="{TemplateBinding FontSize}">
                         <Border Background="{DynamicResource MenuBrush}" CornerRadius="8">
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="12" ShadowDepth="2" Direction="270" Opacity="0.16" />
