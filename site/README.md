@@ -37,7 +37,7 @@ GitHub releases (needs `gh`). `release.ps1` runs it after each upload; commit th
 are the `-Notes` given to `release.ps1`: one `- change` per line.
 
 The same script fills the home page's "Measured, every release" (between the `<!-- perf -->` markers) from
-`perf/history.csv`. Start time and memory show only for versions measured over several runs (the `runs` column).
+`perf/history.csv`. Start time and memory measured once only (`runs` = 1) are hollow columns; the figures above them are always a median.
 
 ## Publishing
 

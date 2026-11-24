@@ -79,7 +79,9 @@ section .sub { text-align: center; color: var(--muted); margin: 12px auto 36px; 
 .numbers .columns { display: block; max-width: 100%; height: auto; margin-top: auto; padding-top: 22px; box-sizing: content-box; }
 .columns path { fill: color-mix(in srgb, var(--faint) 45%, transparent); }
 .columns .hit { fill: transparent; }
+.columns .single path { fill: none; stroke: color-mix(in srgb, var(--faint) 60%, transparent); stroke-width: 1; }
 .columns g:hover path { fill: var(--muted); }
+.columns .single:hover path { fill: none; stroke: var(--text); }
 .columns .now path, .columns .now:hover path { fill: var(--accent); }
 .numbers .range { display: flex; justify-content: space-between; max-width: 100%; margin-top: 6px; font-size: 12.5px; color: var(--faint); }
 .perf .fine { max-width: 640px; margin: 20px auto 0; text-align: center; font-size: 13.5px; color: var(--faint); }
