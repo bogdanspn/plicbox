@@ -96,6 +96,16 @@ public static class Theme
         ["RadioButtonCheckOuterEllipseCheckedFillPressed"] = ("#5C5C5C", "#BDBDBD"),
         ["RadioButtonCheckOuterEllipseCheckedStrokePressed"] = ("#5C5C5C", "#BDBDBD"),
         ["RadioButtonCheckGlyphFill"] = ("#FFFFFF", "#1F1F1F"),
+        // pressed-in toggle buttons (the work days in Settings): the same neutral as a ticked checkbox
+        ["ToggleButtonBackgroundChecked"] = ("#3D3D3D", "#D0D0D0"),
+        ["ToggleButtonBackgroundCheckedPointerOver"] = ("#4D4D4D", "#DEDEDE"),
+        ["ToggleButtonBackgroundCheckedPressed"] = ("#5C5C5C", "#BDBDBD"),
+        ["ToggleButtonBorderBrushChecked"] = ("#3D3D3D", "#D0D0D0"),
+        ["ToggleButtonBorderBrushCheckedPointerOver"] = ("#4D4D4D", "#DEDEDE"),
+        ["ToggleButtonBorderBrushCheckedPressed"] = ("#5C5C5C", "#BDBDBD"),
+        ["ToggleButtonForegroundChecked"] = ("#FFFFFF", "#1F1F1F"),
+        ["ToggleButtonForegroundCheckedPointerOver"] = ("#FFFFFF", "#1F1F1F"),
+        ["ToggleButtonForegroundCheckedPressed"] = ("#E6E6E6", "#333333"),
     };
 
     public static IEnumerable<string> Keys => Palette.Keys;
