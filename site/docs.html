@@ -79,10 +79,11 @@
     <li><strong>Known providers:</strong> Gmail, iCloud, Yahoo, Outlook.com and others are built in.</li>
     <li><strong>Who runs the domain's mail:</strong> the domain's MX records show when your own domain is hosted by Google,
       Microsoft, iCloud+, Zoho (in its region) or Fastmail.</li>
+    <li><strong>What the domain says itself:</strong> the server records some domains publish (SRV), or a settings file on the domain's
+      own server.</li>
     <li><strong>Mozilla's settings database:</strong> the public list Thunderbird uses, which knows thousands of providers and hosts.
       Only the part of your address after the @ is looked up.</li>
-    <li><strong>Trying the usual names:</strong> imap.<em>yourdomain</em>, mail.<em>yourdomain</em> and similar, including the server
-      records some domains publish.</li>
+    <li><strong>Trying the usual names:</strong> imap.<em>yourdomain</em>, mail.<em>yourdomain</em> and similar.</li>
   </ol>
   <p>If none of that works, you can type the server names and ports yourself. When something fails, Plicbox says why in plain
   words: a wrong password, a provider that wants an app password, or a shared host whose security certificate carries the
@@ -138,14 +139,28 @@
     <li><strong>Send later:</strong> the arrow next to Send picks a time (later today, tomorrow morning, Monday, or any date).
       The message waits in the Outbox until then. Plicbox sends it itself, so it needs to be running at that time (in the
       notification area is enough); otherwise it goes as soon as Plicbox starts.</li>
+    <li><strong>Drag and drop while writing:</strong> pictures dropped on the text go into it; other files, and anything dropped elsewhere
+      in the window, are attached.</li>
+    <li><strong>Before you send:</strong> Plicbox points out attachments that may not get through: programs (even zipped), shortcuts, files
+      with macros, password-locked zips, and more than 25 MB altogether.</li>
     <li><strong>Search:</strong> full text over subject, sender and body, on your PC (SQLite FTS5), so it's fast and private.</li>
     <li><strong>Trackers:</strong> pictures from the internet stay blocked until you choose to show them; known tracking pixels are
       removed even then. You can trust senders whose pictures should always load.</li>
     <li><strong>Phishing warnings:</strong> Plicbox reads the server's sender checks (SPF, DKIM, DMARC) and points out forged
       senders, replies that would go elsewhere, look-alike domains, links whose text names a different site, and attachments
       dressed up as documents (like <code>invoice.pdf.exe</code>).</li>
+    <li><strong>Look-alike senders:</strong> a domain one letter off one you write to (or your own), or a known person's name on an address
+      they've never used, gets a warning. The first message from an address is noted quietly.</li>
+    <li><strong>Phishing and malware lists:</strong> senders and links on public lists of reported sites (OpenPhish, PhishTank, IPThreat and
+      URLhaus, through malware-filter) are flagged in red. The lists download twice a day and are checked on your PC. Can be turned off
+      (Settings → Mail → Phishing and malware).</li>
+    <li><strong>Attachments you receive:</strong> zips are judged by what's inside, before you open them. What you open or save is marked as
+      from the internet, so Office uses Protected View and your antivirus checks it first.</li>
     <li><strong>Rules and blocked senders:</strong> run on your PC as new mail arrives, so they work with any provider. They run
-      while Plicbox is open, also from the notification area.</li>
+      while Plicbox is open, also from the notification area. A rule can move, copy, flag, archive or delete mail, mark it as read or
+      move it to Junk, for instance when its sender or a link is on the phishing and malware lists.</li>
+    <li><strong>Several messages at once:</strong> select them and right-click to block all their senders (or everyone at their companies'
+      domains), or to create one rule for all of them.</li>
     <li><strong>Sender pictures:</strong> Gravatar, verified company logos (BIMI) and website icons, cached for a month. Optional.</li>
     <li><strong>Notifications:</strong> from the notification area, where Plicbox keeps running when you close the window (optional).</li>
   </ul>
@@ -168,7 +183,8 @@
   <h2 id="data">Your data</h2>
   <p>There is no Plicbox server. Mail, calendar, contacts and tasks are copied to your PC (<code>%LOCALAPPDATA%\Plicbox</code>) and
   synced directly with your provider. Passwords and sign-in tokens are kept in Windows Credential Manager or encrypted for your
-  Windows account. There are no analytics and no tracking. The <a href="privacy.html">privacy policy</a> lists every connection
+  Windows account. There are no analytics and no tracking, and the <a href="https://github.com/bogdanspn/plicbox">source code</a> is public
+  (GPL, version 3), so anyone can check. The <a href="privacy.html">privacy policy</a> lists every connection
   Plicbox makes.</p>
 
   <h2 id="backup">Backups and files</h2>
@@ -196,7 +212,12 @@
   <h2 id="language">Language and look</h2>
   <ul>
     <li>English, German, Romanian and Spanish, switched in Settings.</li>
-    <li>Light or dark, following Windows or set by hand, with your own accent colour and text size.</li>
+    <li>Light or dark, following Windows or set by hand, with your own app font.</li>
+    <li>Your accent colour on buttons, and on links, selections and counts too (optional), in a shade that stays readable in light and dark.</li>
+    <li>In dark mode, plain messages are dark as well (optional). Those with their own colours or pictures, like newsletters, stay on a white
+      page, and so does printing.</li>
+    <li>The message under the list, beside it, filling the screen, or only in its own window.</li>
+    <li>Font and size for mail that doesn't choose its own, and a zoom for every message.</li>
     <li>A sidebar that folds into a strip of icons, and a unified inbox for all your accounts.</li>
   </ul>
 
@@ -206,6 +227,12 @@
       <tr><td><kbd>Ctrl</kbd> + <kbd>1</kbd> … <kbd>4</kbd></td><td>Mail, Calendar, Contacts, Tasks</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>N</kbd></td><td>New email, event, contact or task (in each module)</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>F</kbd></td><td>Search</td></tr>
+      <tr><td><kbd>F4</kbd></td><td>Find in the open message</td></tr>
+      <tr><td><kbd>F5</kbd></td><td>Refresh</td></tr>
+      <tr><td><kbd>Enter</kbd></td><td>Open the selected message</td></tr>
+      <tr><td><kbd>→</kbd> <kbd>←</kbd></td><td>Open or fold a conversation in the list</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Back to the list, when messages fill the screen</td></tr>
+      <tr><td><kbd>Delete</kbd></td><td>Delete</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>Q</kbd></td><td>Mark read or unread</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>E</kbd></td><td>Archive</td></tr>
       <tr><td><kbd>Ctrl</kbd> + <kbd>Enter</kbd></td><td>Send, while writing</td></tr>
@@ -232,6 +259,7 @@
       <tr><td>WebView2</td><td>Showing email (once it's been cleaned) and the editor</td></tr>
       <tr><td>HtmlSanitizer</td><td>Cleaning email before it's shown</td></tr>
       <tr><td>MSAL, Google APIs</td><td>Signing in with Microsoft and Google; Google calendar, contacts and tasks</td></tr>
+      <tr><td>malware-filter</td><td>The phishing and malware lists (CC BY-SA 4.0, CC0)</td></tr>
       <tr><td>DnsClient</td><td>Finding mail servers, and company logos (BIMI)</td></tr>
       <tr><td>Velopack</td><td>Installing and updating</td></tr>
       <tr><td>H.NotifyIcon</td><td>The icon in the notification area</td></tr>

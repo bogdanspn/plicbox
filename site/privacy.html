@@ -24,7 +24,7 @@
 
 <main class="wrap doc">
   <h1>Privacy policy</h1>
-  <p class="date">Effective 10 November 2026, updated 13 November 2026</p>
+  <p class="date">Effective 10 November 2026, updated 24 November 2026</p>
 
   <p class="lead"><strong>The short version:</strong> Plicbox is a desktop app that talks straight to your mail provider. There is no Plicbox server.
   Your mail, calendar, contacts, tasks, passwords and sign-in tokens stay on your PC and are never sent to the developer
@@ -96,13 +96,22 @@
       You can turn automatic updates off in Settings.</li>
     <li><strong>Sender pictures:</strong> to show a picture next to a sender, Plicbox may ask Gravatar for that sender's picture
       (Gravatar receives a one-way hash of the sender's address, not the address itself). It may also look up the sender's
-      company logo published in DNS (BIMI), or a website icon for addresses like noreply@. Results are cached for about a month.
+      company logo published in DNS (BIMI), or a website icon for addresses like noreply@; those pictures are
+      downloaded from the company's own servers. Results are cached for about a month.
       You can turn this off in Settings (<em>Show senders' pictures from the internet</em>).</li>
-    <li><strong>Setting up an account:</strong> to find the server settings for an address that isn't Google or Microsoft,
-      Plicbox looks up the domain (the part after the @) in DNS and in Mozilla's public Thunderbird configuration database.</li>
+    <li><strong>Phishing and malware lists:</strong> twice a day Plicbox downloads public lists of reported phishing and malware sites
+      from the malware-filter project (on GitLab, or its copies on GitHub and Cloudflare Pages). Those servers see a normal web
+      request from your PC. Your mail is checked against the lists on your PC; nothing about it is sent anywhere. You can turn this
+      off in Settings (<em>Warn about senders and links on public lists of phishing and malware sites</em>).</li>
+    <li><strong>Setting up an account:</strong> to find the server settings for an address that isn't at a provider it knows,
+      Plicbox looks up the domain (the part after the @) in DNS and in Mozilla's public Thunderbird configuration database, asks the
+      domain's own server for a mail settings file (that request includes your address), and tries the domain's usual mail server names.</li>
     <li><strong>Pictures inside emails:</strong> pictures loaded from the internet are blocked until you choose to show them, and
       known tracking pixels are removed even then. When you show a message's pictures, the servers they come from see a normal
       request from your PC.</li>
+    <li><strong>Microsoft Edge WebView2:</strong> messages are shown by this Windows component. Microsoft keeps it up to date, and it may
+      send Microsoft diagnostic data, depending on your Windows settings. See
+      <a href="https://privacy.microsoft.com/privacystatement">Microsoft's privacy statement</a>.</li>
   </ul>
 
   <h2>Your control</h2>
