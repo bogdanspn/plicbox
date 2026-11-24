@@ -23,7 +23,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <!-- The release version: release.ps1 raises it and packs the installer and updates with it. -->
-    <Version>0.1.18</Version>
+    <Version>0.1.19</Version>
     <!-- Restored for the release build too (release.ps1 publishes win-x64; WPF's inner build needs it listed). -->
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     <!-- Plain Windows target, without the 53 MB binding for Windows' APIs (Microsoft.Windows.SDK.NET.dll): the print
