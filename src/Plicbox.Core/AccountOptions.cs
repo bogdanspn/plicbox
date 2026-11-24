@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Plicbox.Core;
 
@@ -9,7 +10,9 @@ public enum TlsMode { Auto = 0, Tls = 1, StartTls = 2 }
 public enum SmtpAuthMode { SameAsIncoming = 0, Separate = 1, None = 2 }
 
 /// <summary>An extra "From" identity for an account (e.g. Gmail "Send mail as" addresses).</summary>
-public sealed record MailAlias(string Name, string Address)
+/// <param name="IsDefault">New mail from the account goes out from this one, not from the account's own address.</param>
+public sealed record MailAlias(string Name, string Address,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] bool IsDefault = false)
 {
     public override string ToString() => string.IsNullOrWhiteSpace(Name) ? Address : $"{Name} <{Address}>";
 }
@@ -101,6 +104,8 @@ public sealed record AppSettings
     public double MarkReadAfterSeconds { get; init; } = 1.5;
     /// <summary>Seconds a sent message waits in the Outbox, so Undo can take it back; 0 = it goes at once.</summary>
     public int UndoSendSeconds { get; init; } = 30;
+    /// <summary>Spell checking while writing: "all" (every language added to Windows), one of them ("de-DE"), or "off".</summary>
+    public string SpellCheck { get; init; } = "all";
     /// <summary>Back up what's kept only on this computer (calendars, contacts, tasks, settings) once a day.</summary>
     public bool BackupDaily { get; init; } = true;
     /// <summary>Where backups go; null for the default (OneDrive when set up, else Documents).</summary>

@@ -24,7 +24,7 @@ public enum ComposeMode
 public sealed record ComposeDraft
 {
     public long AccountId { get; init; }
-    /// <summary>Which of the account's identities to send from (null = the account's own address).</summary>
+    /// <summary>Which of the account's identities to send from (null = the account's default).</summary>
     public string? FromAddress { get; init; }
     public string To { get; init; } = "";
     public string Cc { get; init; } = "";
@@ -56,15 +56,17 @@ public static partial class Composing
     public static ComposeDraft New(Account account) => new()
     {
         AccountId = account.Id,
+        FromAddress = account.DefaultIdentity.Address,
         BodyHtml = "<div><br></div>" + SignatureHtml(account),
     };
 
     public static ComposeDraft Build(ComposeMode mode, MimeMessage original, Account account, MessageRenderer renderer)
     {
         var mine = account.Identities.Select(i => i.Address).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        // Answer from whichever of my addresses the message was sent to (alias-aware, like eM Client).
+        // Answer from whichever of my addresses the message was sent to (alias-aware, like eM Client); one sent to none
+        // of them (a mailing list, a hidden copy) from the one new mail goes out from.
         var recipients = original.To.Mailboxes.Concat(original.Cc.Mailboxes).Select(m => m.Address);
-        var fromAddress = recipients.FirstOrDefault(mine.Contains) ?? account.Email;
+        var fromAddress = recipients.FirstOrDefault(mine.Contains) ?? account.DefaultIdentity.Address;
         var quoted = renderer.SanitizeForQuote(original);
         var date = (original.Date == default ? DateTimeOffset.Now : original.Date).LocalDateTime;
 
@@ -198,7 +200,7 @@ public static partial class Composing
         var message = new MimeMessage();
         if (!string.IsNullOrEmpty(draft.MessageId)) message.MessageId = draft.MessageId;
         from ??= account.Identities.FirstOrDefault(i => i.Address.Equals(draft.FromAddress, StringComparison.OrdinalIgnoreCase))
-                 ?? account.Identities[0];
+                 ?? account.DefaultIdentity;
         var sender = new MailboxAddress(string.IsNullOrWhiteSpace(from.Name) ? account.DisplayName : from.Name, from.Address);
         message.From.Add(sender);
         message.To.AddRange(ParseAddresses(to, L.T("To"), asDraft));

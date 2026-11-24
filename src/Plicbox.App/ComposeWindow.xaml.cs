@@ -167,6 +167,8 @@ public partial class ComposeWindow : Window
         }
 
         Loaded += async (_, _) => await InitAsync(account);
+        Services.Theme.Changed += OnThemeChanged;
+        Closed += (_, _) => Services.Theme.Changed -= OnThemeChanged;
         Closing += OnClosing;
         PreviewDragOver += OnPreviewDragOver;
         PreviewDrop += OnPreviewDrop;
@@ -182,11 +184,13 @@ public partial class ComposeWindow : Window
         FromBox.ItemsSource = identities;
         FromBox.SelectedItem =
             identities.FirstOrDefault(i => i.Account.Id == account.Id && i.Alias.Address.Equals(_draft.FromAddress, StringComparison.OrdinalIgnoreCase))
+            ?? identities.FirstOrDefault(i => i.Account.Id == account.Id && i.Alias == account.DefaultIdentity)
             ?? identities.FirstOrDefault(i => i.Account.Id == account.Id)
             ?? identities.FirstOrDefault();
         _shownIdentity = FromBox.SelectedItem as Identity;
         FromBox.SelectionChanged += async (_, _) => await OnFromChangedAsync();
 
+        var spellingLanguages = Services.Spelling.LanguagesAsync();
         var env = await CoreWebView2Environment.CreateAsync(userDataFolder: Path.Combine(App.OwnDir, "WebView2"));
         await Editor.EnsureCoreWebView2Async(env);
         var core = Editor.CoreWebView2;
@@ -211,7 +215,13 @@ public partial class ComposeWindow : Window
         };
         core.NavigationCompleted += (_, _) => _editorReady.TrySetResult();
         core.WebMessageReceived += OnWebMessage;
+        core.ContextMenuRequested += OnEditorMenu;
 
+        _spellingLanguages = await spellingLanguages;
+        var settings = App.Services?.GetService(typeof(ISettingsStore)) as ISettingsStore;
+        _spellCheck = settings?.Current.SpellCheck ?? "all";
+        // A language since removed from Windows.
+        if (_spellCheck != "off" && _spellingLanguages.All(l => l.Tag != _spellCheck)) _spellCheck = "all";
         var nonce = Convert.ToHexString(RandomNumberGenerator.GetBytes(16));
         var state = JsonSerializer.Serialize(new
         {
@@ -219,9 +229,11 @@ public partial class ComposeWindow : Window
             receipt = _draft.ReadReceipt,
             plain = _draft.PlainText,
         });
+        var spelling = JsonSerializer.Serialize(new { mode = _spellCheck, languages = _spellingLanguages }, Json);
         // The quoted original's web pictures: shown if you allowed them for that message, placeholders otherwise.
         var body = _draft.ShowRemotePictures ? _draft.BodyHtml : Composing.HoldRemotePictures(_draft.BodyHtml);
-        _page = EditorTemplate.Value.Replace("{{NONCE}}", nonce).Replace("{{STATE}}", state)
+        _page = EditorTemplate.Value.Replace("{{NONCE}}", nonce).Replace("{{STATE}}", state).Replace("{{SPELLING}}", spelling)
+            .Replace("{{MODE}}", Services.Theme.IsDark ? "dark" : "")
             .Replace("{{REMOTE_IMAGES}}", _draft.ShowRemotePictures ? " https: http:" : "")
             .Replace("{{SCROLLBAR_CSS}}", MessageRenderer.ScrollbarCss)
             .Replace("{{TEXT_SIZE}}", MessageRenderer.TextSize.ToString(System.Globalization.CultureInfo.InvariantCulture))
@@ -286,7 +298,12 @@ public partial class ComposeWindow : Window
     private async void OnWebMessage(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
     {
         string? type;
-        try { type = JsonDocument.Parse(e.WebMessageAsJson).RootElement.GetProperty("type").GetString(); }
+        JsonElement message;
+        try
+        {
+            message = JsonDocument.Parse(e.WebMessageAsJson).RootElement;
+            type = message.GetProperty("type").GetString();
+        }
         catch (Exception) { return; }
         try
         {
@@ -303,11 +320,90 @@ public partial class ComposeWindow : Window
                 case "print": await PrintAsync(); break;
                 case "replyTo": ShowReplyTo(); break;
                 case "plainText": await SwitchToPlainTextAsync(); break;
+                case "spell": await CheckSpellingAsync(message.GetProperty("words").Deserialize<string[]>() ?? []); break;
+                case "spellMode": SetSpellCheck(message.GetProperty("mode").GetString() ?? "all"); break;
+                case "spellLanguages":
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("ms-settings:regionlanguage") { UseShellExecute = true });
+                    break;
             }
         }
         catch (Exception ex)
         {
             Serilog.Log.Warning(ex, "Compose action {Action} failed", type);
+        }
+    }
+
+    /// <summary>The formatting bar and its menus (the rest of the window follows by itself).</summary>
+    private void OnThemeChanged()
+    {
+        if (_editorReady.Task.IsCompleted) _ = RunScriptAsync("setDark", Services.Theme.IsDark);
+    }
+
+    // ───────────────────────── spelling ─────────────────────────
+
+    private IReadOnlyList<Services.Spelling.SpellingLanguage> _spellingLanguages = [];
+    /// <summary>"all", one language's tag, or "off".</summary>
+    private string _spellCheck = "all";
+    /// <summary>Words of this message each language doesn't know: the one with the fewest is what it's written in.</summary>
+    private readonly Dictionary<string, int> _unknownWords = [];
+
+    private IEnumerable<string> SpellingTags => _spellCheck switch
+    {
+        "off" => [],
+        "all" => _spellingLanguages.Select(l => l.Tag).OrderBy(t => _unknownWords.GetValueOrDefault(t)),
+        var one => [one],
+    };
+
+    /// <summary>A word is wrong when none of the languages checked knows it.</summary>
+    private async Task CheckSpellingAsync(string[] words)
+    {
+        var mode = _spellCheck;
+        var unknown = await Services.Spelling.UnknownAsync(words, SpellingTags.ToList());
+        foreach (var (tag, list) in unknown) _unknownWords[tag] = _unknownWords.GetValueOrDefault(tag) + list.Count;
+        var wrong = unknown.Count == 0 ? [] : words.Where(w => unknown.Values.All(list => list.Contains(w))).ToArray();
+        await RunScriptAsync("spelled", mode, words, wrong);
+    }
+
+    /// <summary>The choice in the toolbar also holds for the next messages.</summary>
+    private void SetSpellCheck(string mode)
+    {
+        _spellCheck = mode;
+        _unknownWords.Clear();
+        if (App.Services?.GetService(typeof(ISettingsStore)) is ISettingsStore settings && settings.Current.SpellCheck != mode)
+            settings.Save(settings.Current with { SpellCheck = mode });
+    }
+
+    /// <summary>Right-click on a misspelled word: suggestions on top of the usual menu.</summary>
+    private async void OnEditorMenu(object? sender, CoreWebView2ContextMenuRequestedEventArgs e)
+    {
+        if (!e.ContextMenuTarget.IsEditable || _spellCheck == "off" || Editor.CoreWebView2 is not { } core) return;
+        using var deferral = e.GetDeferral();
+        try
+        {
+            var word = JsonSerializer.Deserialize<string?>(await Editor.ExecuteScriptAsync("window.plicbox ? window.plicbox.misspelled() : null"));
+            if (word is null) return;
+            var tags = SpellingTags.ToList();
+            var suggestions = await Services.Spelling.SuggestAsync(word, tags);
+            var at = 0;
+            void Add(string label, Func<Task> run, bool enabled = true)
+            {
+                var item = core.Environment.CreateContextMenuItem(label.Replace("&", "&&"), null, CoreWebView2ContextMenuItemKind.Command);
+                item.IsEnabled = enabled;
+                item.CustomItemSelected += async (_, _) => await run();
+                e.MenuItems.Insert(at++, item);
+            }
+            foreach (var suggestion in suggestions) Add(suggestion, () => RunScriptAsync("respell", suggestion));
+            if (suggestions.Count == 0) Add(L.T("No suggestions"), () => Task.CompletedTask, enabled: false);
+            Add(L.T("Add to dictionary"), async () =>
+            {
+                await Services.Spelling.AddAsync(word, tags);
+                await RunScriptAsync("spellAgain");
+            });
+            e.MenuItems.Insert(at, core.Environment.CreateContextMenuItem("", null, CoreWebView2ContextMenuItemKind.Separator));
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Warning(ex, "Spelling suggestions failed");
         }
     }
 

@@ -87,6 +87,9 @@ public sealed record Account
     public IReadOnlyList<MailAlias> Identities =>
         [new MailAlias(DisplayName, Email), .. Aliases.Where(a => !a.Address.Equals(Email, StringComparison.OrdinalIgnoreCase))];
 
+    /// <summary>What new mail is sent from: the alias chosen for that, else the account's own address.</summary>
+    public MailAlias DefaultIdentity => Identities.FirstOrDefault(i => i.IsDefault) ?? Identities[0];
+
     public string SidebarTitle => string.IsNullOrWhiteSpace(Label) ? Email : Label;
 }
 

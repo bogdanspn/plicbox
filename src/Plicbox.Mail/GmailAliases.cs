@@ -36,7 +36,8 @@ public sealed class GmailAliases(HttpClient http, GoogleAuth google)
             .Where(e => !e.TryGetProperty("verificationStatus", out var v) || v.GetString() == "accepted")
             .Select(e => new MailAlias(
                 e.TryGetProperty("displayName", out var n) ? n.GetString() ?? "" : "",
-                e.GetProperty("sendAsEmail").GetString() ?? ""))
+                e.GetProperty("sendAsEmail").GetString() ?? "",
+                e.TryGetProperty("isDefault", out var d) && d.GetBoolean()))
             .Where(a => a.Address.Contains('@'))
             .ToList();
     }

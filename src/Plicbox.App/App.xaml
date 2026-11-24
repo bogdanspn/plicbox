@@ -666,8 +666,8 @@
             </Setter>
         </Style>
 
-        <!-- A row in a settings-style list on the left (Accounts, Rules), drawn like the main window's rail: a tint on
-             hover; when picked, the accent bar along the window edge and the title in the accent colour. -->
+        <!-- A row in a settings-style list on the left (Accounts, Rules), a tint on hover; when picked, the
+             background of a selected folder, the accent bar along the window edge and the title in the accent colour. -->
         <Style x:Key="PaneListItem" TargetType="ListBoxItem">
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -685,6 +685,7 @@
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SidebarSelectedBrush}" />
                                 <Setter TargetName="Content" Property="TextElement.Foreground" Value="{DynamicResource LinkBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>

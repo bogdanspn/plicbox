@@ -11,10 +11,12 @@ using Plicbox.Mail;
 namespace Plicbox.App.ViewModels;
 
 /// <summary>One editable alias row (the DataGrid needs settable properties and a parameterless constructor).</summary>
-public sealed class AliasRow
+public sealed partial class AliasRow : ObservableObject
 {
     public string Name { get; set; } = "";
     public string Address { get; set; } = "";
+    /// <summary>New mail from the account goes out from this one (at most one row).</summary>
+    [ObservableProperty] private bool _isDefault;
 }
 
 /// <summary>Editable copy of one account; changes apply only on Save &amp; Close.</summary>
@@ -115,7 +117,7 @@ public sealed partial class AccountEditor : ObservableObject
         IgnoredPaths.Clear();
         foreach (var p in a.IgnoredPaths) IgnoredPaths.Add(p);
         Aliases.Clear();
-        foreach (var alias in a.Aliases) Aliases.Add(new AliasRow { Name = alias.Name, Address = alias.Address });
+        foreach (var alias in a.Aliases) Aliases.Add(new AliasRow { Name = alias.Name, Address = alias.Address, IsDefault = alias.IsDefault });
     }
 
     /// <summary>Server folders for the special-folder pickers; with auto-detect on, shows what was detected.</summary>
@@ -150,6 +152,15 @@ public sealed partial class AccountEditor : ObservableObject
     [RelayCommand]
     private void RemoveAlias(AliasRow row) => Aliases.Remove(row);
 
+    /// <summary>The star: new mail goes out from this alias; clicked again, from the account's own address.</summary>
+    [RelayCommand]
+    private void ToggleDefaultAlias(AliasRow row)
+    {
+        var on = !row.IsDefault;
+        foreach (var other in Aliases) other.IsDefault = false;
+        row.IsDefault = on;
+    }
+
     /// <summary>The edited account, or an error message describing what to fix.</summary>
     public (Account? Account, string? Error) Build()
     {
@@ -162,7 +173,7 @@ public sealed partial class AccountEditor : ObservableObject
             return (null, L.F("{0}: the Bcc address isn't valid.", Email));
 
         var aliases = Aliases.Where(r => !string.IsNullOrWhiteSpace(r.Address))
-            .Select(r => new MailAlias(r.Name.Trim(), r.Address.Trim())).ToList();
+            .Select(r => new MailAlias(r.Name.Trim(), r.Address.Trim(), r.IsDefault)).ToList();
         if (aliases.FirstOrDefault(a => !MimeKit.MailboxAddress.TryParse(a.Address, out var m) || !m.Address.Contains('@')) is { } bad)
             return (null, L.F("{0}: the alias \"{1}\" isn't a valid address.", Email, bad.Address));
 
@@ -345,10 +356,14 @@ public sealed partial class AccountsViewModel : ObservableObject
         if (_dialogs.ShowAddAccount()) await LoadAsync();
     }
 
-    [RelayCommand(CanExecute = nameof(HasSelection))]
+    /// <summary>Not for the account that is the default already.</summary>
+    private bool CanSetDefault() => Selected is { IsDefault: false };
+
+    [RelayCommand(CanExecute = nameof(CanSetDefault))]
     private void SetDefault()
     {
         foreach (var e in Editors) e.IsDefault = e == Selected;
+        SetDefaultCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand(CanExecute = nameof(HasSelection))]
@@ -362,13 +377,17 @@ public sealed partial class AccountsViewModel : ObservableObject
         var index = Editors.IndexOf(editor);
         Editors.Remove(editor);
         if (editor.IsDefault && Editors.Count > 0) Editors[0].IsDefault = true;
+        Selected = null; // so the buttons look again even if the list already picked the next one
         Selected = Editors.Count == 0 ? null : Editors[Math.Min(index, Editors.Count - 1)];
     }
 
-    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private bool CanMoveUp() => Selected is { } editor && Editors.IndexOf(editor) > 0;
+    private bool CanMoveDown() => Selected is { } editor && Editors.IndexOf(editor) < Editors.Count - 1;
+
+    [RelayCommand(CanExecute = nameof(CanMoveUp))]
     private void MoveUp() => Move(-1);
 
-    [RelayCommand(CanExecute = nameof(HasSelection))]
+    [RelayCommand(CanExecute = nameof(CanMoveDown))]
     private void MoveDown() => Move(+1);
 
     private void Move(int delta)
@@ -379,6 +398,8 @@ public sealed partial class AccountsViewModel : ObservableObject
         if (to < 0 || to >= Editors.Count) return;
         Editors.Move(from, to);
         Selected = editor;
+        MoveUpCommand.NotifyCanExecuteChanged();
+        MoveDownCommand.NotifyCanExecuteChanged();
     }
 
     [RelayCommand(CanExecute = nameof(HasSelection))]
@@ -396,7 +417,9 @@ public sealed partial class AccountsViewModel : ObservableObject
             foreach (var alias in found)
             {
                 if (editor.Aliases.Any(r => r.Address.Equals(alias.Address, StringComparison.OrdinalIgnoreCase))) continue;
-                editor.Aliases.Add(new AliasRow { Name = alias.Name, Address = alias.Address });
+                // Gmail's own default comes along, unless one is starred here already.
+                var isDefault = alias.IsDefault && !editor.Aliases.Any(r => r.IsDefault);
+                editor.Aliases.Add(new AliasRow { Name = alias.Name, Address = alias.Address, IsDefault = isDefault });
                 added++;
             }
             if (added == 0)

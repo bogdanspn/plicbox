@@ -43,6 +43,24 @@ public sealed class AliasTests
     }
 
     [Fact]
+    public void New_mail_comes_from_the_starred_alias_and_replies_still_from_the_one_written_to()
+    {
+        Assert.Equal("contact@example.ro", Composing.New(Me).FromAddress);
+        Assert.DoesNotContain("IsDefault", Me.AliasesJson); // nothing changes for accounts without one
+
+        var starred = Me with { AliasesJson = AccountJson.Aliases([new MailAlias("Bogdan R", "contact@example.com", true), new MailAlias("Noreply", "noreply@example.net")]) };
+        Assert.Equal("contact@example.com", Composing.New(starred).FromAddress);
+        Assert.Equal("contact@example.ro", Composing.Build(ComposeMode.Reply, SentTo("contact@example.ro"), starred, new MessageRenderer()).FromAddress);
+
+        var toAList = SentTo("list@example.org");
+        toAList.Cc.Clear();
+        Assert.Equal("contact@example.com", Composing.Build(ComposeMode.Reply, toAList, starred, new MessageRenderer()).FromAddress);
+
+        var sent = Composing.ToMimeMessage(starred, new ComposeDraft(), "a@example.org", "", "", "s", "<p>x</p>", []);
+        Assert.Equal("contact@example.com", sent.From.Mailboxes.Single().Address);
+    }
+
+    [Fact]
     public void Account_bcc_copy_is_added_once()
     {
         var account = Me with { BccAddress = "archive@example.ro" };
@@ -56,12 +74,13 @@ public sealed class AliasTests
         const string json = """
             {"sendAs":[
               {"sendAsEmail":"contact@example.ro","displayName":"","isPrimary":true},
-              {"sendAsEmail":"contact@example.com","displayName":"Bogdan Rosu","verificationStatus":"accepted"},
+              {"sendAsEmail":"contact@example.com","displayName":"Bogdan Rosu","verificationStatus":"accepted","isDefault":true},
               {"sendAsEmail":"pending@example.com","displayName":"P","verificationStatus":"pending"},
               {"sendAsEmail":"noreply@example.net","displayName":"Matrix Noreply"}
             ]}
             """;
         Assert.Equal(["contact@example.com", "noreply@example.net"], GmailAliases.Parse(json).Select(a => a.Address));
+        Assert.Equal([true, false], GmailAliases.Parse(json).Select(a => a.IsDefault));
     }
 
     [Fact]

@@ -1,55 +1,69 @@
 <!doctype html>
-<html>
+<html class="{{MODE}}">
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:{{REMOTE_IMAGES}}; style-src 'unsafe-inline'; script-src 'nonce-{{NONCE}}'">
 <style>
+  /* The formatting bar and its menus follow the app's light or dark mode; the text stays on white paper, as it goes out. */
+  :root { --bar: #fafafa; --line: #e3e3e3; --ink: #333; --hover: #e8e8e8; --on: #dde7f5; --on-ink: #0f4c9c; --off-ink: #bbb;
+          --sep: #ddd; --high: #c42b1c; --low: #0f6cbd;
+          --menu: #fff; --menu-line: #d6d6d6; --menu-ink: #1f1f1f; --menu-hover: #eef1f5; --menu-icon: #444; --dim: #707070;
+          --menu-sep: #e6e6e6; --field: #fff; --field-line: #ccc; --edge: rgba(0,0,0,.15); --cell-on: #cfe0f7;
+          --focus: #0f6cbd; --shadow: rgba(0,0,0,.16); }
+  :root.dark { --bar: #202020; --line: #3a3a3a; --ink: #e0e0e0; --hover: #383838; --on: #29466b; --on-ink: #a9cdfb; --off-ink: #666;
+          --sep: #444; --high: #ff7b72; --low: #6aa6f8;
+          --menu: #2c2c2c; --menu-line: #3e3e3e; --menu-ink: #ececec; --menu-hover: #3a3a3a; --menu-icon: #c4c4c4; --dim: #a3a3a3;
+          --menu-sep: #3e3e3e; --field: #1f1f1f; --field-line: #505050; --edge: rgba(255,255,255,.28); --cell-on: #29466b;
+          --focus: #6aa6f8; --shadow: rgba(0,0,0,.5); }
+  .dark .pop { color-scheme: dark; }
+  .dark .pop::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,.4); }
   html, body { margin: 0; height: 100%; }
   body { font: 14px/1.5 'Segoe UI', sans-serif; color: #1f1f1f; display: flex; flex-direction: column; }
   .ic { font-family: 'Segoe Fluent Icons', 'Segoe MDL2 Assets'; font-size: 16px; line-height: 1; font-style: normal; font-weight: normal; }
 
-  #bar { display: flex; flex-wrap: wrap; gap: 1px; align-items: center; padding: 4px 10px; border-bottom: 1px solid #e3e3e3;
-         background: #fafafa; flex: none; user-select: none; }
+  #bar { display: flex; flex-wrap: wrap; gap: 1px; align-items: center; padding: 4px 10px; border-bottom: 1px solid var(--line);
+         background: var(--bar); flex: none; user-select: none; }
   #bar button { border: 0; background: transparent; border-radius: 4px; min-width: 30px; height: 30px; padding: 0 6px;
-                font: inherit; cursor: pointer; color: #333; display: inline-flex; align-items: center; justify-content: center; gap: 2px; }
-  #bar button:hover { background: #e8e8e8; }
-  #bar button.on { background: #dde7f5; color: #0f4c9c; }
-  #bar button:disabled { color: #bbb; background: transparent; cursor: default; }
+                font: inherit; cursor: pointer; color: var(--ink); display: inline-flex; align-items: center; justify-content: center; gap: 2px; }
+  #bar button:hover { background: var(--hover); }
+  #bar button.on { background: var(--on); color: var(--on-ink); }
+  #bar button:disabled { color: var(--off-ink); background: transparent; cursor: default; }
   #bar button .chev { font-size: 8px; margin-left: 2px; }
   #bar button svg { width: 16px; height: 16px; }
-  #bar .sep { width: 1px; height: 18px; background: #ddd; margin: 0 5px; }
+  #bar button[hidden] { display: none; }
+  #bar .sep { width: 1px; height: 18px; background: var(--sep); margin: 0 5px; }
   #bar .spacer { flex: 1; }
   .swatch { position: relative; }
   .swatch i.bar { position: absolute; left: 7px; right: 16px; bottom: 5px; height: 3px; border-radius: 1px; }
-  #impBtn.high { color: #c42b1c; }
-  #impBtn.low { color: #0f6cbd; }
+  #bar #impBtn.high { color: var(--high); }
+  #bar #impBtn.low { color: var(--low); }
 
-  .pop { position: fixed; z-index: 10; background: #fff; border: 1px solid #d6d6d6; border-radius: 8px; padding: 4px;
-         box-shadow: 0 6px 20px rgba(0,0,0,.16); min-width: 180px; max-height: 70vh; overflow: auto; user-select: none; }
+  .pop { position: fixed; z-index: 10; background: var(--menu); color: var(--menu-ink); border: 1px solid var(--menu-line); border-radius: 8px; padding: 4px;
+         box-shadow: 0 6px 20px var(--shadow); min-width: 180px; max-height: 70vh; overflow: auto; user-select: none; }
   .pop[hidden] { display: none; }
   .mi { display: flex; align-items: center; gap: 10px; padding: 5px 10px 5px 8px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
-  .mi:hover { background: #eef1f5; }
-  .mi .ic { width: 16px; text-align: center; color: #444; }
+  .mi:hover { background: var(--menu-hover); }
+  .mi .ic { width: 16px; text-align: center; color: var(--menu-icon); }
   .mi .check { width: 16px; text-align: center; font-size: 12px; }
-  .mi .key { margin-left: auto; padding-left: 24px; color: #888; font-size: 12px; }
-  .mi.disabled { color: #aaa; cursor: default; background: transparent; }
-  .msep { height: 1px; background: #e6e6e6; margin: 4px 2px; }
+  .mi .key { margin-left: auto; padding-left: 24px; color: var(--dim); font-size: 12px; }
+  .mi.disabled { color: var(--off-ink); cursor: default; background: transparent; }
+  .msep { height: 1px; background: var(--menu-sep); margin: 4px 2px; }
   .colors { display: grid; grid-template-columns: repeat(10, 20px); gap: 3px; padding: 6px; }
-  .colors button { width: 20px; height: 20px; border: 1px solid rgba(0,0,0,.15); border-radius: 3px; cursor: pointer; padding: 0; }
-  .colors button:hover { outline: 2px solid #0f6cbd; outline-offset: 1px; }
+  .colors button { width: 20px; height: 20px; border: 1px solid var(--edge); border-radius: 3px; cursor: pointer; padding: 0; }
+  .colors button:hover { outline: 2px solid var(--focus); outline-offset: 1px; }
   .emojis { display: grid; grid-template-columns: repeat(10, 30px); gap: 2px; padding: 4px; font: 20px 'Segoe UI Emoji', sans-serif; }
   .emojis span { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; }
-  .emojis span:hover { background: #eef1f5; }
+  .emojis span:hover { background: var(--menu-hover); }
   .grid { display: grid; grid-template-columns: repeat(8, 18px); gap: 2px; padding: 6px 6px 2px; }
-  .grid span { width: 18px; height: 18px; border: 1px solid #ccc; border-radius: 2px; }
-  .grid span.on { background: #cfe0f7; border-color: #0f6cbd; }
-  .gridlabel { padding: 2px 6px 6px; color: #555; font-size: 12px; }
+  .grid span { width: 18px; height: 18px; border: 1px solid var(--field-line); border-radius: 2px; }
+  .grid span.on { background: var(--cell-on); border-color: var(--focus); }
+  .gridlabel { padding: 2px 6px 6px; color: var(--dim); font-size: 12px; }
   .form { padding: 8px 10px; display: grid; gap: 8px; min-width: 300px; }
-  .form label { display: grid; gap: 2px; font-size: 12px; color: #555; }
-  .form input { font: inherit; padding: 5px 7px; border: 1px solid #ccc; border-radius: 4px; outline: none; }
-  .form input:focus { border-color: #0f6cbd; }
+  .form label { display: grid; gap: 2px; font-size: 12px; color: var(--dim); }
+  .form input { font: inherit; padding: 5px 7px; border: 1px solid var(--field-line); border-radius: 4px; outline: none; background: var(--field); color: var(--menu-ink); }
+  .form input:focus { border-color: var(--focus); }
   .form .buttons { display: flex; gap: 6px; justify-content: flex-end; }
-  .form button { font: inherit; padding: 4px 14px; border-radius: 4px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+  .form button { font: inherit; padding: 4px 14px; border-radius: 4px; border: 1px solid var(--field-line); background: var(--menu); color: var(--menu-ink); cursor: pointer; }
   .form button.primary { background: #0f6cbd; border-color: #0f6cbd; color: #fff; }
 
   /* The text at the size set for messages (Settings > Appearance), as it goes out (Composing.ToMimeMessage). */
@@ -85,9 +99,11 @@
               background: #0f6cbd; color: #fff; font: 13px 'Segoe UI', sans-serif; padding: 6px 14px; border-radius: 16px;
               box-shadow: 0 4px 14px rgba(0,0,0,.2); white-space: nowrap; }
   #drophint[hidden] { display: none; }
+  ::highlight(spelling) { text-decoration: spelling-error; }
 {{SCROLLBAR_CSS}}
 
   @media print {
+    ::highlight(spelling) { text-decoration: none; }
     #bar, .pop { display: none !important; }
     body { display: block; height: auto; }
     #editor { overflow: visible; padding: 0; }
@@ -127,6 +143,9 @@
   <button data-pop="emoji" title="[[Emoji]]"><span class="ic">&#xE76E;</span></button>
   <button data-cmd="removeFormat" class="fmt" title="[[Clear formatting]]"><span class="ic">&#xED60;</span></button>
   <span class="spacer"></span>
+  <button id="spellBtn" data-pop="spelling" title="[[Spelling]]" hidden>
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 10 4.6 1.8h.6L8.3 10M2.5 7.4h4.8M8 13l2 2 4.8-5.2"/><path id="spellOff" d="M9.6 10.6l4.6 4.6M14.2 10.6l-4.6 4.6"/></svg><span class="ic chev">&#xE70D;</span>
+  </button>
   <button data-pop="more" title="[[More options]]"><span class="ic">&#xE712;</span></button>
 </div>
 <div id="pop" class="pop" hidden></div>
@@ -722,6 +741,129 @@
     item(p, T('Horizontal line'), () => { closePop(); exec('insertHorizontalRule'); }, { icon: '\uE76F', disabled: state.plain });
   };
 
+  // ───────── spelling ─────────
+  // Windows checks the words (ComposeWindow.CheckSpellingAsync), in the languages picked here, and the wrong ones are
+  // underlined as a highlight: the message's own HTML is never touched. Your text is checked, not the signature or
+  // the quoted original, except where you write in it.
+  const SPELLING = {{SPELLING}};
+  const known = new Map();            // word → right or wrong; undefined while being checked
+  const wrongWords = new Highlight();
+  const touched = new Set();          // blocks typed in
+  let spellTimer = 0, typing = false, clicked = null;
+  const BLOCKS = 'div,p,li,td,th,blockquote,pre,h1,h2,h3,h4,h5,h6,table,ul,ol,tr,center,section,article,#editor';
+  const NOT_MINE = '.mr-signature,.mr-quote-header,blockquote,.gmail_quote';
+  CSS.highlights.set('spelling', wrongWords);
+  // Without Windows' spell checker, the browser's own does what it can.
+  if (SPELLING.languages.length) { editor.spellcheck = false; document.getElementById('spellBtn').hidden = false; }
+  const checking = () => SPELLING.languages.length > 0 && SPELLING.mode !== 'off';
+
+  POP.spelling = p => {
+    const pick = mode => { closePop(); setSpelling(mode); };
+    if (SPELLING.languages.length > 1) item(p, T('All my languages'), () => pick('all'), { check: SPELLING.mode === 'all' });
+    for (const l of SPELLING.languages)
+      item(p, l.name, () => pick(l.tag), { check: SPELLING.mode === l.tag || (SPELLING.mode === 'all' && SPELLING.languages.length === 1) });
+    separator(p);
+    item(p, T('Off'), () => pick('off'), { check: SPELLING.mode === 'off' });
+    separator(p);
+    item(p, T('Add a language in Windows…'), () => { closePop(); host({ type: 'spellLanguages' }); }, { icon: '\uE774' });
+  };
+  function setSpelling(mode) {
+    SPELLING.mode = mode;
+    host({ type: 'spellMode', mode });
+    spellAgain();
+  }
+  function spellAgain() {
+    known.clear();
+    showSpellButton();
+    checkSpelling();
+  }
+  function showSpellButton() {
+    document.getElementById('spellOff').style.display = checking() ? 'none' : '';
+    const language = SPELLING.languages.find(l => l.tag === SPELLING.mode);
+    document.getElementById('spellBtn').title = T('Spelling') + ': ' + (language ? language.name : SPELLING.mode === 'off' ? T('Off') : T('All my languages'));
+  }
+
+  /** The text in runs that read on (a word can be in several pieces: half of it bold, or split by an undo). */
+  function textRuns() {
+    const runs = [];
+    let run = null, block = null;
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, n => {
+      if (n.nodeType === 3) return NodeFilter.FILTER_ACCEPT;
+      if (n.matches('a,style,script')) return NodeFilter.FILTER_REJECT;
+      if (n.matches(NOT_MINE) && ![...touched].some(t => n.contains(t))) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    });
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (n.nodeType === 1) { if (n.matches('br,img,hr')) run = null; continue; }
+      const b = n.parentNode.closest(BLOCKS);
+      if (b !== block) { run = null; block = b; }
+      if (b !== editor && b.closest(NOT_MINE) && !touched.has(b)) continue;
+      if (!run) runs.push(run = { text: '', parts: [] });
+      run.parts.push({ node: n, start: run.text.length });
+      run.text += n.data;
+    }
+    return runs;
+  }
+  function rangeIn(run, start, end) {
+    const r = document.createRange();
+    for (const { node, start: at } of run.parts) {
+      if (start >= at && start < at + node.length) r.setStart(node, start - at);
+      if (end > at && end <= at + node.length) { r.setEnd(node, end - at); break; }
+    }
+    return r;
+  }
+  const WORD = /\p{L}[\p{L}\p{M}]*(?:['’]\p{L}[\p{L}\p{M}]*)*/gu;
+  // Not words: addresses, paths, anything with digits, abbreviations (z.B.), quoted lines in plain text.
+  const NO_WORD = /[@\/\\_\d]|\p{L}[.:]\p{L}/u;
+  function* wordsOf(text) {
+    for (const token of text.matchAll(/[^\s\u00a0\u200b]+/g)) {
+      if (NO_WORD.test(token[0])) continue;
+      for (const m of token[0].matchAll(WORD)) {
+        const word = m[0];
+        if (word.length < 2 || word === word.toUpperCase()) continue;
+        yield { word: word.replace(/’/g, "'"), start: token.index + m.index, end: token.index + m.index + word.length };
+      }
+    }
+  }
+  function checkSpelling() {
+    clearTimeout(spellTimer);
+    wrongWords.clear();
+    if (!checking()) return;
+    const sel = getSelection();
+    const ask = [];
+    for (const run of textRuns()) {
+      const caretPart = typing && sel.isCollapsed ? run.parts.find(p => p.node === sel.anchorNode) : null;
+      const caret = caretPart ? caretPart.start + sel.anchorOffset : -1;
+      const quoted = state.plain ? [...run.text.matchAll(/^>.*$/gm)].map(m => [m.index, m.index + m[0].length]) : [];
+      for (const { word, start, end } of wordsOf(run.text)) {
+        if (caret >= start && caret <= end) continue;   // still being written
+        if (quoted.some(([from, to]) => start >= from && end <= to)) continue;
+        if (!known.has(word)) { known.set(word, undefined); ask.push(word); }
+        else if (known.get(word) === false) wrongWords.add(rangeIn(run, start, end));
+      }
+    }
+    if (ask.length) host({ type: 'spell', words: ask });
+  }
+  function checkSoon() {
+    clearTimeout(spellTimer);
+    spellTimer = setTimeout(checkSpelling, 250);
+  }
+  editor.addEventListener('input', () => {
+    typing = true;
+    const n = getSelection().anchorNode;
+    const block = n && (n.nodeType === 3 ? n.parentNode : n).closest(BLOCKS);
+    if (block && block !== editor && editor.contains(block)) touched.add(block);
+    checkSoon();
+  });
+  function stopTyping() { if (typing) { typing = false; checkSoon(); } }
+  editor.addEventListener('mousedown', stopTyping);
+  editor.addEventListener('blur', stopTyping);
+  editor.addEventListener('keydown', e => { if (/^(Arrow|Home|End|Page)/.test(e.key)) stopTyping(); });
+  editor.addEventListener('contextmenu', e => {
+    const at = document.caretRangeFromPoint(e.clientX, e.clientY);
+    clicked = at && [...wrongWords].find(r => r.startContainer.isConnected && r.isPointInRange(at.startContainer, at.startOffset)) || null;
+  });
+
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !pop.hidden) { e.preventDefault(); closePop(); }
     else if (e.ctrlKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k' && !state.plain) {
@@ -758,6 +900,7 @@
     else editor.innerHTML = plainToHtml(text) || '<div><br></div>';
     editor.focus();
     updateState();
+    checkSoon();
   }
 
   // ───────── start ─────────
@@ -770,8 +913,28 @@
   getSelection().removeAllRanges();
   getSelection().addRange(range);
   updateState();
+  showSpellButton();
+  checkSpelling();
 
   window.plicbox = {
+    /** The answer to 'spell': these words checked, those of them wrong. */
+    spelled: (mode, words, wrong) => {
+      if (mode !== SPELLING.mode) return;   // asked before the language was changed
+      const bad = new Set(wrong);
+      for (const w of words) known.set(w, !bad.has(w));
+      checkSpelling();
+    },
+    spellAgain,
+    /** The misspelled word right-clicked, if it was one. */
+    misspelled: () => clicked ? clicked.toString().replace(/’/g, "'") : null,
+    respell: word => {
+      if (!clicked) return;
+      saved = clicked;
+      clicked = null;
+      exec('insertText', word);
+      typing = false;
+      checkSpelling();
+    },
     /** forSending: pictures shown smaller go out smaller (sendableHtml); drafts keep them as they are. */
     state: forSending => ({ html: forSending ? sendableHtml() : editor.innerHTML, text: editor.innerText, plain: state.plain, importance: state.importance, receipt: state.receipt }),
     focus: () => editor.focus(),
@@ -789,6 +952,7 @@
       exec('insertHTML', html);
       return true;
     },
+    setDark: dark => document.documentElement.classList.toggle('dark', dark),
     setPrintHeader: html => { document.getElementById('printhead').innerHTML = html; },
   };
 </script>

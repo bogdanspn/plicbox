@@ -172,7 +172,30 @@
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="{local:T 'Name'}" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="*" />
                                     <DataGridTextColumn Header="{local:T 'Address'}" Binding="{Binding Address, UpdateSourceTrigger=PropertyChanged}" Width="*" />
-                                    <!-- Cells pad 10 px each side, so the column must fit 20 px plus the button (6+17+6). -->
+                                    <!-- Cells pad 10 px each side, so these columns must fit 20 px plus the button (6+17+6). -->
+                                    <DataGridTemplateColumn Width="52" CanUserResize="False">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Command="{Binding DataContext.ToggleDefaultAliasCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource ToolbarButton}">
+                                                            <Setter Property="Tag" Value="&#xE734;" />
+                                                            <Setter Property="Padding" Value="6,2" />
+                                                            <Setter Property="ToolTip" Value="{local:T 'Send new mail from this address'}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsDefault}" Value="True">
+                                                                    <Setter Property="Tag" Value="&#xE735;" />
+                                                                    <Setter Property="Foreground" Value="{DynamicResource LinkBrush}" />
+                                                                    <Setter Property="ToolTip" Value="{local:T 'New mail is sent from this address. Click to use the account\'s own address again.'}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                     <DataGridTemplateColumn Width="52" CanUserResize="False">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
@@ -191,7 +214,7 @@
                                         Visibility="{Binding IsGoogle, Converter={StaticResource BoolToVisibility}}" />
                             </StackPanel>
                             <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap"
-                                       Text="{local:T 'Pick these in the From field when writing. Replies automatically use the alias the message was sent to. Gmail only sends from addresses set up under Gmail → Settings → Accounts → Send mail as.'}" />
+                                       Text="{local:T 'Pick these in the From field when writing. New mail uses the one with the star, or the account\'s own address. Replies use the alias the message was sent to. Gmail only sends from addresses set up under Gmail → Settings → Accounts → Send mail as.'}" />
 
                             <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Signature'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
                             <TextBox Text="{Binding Signature, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap"
