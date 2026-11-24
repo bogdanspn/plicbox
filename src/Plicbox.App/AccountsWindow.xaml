@@ -17,13 +17,6 @@
         <Style x:Key="FormBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
             <Setter Property="Margin" Value="0,5" />
         </Style>
-        <Style x:Key="SectionHeader" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource SubtleFillBrush}" />
-            <Setter Property="CornerRadius" Value="3" />
-            <Setter Property="Padding" Value="10,6" />
-            <Setter Property="Margin" Value="0,18,0,8" />
-            <Setter Property="TextElement.FontWeight" Value="SemiBold" />
-        </Style>
     </Window.Resources>
 
     <Grid>

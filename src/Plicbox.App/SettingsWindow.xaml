@@ -6,13 +6,6 @@
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
         FontFamily="{DynamicResource UiFont}" FontSize="14" Background="{DynamicResource SurfaceBrush}">
     <Window.Resources>
-        <Style x:Key="SectionHeader" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource SubtleFillBrush}" />
-            <Setter Property="CornerRadius" Value="3" />
-            <Setter Property="Padding" Value="10,6" />
-            <Setter Property="Margin" Value="0,16,0,8" />
-            <Setter Property="TextElement.FontWeight" Value="SemiBold" />
-        </Style>
         <Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
             <Setter Property="Margin" Value="10,4" />
         </Style>

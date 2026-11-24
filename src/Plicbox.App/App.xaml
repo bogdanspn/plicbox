@@ -666,6 +666,15 @@
             </Setter>
         </Style>
 
+        <!-- The bar with a section's title in Settings, Accounts and Rules -->
+        <Style x:Key="SectionHeader" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource SubtleFillBrush}" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Margin" Value="0,16,0,8" />
+            <Setter Property="TextElement.FontWeight" Value="SemiBold" />
+        </Style>
+
         <!-- A row in a settings-style list on the left (Accounts, Rules), a tint on hover; when picked, the
              background of a selected folder, the accent bar along the window edge and the title in the accent colour. -->
         <Style x:Key="PaneListItem" TargetType="ListBoxItem">
