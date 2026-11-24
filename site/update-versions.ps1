@@ -69,15 +69,11 @@ function Columns($points, [string]$label) {
         $height = [math]::Max(4, [math]::Round(40 * $points[$i].value / $max, 1))
         $x = $i * 16
         $side = Show ($height - 3) '0.#'
-        $class = if ($points[$i].single) { ' class="single"' } elseif ($i -eq $points.Count - 1) { ' class="now"' } else { "" }
-        $text = $points[$i].text + $(if ($points[$i].single) { ", one first run" } else { "" })
-        "<g$class><title>$($points[$i].version): $text</title><rect class=`"hit`" x=`"$x`" width=`"16`" height=`"40`"/><path d=`"M$($x + 2) 40v-${side}q0-3 3-3h6q3 0 3 3v${side}z`"/></g>"
+        $class = if ($i -eq $points.Count - 1) { ' class="now"' } else { "" }
+        "<g$class><title>$($points[$i].version): $($points[$i].text)</title><rect class=`"hit`" x=`"$x`" width=`"16`" height=`"40`"/><path d=`"M$($x + 2) 40v-${side}q0-3 3-3h6q3 0 3 3v${side}z`"/></g>"
     }
     $width = $points.Count * 16
-    # The spoken summary compares like with like only.
-    $first = @($points | Where-Object { -not $_.single })[0]
-    if (-not $first) { $first = $points[0] }
-    $summary = "${label}: $($points[-1].text) in $($points[-1].version)" + $(if ($first.version -ne $points[-1].version) { ", $($first.text) in $($first.version)" } else { "" })
+    $summary = "${label}: $($points[0].text) in $($points[0].version), $($points[-1].text) in $($points[-1].version)"
     "<svg class=`"columns`" viewBox=`"0 0 $width 40`" width=`"$width`" height=`"40`" role=`"img`" aria-label=`"$summary`">$($bars -join '')</svg>" +
     "<span class=`"range`" style=`"width:${width}px`"><span>$($points[0].version)</span><span>$($points[-1].version)</span></span>"
 }
@@ -88,13 +84,13 @@ $history = @(Import-Csv (Join-Path $site "../perf/history.csv"))
 $now = $history[-1]
 if ($now.version -ne $version) { Write-Host "perf/history.csv ends at $($now.version): the numbers on the home page are that version's." -ForegroundColor Yellow }
 # Start time and memory are a median of several runs (runs > 1). Up to 0.1.18 they're one run straight after the build,
-# slower to start: those columns are hollow, and the note under the tiles says why.
+# slower to start: shown in the charts alike, but the figures above them are always a median.
 $timed = @($history | Where-Object startupMs)
 $steady = @($history | Where-Object { [int]("0" + $_.runs) -gt 1 })
 $setups = $history | Where-Object setupMb | ForEach-Object { @{ version = $_.version; value = Num $_.setupMb; text = "$($_.setupMb) MB" } }
 $installs = $history | Where-Object appFolderMb | ForEach-Object { @{ version = $_.version; value = Num $_.appFolderMb; text = "$($_.appFolderMb) MB" } }
-$starts = $timed | ForEach-Object { $s = (Num $_.startupMs) / 1000; @{ version = $_.version; value = $s; text = "$(Show $s '0.0') s"; single = [int]$_.runs -lt 2 } }
-$memory = $timed | ForEach-Object { $mb = Memory $_; @{ version = $_.version; value = $mb; text = "$(Show $mb '0') MB"; single = [int]$_.runs -lt 2 } }
+$starts = $timed | ForEach-Object { $s = (Num $_.startupMs) / 1000; @{ version = $_.version; value = $s; text = "$(Show $s '0.0') s" } }
+$memory = $timed | ForEach-Object { $mb = Memory $_; @{ version = $_.version; value = $mb; text = "$(Show $mb '0') MB" } }
 $tiles = @(
     (Tile "Download" (Show (Num $now.setupMb) '0.0') "MB" "The installer. Updates fetch only what changed." (Columns $setups "Installer size"))
     (Tile "On disk" (Show (Num $now.appFolderMb) '0.0') "MB" "Installed, before your mail." (Columns $installs "Installed size"))
@@ -104,15 +100,12 @@ $tiles = @(
         (Tile "Memory" (Show (Memory $last) '0') "MB" "$(Show (Num $last.appPrivateMb) '0') for Plicbox, $(Show (Num $last.webViewPrivateMb) '0') for WebView2, which shows the messages." (Columns $memory "Memory"))
     }
 )
-$runs = if ($steady) { "Start time and memory are the median of $($steady[-1].runs) runs with a small demo mailbox, on the PC Plicbox is built on, so yours will differ. " } else { "" }
-if ($timed | Select-Object -Last 14 | Where-Object { [int]$_.runs -lt 2 }) {
-    $runs += "Hollow columns are older measurements, of a single run straight after the build: it starts slower and varies more, so they don't compare with the solid ones. "
-}
+$runs = if ($steady) { "Start time and memory are the <a href=`"https://github.com/$repo/tree/main/perf`">median of $($steady[-1].runs) runs</a> with a small demo mailbox, on the PC Plicbox is built on, so yours will differ." } else { "" }
 $perf = @"
       <div class="numbers">
 $($tiles -join "`n")
       </div>
-      <p class="fine">Version $($now.version). $runs<a href="https://github.com/$repo/blob/main/perf/history.csv">All the numbers</a> and <a href="https://github.com/$repo/blob/main/perf/measure.ps1">how they're measured</a> are on GitHub.</p>
+      <p class="fine">Version $($now.version). $runs</p>
 "@ -replace "`r`n", "`n"
 $text = [regex]::Replace($text, '(?s)(<!-- perf:[^\n]*-->\n).*?( *<!-- /perf -->)', { param($m) $m.Groups[1].Value + $perf + "`n" + $m.Groups[2].Value })
 Write-Utf8 $index $text
