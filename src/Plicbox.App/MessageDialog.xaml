@@ -26,8 +26,15 @@
                 <TextBlock x:Name="Glyph" Style="{StaticResource Icon}" FontSize="18" Foreground="White" HorizontalAlignment="Center" />
             </Border>
             <TextBlock x:Name="TitleText" Grid.Column="1" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center" />
-            <TextBlock x:Name="MessageText" Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" TextWrapping="Wrap"
-                       Foreground="{DynamicResource MutedTextBrush}" LineHeight="20" />
+            <StackPanel Grid.Row="1" Grid.Column="1">
+                <TextBlock x:Name="MessageText" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" LineHeight="20" />
+                <CheckBox x:Name="Option" Margin="0,12,0,0" Visibility="Collapsed">
+                    <StackPanel>
+                        <TextBlock x:Name="OptionText" TextWrapping="Wrap" />
+                        <TextBlock x:Name="OptionNote" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource MutedTextBrush}" />
+                    </StackPanel>
+                </CheckBox>
+            </StackPanel>
 
             <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
                 <Button x:Name="CancelButton" IsCancel="True" MinWidth="90" Padding="16,7" Margin="0,0,10,0" Content="{local:T 'Cancel'}"

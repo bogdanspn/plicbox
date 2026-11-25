@@ -153,7 +153,7 @@ public sealed class MessageRepository(Database db) : IMessageRepository
         m.in_reply_to AS InReplyTo, m.thread_key AS ThreadKey, m.subject, m.from_name AS FromName,
         m.from_address AS FromAddress, m.to_list AS "To", m.recipients AS Recipients, m.date AS DateUnix, m.preview,
         m.is_read AS IsRead, m.is_flagged AS IsFlagged, m.has_attachments AS HasAttachments, m.size,
-        m.is_important AS IsImportant
+        m.is_important AS IsImportant, m.send_state AS SendState
         """;
 
     // Unread/Flagged smart views and counts ignore mail that's already been binned.
@@ -434,6 +434,13 @@ public sealed class MessageRepository(Database db) : IMessageRepository
             new { id, date = date.ToUnixTimeSeconds() }, cancellationToken: ct));
     }
 
+    public async Task SetSendStateAsync(long id, SendState state, CancellationToken ct = default)
+    {
+        using var conn = db.Open();
+        await conn.ExecuteAsync(new CommandDefinition("UPDATE messages SET send_state = @state WHERE id = @id",
+            new { id, state = (int)state }, cancellationToken: ct));
+    }
+
     public async Task<int> MarkFolderReadAsync(long folderId, CancellationToken ct = default)
     {
         using var conn = db.Open();
@@ -445,7 +452,7 @@ public sealed class MessageRepository(Database db) : IMessageRepository
     {
         using var conn = db.Open();
         await conn.ExecuteAsync(new CommandDefinition(
-            "UPDATE messages SET folder_id = @folderId, uid = -id WHERE id = @id",
+            "UPDATE messages SET folder_id = @folderId, uid = -id, send_state = 0 WHERE id = @id",
             new { id, folderId }, cancellationToken: ct));
     }
 
@@ -592,6 +599,7 @@ public sealed class MessageRepository(Database db) : IMessageRepository
         public bool HasAttachments { get; init; }
         public long Size { get; init; }
         public bool IsImportant { get; init; }
+        public long SendState { get; init; }
 
         public MessageSummary ToModel() => new()
         {
@@ -599,7 +607,7 @@ public sealed class MessageRepository(Database db) : IMessageRepository
             InReplyTo = InReplyTo, ThreadKey = ThreadKey, Subject = Subject, FromName = FromName,
             FromAddress = FromAddress, To = To, Recipients = Recipients, Date = DateTimeOffset.FromUnixTimeSeconds(DateUnix),
             Preview = Preview, IsRead = IsRead, IsFlagged = IsFlagged, HasAttachments = HasAttachments, Size = Size,
-            IsImportant = IsImportant,
+            IsImportant = IsImportant, SendState = (SendState)SendState,
         };
     }
 }

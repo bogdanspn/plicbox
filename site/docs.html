@@ -141,6 +141,8 @@
     <li><strong>Send later:</strong> the arrow next to Send picks a time (later today, tomorrow morning, Monday, or any date).
       The message waits in the Outbox until then. Plicbox sends it itself, so it needs to be running at that time (in the
       notification area is enough); otherwise it goes as soon as Plicbox starts.</li>
+    <li><strong>Default mail app:</strong> Settings &gt; General opens the Windows page where you can choose Plicbox, so email addresses
+      clicked in other programs start a message here. Those in messages always do.</li>
     <li><strong>Drag and drop while writing:</strong> pictures dropped on the text go into it; other files, and anything dropped elsewhere
       in the window, are attached.</li>
     <li><strong>Spelling:</strong> checked on your PC by Windows' own spell checker, in all the languages added to Windows at once, in one of
@@ -149,7 +151,8 @@
       with macros, password-locked zips, and more than 25 MB altogether.</li>
     <li><strong>Search:</strong> full text over subject, sender and body, on your PC (SQLite FTS5), so it's fast and private.</li>
     <li><strong>Trackers:</strong> pictures from the internet stay blocked until you choose to show them; known tracking pixels are
-      removed even then. You can trust senders whose pictures should always load.</li>
+      removed even then. You can trust senders whose pictures should always load. Nothing in a message is ever loaded from your
+      own computer or home network.</li>
     <li><strong>Phishing warnings:</strong> Plicbox reads the server's sender checks (SPF, DKIM, DMARC) and points out forged
       senders, replies that would go elsewhere, look-alike domains, links whose text names a different site, and attachments
       dressed up as documents (like <code>invoice.pdf.exe</code>).</li>
@@ -177,7 +180,9 @@
       list. Each account can keep the last month, 6 months, a year or everything, or download a message only when you open it
       (Accounts &gt; Sync options &gt; Offline mail). Settings &gt; Mail shows how much space this takes.</li>
     <li><strong>Mail you send</strong> waits in the <strong>Outbox</strong>, under Favorites in the sidebar, and goes out on its
-      own when the connection is back. If a server refuses a message, it stays there with the reason; open it to fix it.</li>
+      own when the connection is back. If a server refuses a message, it stays there with the reason; open it to fix it.
+      If the connection breaks just as a message is going out, Plicbox looks for it in Sent, and asks you before sending it again,
+      so it doesn't arrive twice.</li>
     <li><strong>Drafts</strong> are saved on your PC first and copied to the account's Drafts folder when it can be reached.</li>
     <li><strong>Read, flagged, moved or deleted:</strong> changed in Plicbox at once, and on the server later.</li>
     <li><strong>Google calendar and contacts:</strong> new events, changes, deletions, invitation answers and edited contacts show

@@ -238,6 +238,20 @@ public sealed class Dialogs(IServiceProvider services)
     public bool Confirm(string title, string message, string action, DialogKind kind = DialogKind.Question) =>
         MessageDialog.Ask(null, title, message, action, L.T("Cancel"), kind);
 
+    /// <summary>Asks before removing an account: null when it stays, otherwise whether to also end Plicbox's access at Google.</summary>
+    public bool? ConfirmRemoveAccount(string name, bool google)
+    {
+        var title = L.F("Remove {0}?", name);
+        var text = L.T("Plicbox deletes its local copy and the saved sign-in. Nothing is deleted on the server.");
+        if (!google) return Confirm(title, text, L.T("Remove"), DialogKind.Danger) ? false : null;
+        return MessageDialog.AskWithOption(title, text, L.T("Remove"), L.T("Also end Plicbox's access at Google"),
+            L.T("Signs this account out of Plicbox on your other computers too."), DialogKind.Danger);
+    }
+
+    /// <summary>The account is gone from here, but Google couldn't be told.</summary>
+    public void AccessNotEnded() => Info(L.T("Google couldn't be reached"),
+        L.T("The account is removed from Plicbox, but Google still lists Plicbox's access. You can end it at myaccount.google.com/connections."));
+
     public void Error(string message) =>
         MessageDialog.Show(null, L.T("Something didn't work"), message, DialogKind.Warning);
 

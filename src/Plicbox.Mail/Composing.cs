@@ -60,6 +60,17 @@ public static partial class Composing
         BodyHtml = "<div><br></div>" + SignatureHtml(account),
     };
 
+    /// <summary>A new message as a mailto: link asks for it.</summary>
+    public static ComposeDraft New(Account account, MailtoLink link)
+    {
+        var draft = New(account);
+        return draft with
+        {
+            To = link.To, Cc = link.Cc, Bcc = link.Bcc, Subject = link.Subject,
+            BodyHtml = link.Body.Length == 0 ? draft.BodyHtml : link.BodyHtml + draft.BodyHtml,
+        };
+    }
+
     public static ComposeDraft Build(ComposeMode mode, MimeMessage original, Account account, MessageRenderer renderer)
     {
         var mine = account.Identities.Select(i => i.Address).ToHashSet(StringComparer.OrdinalIgnoreCase);

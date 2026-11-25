@@ -32,6 +32,7 @@ public partial class SettingsWindow : Window
         Icon = WindowIcons.Settings;
         (_settings, _accounts, _trusted, _backups) = (settings, accounts, trusted, backups);
         UpdatesSection.DataContext = updates;
+        DefaultAppSection.Visibility = Updates.IsInstalled ? Visibility.Visible : Visibility.Collapsed; // a dev build isn't registered
         VersionText.Text = L.F("Plicbox {0}", Updates.Version);
         // A dev build doesn't update: the installed Plicbox does that.
         CheckUpdates.IsEnabled = AutoUpdate.IsEnabled = Updates.IsInstalled;
@@ -482,6 +483,8 @@ public partial class SettingsWindow : Window
         foreach (var added in _pictureSenders.Where(a => !before.Contains(a))) _trusted.Trust(added);
         DialogResult = true;
     }
+
+    private void DefaultApp_Click(object sender, RoutedEventArgs e) => DefaultMailApp.OpenWindowsSettings();
 
     // ───────── Backup page ─────────
 

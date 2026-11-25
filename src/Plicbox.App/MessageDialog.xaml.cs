@@ -54,17 +54,33 @@ public partial class MessageDialog : Window
 
     /// <summary>Two actions plus Cancel: true = primary, false = secondary, null = cancelled (Cancel, Esc or closed).</summary>
     public static bool? Choose(Window? owner, string title, string message, string primary, string secondary,
-        DialogKind kind = DialogKind.Question)
+        DialogKind kind = DialogKind.Question, string? cancel = null)
     {
         if (Unattended) return null;
         var dialog = Create(owner, title, message, primary, secondary, kind);
         dialog.SecondaryButton.IsCancel = false;
         dialog.CancelButton.Visibility = Visibility.Visible;
+        if (cancel is not null) dialog.CancelButton.Content = cancel;
         bool? choice = null;
         dialog.PrimaryButton.Click += (_, _) => choice = true;
         dialog.SecondaryButton.Click += (_, _) => choice = false;
         dialog.ShowDialog();
         return choice;
+    }
+
+    /// <summary>Asks, with a box to tick besides: null when cancelled, otherwise whether it was ticked.</summary>
+    public static bool? AskWithOption(string title, string message, string primary, string option, string note, DialogKind kind)
+    {
+        if (Unattended) return null;
+        var dialog = Create(null, title, message, primary, L.T("Cancel"), kind);
+        dialog.ShowOption(option, note);
+        return dialog.ShowDialog() == true ? dialog.Option.IsChecked == true : null;
+    }
+
+    private void ShowOption(string option, string note)
+    {
+        (OptionText.Text, OptionNote.Text) = (option, note);
+        Option.Visibility = Visibility.Visible;
     }
 
     private static MessageDialog Create(Window? owner, string title, string message, string primary, string? secondary, DialogKind kind)

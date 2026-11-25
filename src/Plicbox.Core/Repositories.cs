@@ -62,6 +62,8 @@ public interface IMessageRepository
     Task SetFlagsAsync(long id, bool isRead, bool isFlagged, CancellationToken ct = default);
     /// <summary>Changes a message's date (in the Outbox: when it goes).</summary>
     Task SetDateAsync(long id, DateTimeOffset date, CancellationToken ct = default);
+    /// <summary>How far sending a message in the Outbox got (moving it elsewhere starts over).</summary>
+    Task SetSendStateAsync(long id, SendState state, CancellationToken ct = default);
     /// <summary>Marks every message in a folder read; returns how many changed.</summary>
     Task<int> MarkFolderReadAsync(long folderId, CancellationToken ct = default);
     /// <summary>Local move; the real UID is unknown until the server confirms, so it is set to -id as a placeholder.</summary>

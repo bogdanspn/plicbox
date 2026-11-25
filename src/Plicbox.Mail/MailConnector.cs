@@ -88,6 +88,10 @@ public sealed class MailConnector(ICredentialStore credentials, GoogleAuth? goog
     public static SecureSocketOptions SecurityFor(int port) =>
         (port % 1000) is 993 or 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls; // 3993/3465: local test servers
 
+    /// <summary>Ends Plicbox's access at the account's provider (Google; Microsoft offers no way to). False when it couldn't.</summary>
+    public async Task<bool> EndAccessAsync(Account a) =>
+        a.Auth == AuthKind.GoogleOAuth && google is not null && await google.EndAccessAsync(a.Id, a.Email);
+
     private async Task<MailLogin> LoginForAsync(Account a, CancellationToken ct)
     {
         if (a.Auth is AuthKind.GoogleOAuth or AuthKind.MicrosoftOAuth)

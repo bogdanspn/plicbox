@@ -36,11 +36,48 @@ public static partial class MailWebView
 
     private static readonly ConditionalWeakTable<CoreWebView2, LinkContext> Contexts = new();
 
+    // Web views sharing a folder must have the same options, also with a browser process an older Plicbox left running
+    // for a moment: new options need a new folder (the earlier ones are deleted, see CleanUp).
+    private const string Folder = "WebView2-2";
+    private static readonly string[] EarlierFolders = ["WebView2"];
+
+    /// <summary>What every web view runs in.</summary>
+    public static Task<CoreWebView2Environment> EnvironmentAsync() => CoreWebView2Environment.CreateAsync(
+        userDataFolder: Path.Combine(App.OwnDir, Folder),
+        options: new CoreWebView2EnvironmentOptions { AdditionalBrowserArguments = $"--host-resolver-rules=\"{LocalNetwork.BrowserRules}\"" });
+
+    /// <summary>
+    /// Pictures and styles of a message never come from this computer or the local network (a router's pages, say), also
+    /// when pictures are allowed. The browser's own rules stop plain addresses, redirects included; a name is looked up here.
+    /// </summary>
+    public static void KeepOffLocalNetwork(CoreWebView2 core)
+    {
+        core.AddWebResourceRequestedFilter("http://*", CoreWebView2WebResourceContext.All);
+        core.AddWebResourceRequestedFilter("https://*", CoreWebView2WebResourceContext.All);
+        core.WebResourceRequested += async (_, e) =>
+        {
+            if (!Uri.TryCreate(e.Request.Uri, UriKind.Absolute, out var uri)
+                || uri.Host.EndsWith(".invalid", StringComparison.OrdinalIgnoreCase)) return; // the editor's own page
+            var check = LocalNetwork.IsLocalAsync(uri.IdnHost);
+            var deferral = check.IsCompleted ? null : e.GetDeferral();
+            try
+            {
+                if (await check) e.Response = core.Environment.CreateWebResourceResponse(null, 403, "Blocked", "");
+            }
+            catch (Exception ex) when (ex is COMException or InvalidOperationException) { } // the view has closed meanwhile
+            finally
+            {
+                deferral?.Complete();
+            }
+        };
+    }
+
     public static async Task InitAsync(WebView2 view)
     {
-        var env = await CoreWebView2Environment.CreateAsync(userDataFolder: Path.Combine(App.OwnDir, "WebView2"));
+        var env = await EnvironmentAsync();
         await view.EnsureCoreWebView2Async(env);
         var core = view.CoreWebView2;
+        KeepOffLocalNetwork(core);
         var settings = core.Settings;
         settings.IsScriptEnabled = false;
         settings.IsWebMessageEnabled = false;
@@ -105,9 +142,14 @@ public static partial class MailWebView
     /// <summary>Per view: the temporary file its current (big) message is shown from.</summary>
     private static readonly ConditionalWeakTable<WebView2, RenderFile> RenderFiles = new();
 
-    /// <summary>Removes render files left by an earlier run (each window deletes its own as it moves on).</summary>
-    public static void CleanUpRenderFiles()
+    /// <summary>Removes render files left by an earlier run (each window deletes its own as it moves on), and earlier versions' folders.</summary>
+    public static void CleanUp()
     {
+        foreach (var folder in EarlierFolders)
+        {
+            try { Directory.Delete(Path.Combine(App.OwnDir, folder), recursive: true); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { } // gone already, or still closing: next time
+        }
         try
         {
             foreach (var file in Directory.EnumerateFiles(App.OwnDir, "render-*.html")) TryDelete(file);
@@ -140,7 +182,10 @@ public static partial class MailWebView
         else OpenExternal(uri);
     }
 
-    /// <summary>Opens a web or mailto link from a message in the default browser or mail handler (other schemes are ignored).</summary>
+    /// <summary>Writes the message a mailto: link asks for (set once the app is up).</summary>
+    public static Action<string>? ComposeMailto { get; set; }
+
+    /// <summary>Opens a web link from a message in the default browser, a mailto one as a new message (other schemes are ignored).</summary>
     public static void OpenLink(string uri) => OpenExternal(uri);
 
     // A link that looks like phishing asks first; everything else opens straight away (the hover bubble already said).
@@ -173,7 +218,13 @@ public static partial class MailWebView
     private static void OpenExternal(string uri)
     {
         if (!Uri.TryCreate(uri, UriKind.Absolute, out var parsed)) return;
-        if (parsed.Scheme is not ("http" or "https" or "mailto")) return;
+        if (MailtoLink.Is(uri))
+        {
+            // Not from inside the view's own event: the new window's web view starts with a message loop of its own.
+            Application.Current?.Dispatcher.BeginInvoke(() => ComposeMailto?.Invoke(uri));
+            return;
+        }
+        if (parsed.Scheme is not ("http" or "https")) return;
         Process.Start(new ProcessStartInfo(parsed.AbsoluteUri) { UseShellExecute = true });
     }
 

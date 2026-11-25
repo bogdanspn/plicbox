@@ -145,6 +145,32 @@ public sealed class GoogleAuth(ICredentialStore credentials, string clientFilePa
         }
     }
 
+    /// <summary>
+    /// Ends Plicbox's access to the account at Google, as under "Third-party apps" in the Google account: for every
+    /// computer Plicbox is signed in on. False when Google couldn't be reached.
+    /// </summary>
+    public async Task<bool> EndAccessAsync(long accountId, string email, CancellationToken ct = default)
+    {
+        try
+        {
+            if (credentials.Get(accountId) is not { } json) return true;
+            var token = NewtonsoftJsonSerializer.Instance.Deserialize<TokenResponse>(json);
+            if ((token.RefreshToken ?? token.AccessToken) is not { } secret) return true;
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeout.CancelAfter(TimeSpan.FromSeconds(15));
+            await CreateFlow(new AccountDataStore(credentials, accountId), email).RevokeTokenAsync(email, secret, timeout.Token);
+            return true;
+        }
+        catch (TokenResponseException ex) when (ex.Error?.Error == "invalid_token")
+        {
+            return true; // ended already
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            return false;
+        }
+    }
+
     private PkceGoogleAuthorizationCodeFlow CreateFlow(IDataStore store, string? email) => new(new GoogleAuthorizationCodeFlow.Initializer
     {
         ClientSecrets = LoadClient(),

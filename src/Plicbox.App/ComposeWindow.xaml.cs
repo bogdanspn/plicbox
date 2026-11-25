@@ -191,7 +191,7 @@ public partial class ComposeWindow : Window
         FromBox.SelectionChanged += async (_, _) => await OnFromChangedAsync();
 
         var spellingLanguages = Services.Spelling.LanguagesAsync();
-        var env = await CoreWebView2Environment.CreateAsync(userDataFolder: Path.Combine(App.OwnDir, "WebView2"));
+        var env = await Services.MailWebView.EnvironmentAsync();
         await Editor.EnsureCoreWebView2Async(env);
         var core = Editor.CoreWebView2;
         core.Settings.AreDevToolsEnabled = false;
@@ -206,8 +206,10 @@ public partial class ComposeWindow : Window
         };
         core.NewWindowRequested += (_, e) => e.Handled = true;
         core.AddWebResourceRequestedFilter(PageUri + "*", CoreWebView2WebResourceContext.All);
+        Services.MailWebView.KeepOffLocalNetwork(core);
         core.WebResourceRequested += (_, e) =>
         {
+            if (!e.Request.Uri.StartsWith(PageUri, StringComparison.Ordinal)) return; // a quoted message's pictures
             var response = e.Request.Uri == PageUri
                 ? core.Environment.CreateWebResourceResponse(new MemoryStream(Encoding.UTF8.GetBytes(_page)), 200, "OK", "Content-Type: text/html; charset=utf-8")
                 : core.Environment.CreateWebResourceResponse(null, 404, "Not Found", "");

@@ -94,6 +94,7 @@ public sealed partial class MainViewModel : ObservableObject
         _engine.FolderSynced += (_, _) => _ui.Post(_ => _ = OnFolderProgressAsync(), null);
         _engine.BusyChanged += messageId => _ui.Post(_ => OnBusyChanged(messageId), null);
         _engine.SendFailed += (accountId, subject, why) => _ui.Post(_ => OnSendFailed(accountId, subject, why), null);
+        _engine.SendUnsure += (_, messageId, subject) => _ui.Post(_ => _ = OnSendUnsureAsync(messageId, subject), null);
         _engine.Queued += (_, messageId, subject, at) => _ui.Post(_ => OnQueued(messageId, subject, at), null);
     }
 
@@ -164,6 +165,18 @@ public sealed partial class MainViewModel : ObservableObject
         else
             MessageDialog.Show(null, L.F("Mail from {0} can't be sent", account),
                 L.F("{0}\n\nYour messages wait in the Outbox and go out once this is fixed (press Refresh to try again).", why), DialogKind.Warning);
+    }
+
+    /// <summary>The connection broke as a message was going out: sending it again might make it arrive twice, so it's asked.</summary>
+    private async Task OnSendUnsureAsync(long messageId, string subject)
+    {
+        var name = subject.Length > 0 ? subject : L.T("(no subject)");
+        var choice = MessageDialog.Choose(null, L.F("Was \"{0}\" sent?", name),
+            L.T("The connection broke just as it was going out, so it may have arrived or not. Sent again, it might arrive twice.\n\nUntil you decide, it waits in the Outbox."),
+            L.T("Send again"), L.T("It was sent"), DialogKind.Warning, L.T("Later"));
+        if (choice is null || await _messages.GetAsync(messageId) is not { SendState: SendState.Started } m || !IsInOutbox(m)) return;
+        if (choice == true) await _engine.SendNowAsync(m);
+        else await _engine.MarkSentAsync(m.Id);
     }
 
     public ObservableCollection<SidebarNode> SidebarNodes { get; } = [];
@@ -1609,6 +1622,14 @@ public sealed partial class MainViewModel : ObservableObject
         if (DefaultAccount() is { } account) _dialogs.Compose(Composing.New(account) with { To = to }, account);
     }
 
+    /// <summary>A mailto: link was clicked, in a message or in another program: a new message as it asks for.</summary>
+    public void ComposeMailto(string link)
+    {
+        if (MailtoLink.Parse(link) is not { } mailto) return;
+        if (DefaultAccount() is { } account) _dialogs.Compose(Composing.New(account, mailto), account);
+        else if (_dialogs.ShowAddAccount()) _ = LoadAsync();
+    }
+
     private bool IsDraft(MessageSummary m) =>
         _foldersByAccount.GetValueOrDefault(m.AccountId)?.FirstOrDefault(f => f.Id == m.FolderId)?.Role == FolderRole.Drafts;
 
@@ -1885,10 +1906,9 @@ public sealed partial class MainViewModel : ObservableObject
     private async Task RemoveAccount(SidebarNode? node)
     {
         if (node is not { AccountId: > 0 }) return;
-        if (!_dialogs.Confirm(L.F("Remove {0}?", node.Title), L.T("Plicbox deletes its local copy and the saved sign-in. Nothing is deleted on the server."),
-                L.T("Remove"), DialogKind.Danger))
-            return;
-        await _engine.RemoveAccountAsync(node.AccountId);
+        var google = _accountsById.GetValueOrDefault(node.AccountId)?.Auth == AuthKind.GoogleOAuth;
+        if (_dialogs.ConfirmRemoveAccount(node.Title, google) is not { } endAccess) return;
+        if (!await _engine.RemoveAccountAsync(node.AccountId, endAccess)) _dialogs.AccessNotEnded();
         SelectedMessage = null;
         await LoadAsync();
     }

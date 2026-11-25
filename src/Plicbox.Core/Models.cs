@@ -165,4 +165,20 @@ public sealed record MessageSummary
     public long Size { get; init; }
     /// <summary>Gmail's "Important" label (a small amber dot in the list).</summary>
     public bool IsImportant { get; init; }
+    /// <summary>In the Outbox: how far sending it got.</summary>
+    public SendState SendState { get; init; }
+}
+
+/// <summary>
+/// How far sending a message in the Outbox got, kept on disk: after a broken connection or a crash it's what stops it
+/// from going out twice.
+/// </summary>
+public enum SendState
+{
+    /// <summary>Not handed over: it can be sent.</summary>
+    Waiting = 0,
+    /// <summary>Handed over, but the server's answer never came: it may have gone out or not.</summary>
+    Started = 1,
+    /// <summary>The server took it: only filing it in Sent is left.</summary>
+    Accepted = 2,
 }

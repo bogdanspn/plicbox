@@ -298,5 +298,7 @@ internal static class Migrations
         ALTER TABLE accounts ADD COLUMN offline_days INTEGER NOT NULL DEFAULT 365;
         ALTER TABLE messages ADD COLUMN has_body INTEGER NOT NULL DEFAULT 0;
         """,
+        // How far sending a message in the Outbox got, so one the server may already have isn't sent again.
+        "ALTER TABLE messages ADD COLUMN send_state INTEGER NOT NULL DEFAULT 0;",
     ];
 }

@@ -13,7 +13,11 @@ public static class Program
     public static void Main()
     {
         VelopackApp.Build()
-            .OnBeforeUninstallFastCallback(_ => StartupRegistration.Remove()) // don't leave Windows starting a deleted app
+            .OnBeforeUninstallFastCallback(_ =>
+            {
+                StartupRegistration.Remove(); // don't leave Windows starting a deleted app
+                DefaultMailApp.Remove();
+            })
             .Run();
         if (!FormerName.MoveData()) return; // before App: it reads the data folder from its first line
         var app = new App();

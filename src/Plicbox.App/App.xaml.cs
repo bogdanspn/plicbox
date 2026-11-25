@@ -64,12 +64,20 @@ public partial class App : Application
             FrameworkElement.CursorProperty.OverrideMetadata(type, new FrameworkPropertyMetadata(System.Windows.Input.Cursors.Hand));
     }
 
+    // Started by Windows for a clicked mailto: link. The link comes from elsewhere, so whatever it makes the command line
+    // look like, nothing else on it counts.
+    private static readonly string? Mailto = Environment.GetCommandLineArgs().ElementAtOrDefault(1) is { } first && MailtoLink.Is(first) ? first : null;
+    private static readonly string[] Args = Mailto is null ? Environment.GetCommandLineArgs()[1..] : [];
+    /// <summary>Where a second launch leaves the mailto: link it was started for, for the running Plicbox.</summary>
+    private static readonly string MailtoDir = Path.Combine(OwnDir, "mailto");
+    private bool _loaded;
+
     // The language is set before anything is built, App.xaml's own resources included (it changes on restart).
     // Demo and dev modes start from fresh settings, so they're in the default language unless --lang says otherwise.
     static App()
     {
         HandCursors();
-        var args = Environment.GetCommandLineArgs();
+        var args = Args;
         var sandboxed = args.Contains("--demo");
 #if DEBUG
         sandboxed |= args.Contains(DevGreenMail.Flag);
@@ -83,40 +91,40 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        var demo = e.Args.Contains("--demo");
+        var demo = Args.Contains("--demo");
 #if DEBUG
-        var devGreenMail = e.Args.Contains(DevGreenMail.Flag);
+        var devGreenMail = Args.Contains(DevGreenMail.Flag);
 #else
         const bool devGreenMail = false;
 #endif
         // Demo and dev modes get their own throwaway data so they never mix with real mail.
         var sandbox = demo ? "demo" : devGreenMail ? "dev-greenmail" : null;
-        var shotIndex = Array.IndexOf(e.Args, "--screenshot");
-        var screenshotPath = shotIndex >= 0 && shotIndex + 1 < e.Args.Length ? e.Args[shotIndex + 1] : null;
-        var composeShotIndex = Array.IndexOf(e.Args, "--screenshot-compose");
-        var composeShotPath = composeShotIndex >= 0 && composeShotIndex + 1 < e.Args.Length ? e.Args[composeShotIndex + 1] : null;
-        var calendarShotIndex = Array.IndexOf(e.Args, "--screenshot-calendar");
-        var calendarShotDir = calendarShotIndex >= 0 && calendarShotIndex + 1 < e.Args.Length ? e.Args[calendarShotIndex + 1] : null;
-        var tasksShotIndex = Array.IndexOf(e.Args, "--screenshot-tasks");
-        var tasksShotDir = tasksShotIndex >= 0 && tasksShotIndex + 1 < e.Args.Length ? e.Args[tasksShotIndex + 1] : null;
-        var dialogShotIndex = Array.IndexOf(e.Args, "--screenshot-dialogs");
-        var dialogShotDir = dialogShotIndex >= 0 && dialogShotIndex + 1 < e.Args.Length ? e.Args[dialogShotIndex + 1] : null;
-        var background = e.Args.Contains("--background"); // started by Windows at sign-in
+        var shotIndex = Array.IndexOf(Args, "--screenshot");
+        var screenshotPath = shotIndex >= 0 && shotIndex + 1 < Args.Length ? Args[shotIndex + 1] : null;
+        var composeShotIndex = Array.IndexOf(Args, "--screenshot-compose");
+        var composeShotPath = composeShotIndex >= 0 && composeShotIndex + 1 < Args.Length ? Args[composeShotIndex + 1] : null;
+        var calendarShotIndex = Array.IndexOf(Args, "--screenshot-calendar");
+        var calendarShotDir = calendarShotIndex >= 0 && calendarShotIndex + 1 < Args.Length ? Args[calendarShotIndex + 1] : null;
+        var tasksShotIndex = Array.IndexOf(Args, "--screenshot-tasks");
+        var tasksShotDir = tasksShotIndex >= 0 && tasksShotIndex + 1 < Args.Length ? Args[tasksShotIndex + 1] : null;
+        var dialogShotIndex = Array.IndexOf(Args, "--screenshot-dialogs");
+        var dialogShotDir = dialogShotIndex >= 0 && dialogShotIndex + 1 < Args.Length ? Args[dialogShotIndex + 1] : null;
+        var background = Args.Contains("--background"); // started by Windows at sign-in
 #if DEBUG
         // Dev: open a copy of a real database without syncing, e.g. to measure UI speed (--dev-db <file> [--dev-perf]).
-        var devDbIndex = Array.IndexOf(e.Args, "--dev-db");
-        var devDb = devDbIndex >= 0 && devDbIndex + 1 < e.Args.Length ? e.Args[devDbIndex + 1] : null;
+        var devDbIndex = Array.IndexOf(Args, "--dev-db");
+        var devDb = devDbIndex >= 0 && devDbIndex + 1 < Args.Length ? Args[devDbIndex + 1] : null;
 #else
         string? devDb = null;
 #endif
-        var devPerf = devDb is not null && e.Args.Contains("--dev-perf");
+        var devPerf = devDb is not null && Args.Contains("--dev-perf");
 
         // One Plicbox per data folder: a second launch just brings the running one to the front. A dev build is a
         // separate one, so it can run while the installed Plicbox does.
         var instanceName = "Plicbox-" + (devDb is not null ? "devdb" : sandbox ?? (Updates.IsInstalled ? "main" : "dev"));
         // Restarted by the app itself: the old copy is still closing down.
-        var afterIndex = Array.IndexOf(e.Args, "--after");
-        if (afterIndex >= 0 && afterIndex + 1 < e.Args.Length && int.TryParse(e.Args[afterIndex + 1], out var previous))
+        var afterIndex = Array.IndexOf(Args, "--after");
+        if (afterIndex >= 0 && afterIndex + 1 < Args.Length && int.TryParse(Args[afterIndex + 1], out var previous))
         {
             try { System.Diagnostics.Process.GetProcessById(previous).WaitForExit(TimeSpan.FromSeconds(30)); }
             catch (ArgumentException) { } // already gone
@@ -125,6 +133,7 @@ public partial class App : Application
         _showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, instanceName + "-show");
         if (!isFirst)
         {
+            if (Mailto is not null) HandOver(Mailto);
             _showSignal.Set();
             Shutdown();
             return;
@@ -139,7 +148,7 @@ public partial class App : Application
 
         DispatcherUnhandledException += OnUnhandledException;
         // Big messages are shown from temporary files; anything an earlier run left behind goes (this is the only instance).
-        if (devDb is null && sandbox is null) _ = Task.Run(MailWebView.CleanUpRenderFiles);
+        if (devDb is null && sandbox is null) _ = Task.Run(MailWebView.CleanUp);
 
         var dbPath = devDb ?? (sandbox is null ? Database.DefaultPath : Path.Combine(DataDir, sandbox, "plicbox.db"));
         var bodyRoot = devDb is not null ? Path.Combine(Path.GetDirectoryName(devDb)!, "dev-bodies")
@@ -234,7 +243,7 @@ public partial class App : Application
             {
                 await _host.Services.GetRequiredService<DemoData>().SeedAsync();
                 // The website's pictures show the same week whatever day they're made: events from this week's Tuesday on.
-                var forSite = e.Args.Contains("--record-site") || e.Args.Contains("--screenshot-site");
+                var forSite = Args.Contains("--record-site") || Args.Contains("--screenshot-site");
                 var tuesday = DateOnly.FromDateTime(DateTime.Today.AddDays(1 - ((int)DateTime.Today.DayOfWeek + 6) % 7));
                 await DemoCalendar.SeedAsync(_host.Services.GetRequiredService<IAccountRepository>(), _host.Services.GetRequiredService<ICalendarRepository>(),
                     forSite ? tuesday : null);
@@ -245,8 +254,8 @@ public partial class App : Application
 
             // Settings > Appearance (accent, font, message size): now, and whenever settings change.
             var settingsStore = _host.Services.GetRequiredService<ISettingsStore>();
-            Theme.ForceDark = e.Args.Contains("--dark"); // dev aid: screenshots in dark mode
-            MessageDialog.Unattended = e.Args.Any(a => a.StartsWith("--screenshot", StringComparison.Ordinal) || a.StartsWith("--dev-", StringComparison.Ordinal) || a == "--measure");
+            Theme.ForceDark = Args.Contains("--dark"); // dev aid: screenshots in dark mode
+            MessageDialog.Unattended = Args.Any(a => a.StartsWith("--screenshot", StringComparison.Ordinal) || a.StartsWith("--dev-", StringComparison.Ordinal) || a == "--measure");
             Appearance.Apply(settingsStore.Current);
             SolidWindows.Register(); // no see-through backdrop, title bars in the app's colours
             RenderRecovery.Register(Dispatcher); // a fresh drawing surface after sleep, unlock or a display change
@@ -256,31 +265,38 @@ public partial class App : Application
             // changed the setting meanwhile).
             try { StartupRegistration.Set(settingsStore.Current.RunOnStartup); }
             catch (Exception ex) { Log.Warning(ex, "Couldn't update the startup entry"); }
+            try { DefaultMailApp.Register(); }
+            catch (Exception ex) { Log.Warning(ex, "Couldn't register as a mail app"); }
             var window = _host.Services.GetRequiredService<MainWindow>();
             window.ScreenshotPath = screenshotPath;
             window.ComposeScreenshotPath = composeShotPath;
             window.DialogScreenshotDir = dialogShotDir;
-            var printShotIndex = Array.IndexOf(e.Args, "--screenshot-print");
-            window.PrintScreenshotDir = printShotIndex >= 0 && printShotIndex + 1 < e.Args.Length ? e.Args[printShotIndex + 1] : null;
+            var printShotIndex = Array.IndexOf(Args, "--screenshot-print");
+            window.PrintScreenshotDir = printShotIndex >= 0 && printShotIndex + 1 < Args.Length ? Args[printShotIndex + 1] : null;
             window.CalendarScreenshotDir = calendarShotDir;
             window.TasksScreenshotDir = tasksShotDir;
-            var siteShotIndex = Array.IndexOf(e.Args, "--screenshot-site");
-            window.SiteScreenshotDir = siteShotIndex >= 0 && siteShotIndex + 1 < e.Args.Length ? e.Args[siteShotIndex + 1] : null;
-            var siteVideoIndex = Array.IndexOf(e.Args, "--record-site");
-            window.SiteVideoPath = siteVideoIndex >= 0 && siteVideoIndex + 1 < e.Args.Length ? e.Args[siteVideoIndex + 1] : null;
+            var siteShotIndex = Array.IndexOf(Args, "--screenshot-site");
+            window.SiteScreenshotDir = siteShotIndex >= 0 && siteShotIndex + 1 < Args.Length ? Args[siteShotIndex + 1] : null;
+            var siteVideoIndex = Array.IndexOf(Args, "--record-site");
+            window.SiteVideoPath = siteVideoIndex >= 0 && siteVideoIndex + 1 < Args.Length ? Args[siteVideoIndex + 1] : null;
             ViewModels.CalendarViewModel.DevShowQuickAdd = window.SiteVideoPath is not null || window.SiteScreenshotDir is not null;
             window.PerfRun = devPerf;
             ViewModels.MainViewModel.PerfTrace = devPerf;
-            window.MemoryReport = devDb is not null && e.Args.Contains("--dev-memory") ? Path.Combine(Path.GetDirectoryName(devDb)!, "memory.txt") : null;
-            var measureIndex = Array.IndexOf(e.Args, "--measure"); // only with the demo's data, never real mail
-            window.MeasureReport = demo && measureIndex >= 0 && measureIndex + 1 < e.Args.Length ? e.Args[measureIndex + 1] : null;
-            window.ScrollbarReport = devDb is not null && e.Args.Contains("--dev-scrollbars") ? Path.Combine(Path.GetDirectoryName(devDb)!, "scrollbars.txt") : null;
+            window.MemoryReport = devDb is not null && Args.Contains("--dev-memory") ? Path.Combine(Path.GetDirectoryName(devDb)!, "memory.txt") : null;
+            var measureIndex = Array.IndexOf(Args, "--measure"); // only with the demo's data, never real mail
+            window.MeasureReport = demo && measureIndex >= 0 && measureIndex + 1 < Args.Length ? Args[measureIndex + 1] : null;
+            window.ScrollbarReport = devDb is not null && Args.Contains("--dev-scrollbars") ? Path.Combine(Path.GetDirectoryName(devDb)!, "scrollbars.txt") : null;
             MainWindow = window;
             RenderRecovery.Watch(window);
             window.Show();
             if (background) window.SendToBackground();
             ListenForSecondLaunch(window);
-            await _host.Services.GetRequiredService<MainViewModel>().LoadAsync();
+            var mainViewModel = _host.Services.GetRequiredService<MainViewModel>();
+            MailWebView.ComposeMailto = mainViewModel.ComposeMailto;
+            await mainViewModel.LoadAsync();
+            _loaded = true;
+            if (Mailto is not null) mainViewModel.ComposeMailto(Mailto);
+            ComposeHandedOver();
             // Demo accounts point at fake servers, so nothing syncs in demo mode.
             if (!demo && devDb is null)
             {
@@ -377,10 +393,52 @@ public partial class App : Application
         var thread = new Thread(() =>
         {
             while (signal.WaitOne())
-                Dispatcher.BeginInvoke(window.ShowFromTray);
+                Dispatcher.BeginInvoke(() =>
+                {
+                    // For a mailto: link only the new message opens; before everything is loaded it waits for that.
+                    if (!HasHandedOver()) window.ShowFromTray();
+                    else if (_loaded) ComposeHandedOver();
+                });
         }) { IsBackground = true, Name = "Plicbox single-instance listener" };
         thread.Start();
     }
+
+    // ───────── mailto: links clicked in other programs ─────────
+
+    private static void HandOver(string link)
+    {
+        try
+        {
+            Directory.CreateDirectory(MailtoDir);
+            var path = Path.Combine(MailtoDir, $"{DateTime.UtcNow.Ticks:D20}-{Environment.ProcessId}");
+            File.WriteAllText(path + ".tmp", link);
+            File.Move(path + ".tmp", path + ".txt");
+            AllowSetForegroundWindow(-1); // the running Plicbox may come to the front, as we could
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+    }
+
+    private static string[] HandedOver() => Directory.Exists(MailtoDir) ? [.. Directory.GetFiles(MailtoDir, "*.txt").Order()] : [];
+    private static bool HasHandedOver() => HandedOver().Length > 0;
+
+    private void ComposeHandedOver()
+    {
+        foreach (var path in HandedOver())
+        {
+            string? link = null;
+            try
+            {
+                // One left by a launch long ago (Plicbox closed right then) isn't wanted any more.
+                if (DateTime.UtcNow - File.GetLastWriteTimeUtc(path) < TimeSpan.FromMinutes(2)) link = File.ReadAllText(path);
+                File.Delete(path);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { continue; }
+            if (link is not null) _host?.Services.GetRequiredService<MainViewModel>().ComposeMailto(link);
+        }
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool AllowSetForegroundWindow(int processId);
 
     protected override void OnExit(ExitEventArgs e)
     {

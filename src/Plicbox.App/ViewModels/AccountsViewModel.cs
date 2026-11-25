@@ -370,10 +370,8 @@ public sealed partial class AccountsViewModel : ObservableObject
     private async Task Remove()
     {
         if (Selected is not { } editor) return;
-        if (!_dialogs.Confirm(L.F("Remove {0}?", editor.Email), L.T("Plicbox deletes its local copy and the saved sign-in. Nothing is deleted on the server."),
-                L.T("Remove"), DialogKind.Danger))
-            return;
-        await _engine.RemoveAccountAsync(editor.Id);
+        if (_dialogs.ConfirmRemoveAccount(editor.Email, editor.Original.Auth == AuthKind.GoogleOAuth) is not { } endAccess) return;
+        if (!await _engine.RemoveAccountAsync(editor.Id, endAccess)) _dialogs.AccessNotEnded();
         var index = Editors.IndexOf(editor);
         Editors.Remove(editor);
         if (editor.IsDefault && Editors.Count > 0) Editors[0].IsDefault = true;

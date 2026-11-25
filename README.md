@@ -114,7 +114,7 @@ sign-ins but runs beside it, never updates, and leaves starting with Windows to 
 
 ## Privacy defaults
 
-Message HTML is sanitized, scripts are disabled, and remote images/fonts (tracking pixels) are blocked via CSP until you click **Show images**. Clicked links open in your default browser; messages can never navigate the reading pane.
+Message HTML is sanitized, scripts are disabled, and remote images/fonts (tracking pixels) are blocked via CSP until you click **Show images**; nothing is ever loaded from this computer or the local network. Clicked links open in your default browser; messages can never navigate the reading pane.
 
 ## Safety warnings
 

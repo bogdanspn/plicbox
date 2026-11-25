@@ -74,14 +74,18 @@ public sealed class MailEngine(
         return id;
     }
 
-    public async Task RemoveAccountAsync(long accountId, CancellationToken ct = default)
+    /// <param name="endAccess">Also end Plicbox's access at Google.</param>
+    /// <returns>False when that was asked for and didn't work (the account is removed all the same).</returns>
+    public async Task<bool> RemoveAccountAsync(long accountId, bool endAccess = false, CancellationToken ct = default)
     {
         if (_workers.TryRemove(accountId, out var worker)) await worker.DisposeAsync();
+        var ended = !endAccess || await accounts.GetAsync(accountId, ct) is not { } account || await connector.EndAccessAsync(account);
         var ids = await messages.GetIdsByAccountAsync(accountId, ct);
         await accounts.DeleteAsync(accountId, ct);
         foreach (var id in ids) bodies.Delete(id);
         credentials.Delete(accountId);
         credentials.DeleteSmtp(accountId);
+        return ended;
     }
 
     /// <summary>Saves edited account settings and reconnects with them.</summary>
@@ -199,6 +203,23 @@ public sealed class MailEngine(
     /// </summary>
     public event Action<long, string, string>? SendFailed;
 
+    /// <summary>
+    /// (accountId, messageId, subject) the connection broke as a message was going out and it isn't in Sent on the server:
+    /// only the user can say whether to send it again (<see cref="SendNowAsync"/>) or that it arrived
+    /// (<see cref="MarkSentAsync"/>). It waits in the Outbox meanwhile.
+    /// </summary>
+    public event Action<long, long, string>? SendUnsure;
+
+    // Messages the user has been asked about (asked again after a restart).
+    private readonly ConcurrentDictionary<long, byte> _unsure = new();
+
+    /// <summary>How soon a message that may have gone out is looked for on the server, and again while it isn't there.</summary>
+    internal TimeSpan LookAgain { get; set; } = TimeSpan.FromSeconds(20);
+    /// <summary>How long it may take to turn up in Sent (Gmail's search can lag behind) before the user is asked.</summary>
+    internal TimeSpan LookFor { get; set; } = TimeSpan.FromMinutes(2);
+    /// <summary>Tests only: says whether a message is in Sent on the server (null: can't tell now).</summary>
+    internal Func<string, bool?>? SentLookup { get; set; }
+
     // Outbox messages the server refused (id -> why); left alone until the user retries.
     private readonly ConcurrentDictionary<long, (long AccountId, string Why)> _refused = new();
     // Accounts whose outgoing sign-in was turned down: no retrying on our own (servers lock out repeated failures).
@@ -229,11 +250,29 @@ public sealed class MailEngine(
         return id;
     }
 
-    /// <summary>A message waiting in the Outbox (Undo send's seconds, or Send later) goes now.</summary>
+    /// <summary>
+    /// A message waiting in the Outbox (Undo send's seconds, or Send later) goes now; so does one that may have gone out
+    /// already, as the user asked for it.
+    /// </summary>
     public async Task SendNowAsync(MessageSummary m)
     {
+        lock (_busyLock) if (_beingSent.Contains(m.Id)) return; // it's going
+        if (await messages.GetAsync(m.Id) is { SendState: SendState.Started })
+        {
+            await messages.SetSendStateAsync(m.Id, SendState.Waiting);
+            _unsure.TryRemove(m.Id, out _);
+        }
         await messages.SetDateAsync(m.Id, DateTimeOffset.Now);
         RetryOutbox(m.AccountId);
+    }
+
+    /// <summary>The user knows a message did go out (see <see cref="SendUnsure"/>): it's filed as sent.</summary>
+    public async Task MarkSentAsync(long messageId)
+    {
+        lock (_busyLock) if (_beingSent.Contains(messageId)) return;
+        if (await messages.GetAsync(messageId) is not { SendState: SendState.Started } m) return;
+        await messages.SetSendStateAsync(m.Id, SendState.Accepted);
+        KickOutbox(m.AccountId);
     }
 
     // Per account: the wake-up for the next message whose time hasn't come yet.
@@ -320,11 +359,13 @@ public sealed class MailEngine(
             .Where(m => !_refused.ContainsKey(m.Id)).ToList();
         // Ones whose time hasn't come (Undo's seconds, Send later) wait for it.
         var now = DateTimeOffset.Now.AddSeconds(0.5);
-        WakeAt(accountId, all.Where(m => m.Date > now).Select(m => (DateTimeOffset?)m.Date).Min());
+        var due = all.Where(m => m.Date > now).Select(m => (DateTimeOffset?)m.Date).Min();
+        WakeAt(accountId, due);
         var waiting = all.Where(m => m.Date <= now).ToList();
         if (waiting.Count == 0) return;
 
         MailKit.Net.Smtp.SmtpClient? smtp = null;
+        var unsure = false;
         try
         {
             foreach (var m in waiting)
@@ -342,6 +383,12 @@ public sealed class MailEngine(
                 }
                 // Opened for editing, deleted or put off while the ones before it went out.
                 if (await messages.GetAsync(m.Id) is not { } current || current.FolderId != outbox.Id || current.Date > DateTimeOffset.Now.AddSeconds(0.5)) continue;
+                if (current.SendState != SendState.Waiting)
+                {
+                    unsure |= await SettleAsync(account, accountFolders, current, mime);
+                    FolderSynced?.Invoke(accountId, outbox.Id);
+                    continue;
+                }
                 // Dated now, as it really goes (it may have waited); the copy kept for Sent says the same.
                 mime.Date = DateTimeOffset.Now;
                 using (var dated = new MemoryStream())
@@ -356,7 +403,22 @@ public sealed class MailEngine(
                 try
                 {
                     smtp ??= await connector.ConnectSmtpAsync(account, CancellationToken.None);
-                    await smtp.SendAsync(mime);
+                    await messages.SetSendStateAsync(m.Id, SendState.Started);
+                    var handover = new Handover();
+                    try { await smtp.SendAsync(mime, CancellationToken.None, handover); }
+                    // Turned down, or the connection broke before the server had all of it: it hasn't gone out. Otherwise
+                    // it stays Started, and is looked for on the server before anything else (SettleAsync).
+                    catch (Exception ex) when (ex is MailKit.Net.Smtp.SmtpCommandException || !handover.MayHaveArrived)
+                    {
+                        await messages.SetSendStateAsync(m.Id, SendState.Waiting);
+                        throw;
+                    }
+                    catch (Exception)
+                    {
+                        unsure = true;
+                        throw;
+                    }
+                    await messages.SetSendStateAsync(m.Id, SendState.Accepted);
                 }
                 catch (MailKit.Net.Smtp.SmtpCommandException ex) when ((int)ex.StatusCode >= 500 && ex.ErrorCode != MailKit.Net.Smtp.SmtpErrorCode.UnexpectedStatusCode)
                 {
@@ -375,8 +437,6 @@ public sealed class MailEngine(
                 FolderSynced?.Invoke(accountId, outbox.Id);
             }
         }
-
-
         catch (MailKit.Security.AuthenticationException ex)
         {
             _sendPaused[accountId] = 0;
@@ -396,12 +456,100 @@ public sealed class MailEngine(
                 catch (Exception) { }
                 smtp.Dispose();
             }
+            if (unsure)
+            {
+                var soon = DateTimeOffset.Now + LookAgain;
+                WakeAt(accountId, due < soon ? due : soon);
+            }
         }
+    }
+
+    /// <summary>
+    /// A message that was already handed to the server: filed as sent when the server took it or has it in Sent. Not
+    /// there, it isn't sent again by itself (servers other than Gmail mostly don't file it, so that says little): the
+    /// user is asked.
+    /// </summary>
+    /// <returns>Whether to look again soon.</returns>
+    private async Task<bool> SettleAsync(Account account, IReadOnlyList<Folder> accountFolders, MessageSummary m, MimeMessage mime)
+    {
+        if (m.SendState == SendState.Accepted)
+        {
+            await FileSentAsync(account, accountFolders, m);
+            return false;
+        }
+        if (_unsure.ContainsKey(m.Id)) return false;
+
+        var sent = accountFolders.FirstOrDefault(f => f.Role == FolderRole.Sent);
+        if (sent is not null && !string.IsNullOrEmpty(mime.MessageId))
+        {
+            lock (_busyLock) _beingSent.Add(m.Id); // not to be edited while it's looked for
+            BusyChanged?.Invoke(m.Id);
+            bool? found;
+            try
+            {
+                found = await IsInSentAsync(account, sent, mime.MessageId);
+                if (found == true)
+                {
+                    _log.LogInformation("Outbox message {Id} had gone out before the connection broke", m.Id);
+                    await messages.DeleteAsync(m.Id); // the server's copy comes in with Sent
+                    bodies.Delete(m.Id);
+                    if (_workers.TryGetValue(account.Id, out var worker)) worker.SyncSoon(sent.Id);
+                    return false;
+                }
+            }
+            finally
+            {
+                lock (_busyLock) _beingSent.Remove(m.Id);
+                BusyChanged?.Invoke(m.Id);
+            }
+            if (found is null) return false; // the server can't be reached: after the next sync
+            if (DateTimeOffset.Now - mime.Date < LookFor) return true;
+        }
+        _log.LogWarning("Outbox message {Id} may have gone out or not; asking", m.Id);
+        if (_unsure.TryAdd(m.Id, 0)) SendUnsure?.Invoke(account.Id, m.Id, m.Subject);
+        return false;
+    }
+
+    /// <summary>Whether the server has a message in Sent; null when it can't be asked now.</summary>
+    private async Task<bool?> IsInSentAsync(Account account, Folder sent, string messageId)
+    {
+        if (SentLookup is { } lookup) return lookup(messageId);
+        try
+        {
+            using var imap = await connector.ConnectImapAsync(account, CancellationToken.None);
+            var folder = await imap.GetFolderAsync(sent.Path);
+            await folder.OpenAsync(FolderAccess.ReadOnly);
+            var found = await folder.SearchAsync(MailKit.Search.SearchQuery.HeaderContains("Message-ID", messageId));
+            await imap.DisconnectAsync(true);
+            return found.Count > 0;
+        }
+        catch (Exception ex)
+        {
+            _log.LogInformation(ex, "Can't look for a message in Sent of {Email} yet", account.Email);
+            return null;
+        }
+    }
+
+    /// <summary>Follows a message on its way to the server: until all of it is there, the server can't have taken it.</summary>
+    private sealed class Handover : ITransferProgress
+    {
+        // The size is worked out before the last touches (dots doubled at line starts), so near the end counts as all of it.
+        private const long Margin = 4096;
+
+        public bool MayHaveArrived { get; private set; }
+
+        public void Report(long bytesTransferred, long totalSize)
+        {
+            if (bytesTransferred >= totalSize - Margin) MayHaveArrived = true;
+        }
+
+        public void Report(long bytesTransferred) => MayHaveArrived = true; // no size to compare with
     }
 
     /// <summary>A message just went out: Gmail files it in Sent itself; elsewhere it moves to Sent and is uploaded there.</summary>
     private async Task FileSentAsync(Account account, IReadOnlyList<Folder> accountFolders, MessageSummary m)
     {
+        _unsure.TryRemove(m.Id, out _);
         var sent = accountFolders.FirstOrDefault(f => f.Role == FolderRole.Sent);
         if (sent is null || account.Provider == ProviderKind.Gmail)
         {
@@ -543,6 +691,7 @@ public sealed class MailEngine(
             lock (_busyLock)
                 if (target.Role != FolderRole.Drafts || _beingSent.Contains(m.Id)) return false;
             _refused.TryRemove(m.Id, out _);
+            _unsure.TryRemove(m.Id, out _);
             await messages.MoveAsync(m.Id, target.Id);
             await ops.AddAsync(new PendingOp
             {
@@ -608,6 +757,7 @@ public sealed class MailEngine(
         await messages.DeleteAsync(m.Id);
         bodies.Delete(m.Id);
         _refused.TryRemove(m.Id, out _);
+        _unsure.TryRemove(m.Id, out _);
         Nudge(m.AccountId);
     }
 
