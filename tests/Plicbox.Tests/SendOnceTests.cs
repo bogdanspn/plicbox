@@ -17,6 +17,7 @@ namespace Plicbox.Tests;
 /// A message goes out once, also when the connection breaks in the middle: against a small SMTP server that breaks off
 /// at chosen moments.
 /// </summary>
+[Collection("GreenMail")] // one mailbox: tests using it take turns
 public sealed class SendOnceTests : IAsyncLifetime
 {
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "plicbox-sendonce", Guid.NewGuid().ToString("N"));

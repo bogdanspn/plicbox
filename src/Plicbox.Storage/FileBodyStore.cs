@@ -20,14 +20,22 @@ public sealed class FileBodyStore(string root) : IBodyStore
             await eml.CopyToAsync(file, ct);
             file.Flush(flushToDisk: true); // else a power cut can keep the rename but lose the contents
         }
-        File.Move(tmp, path, overwrite: true);
+        try { File.Move(tmp, path, overwrite: true); }
+        catch (UnauthorizedAccessException)
+        {
+            // The earlier one is being read: Windows won't move over it, but lets it be deleted (see Open).
+            File.Delete(path);
+            File.Move(tmp, path, overwrite: true);
+        }
     }
 
     public Stream? Open(long messageId)
     {
         var path = PathFor(messageId);
         if (!File.Exists(path)) return null;
-        var stream = File.OpenRead(path);
+        // Deleting or replacing it meanwhile is fine (a draft saved again while its earlier save uploads): this keeps reading
+        // what it opened.
+        var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
         if (stream.ReadByte() > 0) { stream.Position = 0; return stream; }
         // Empty, or full size but all zeros (what a crash before the disk caught up leaves): no real message starts
         // with a zero byte. Dropped so it counts as not downloaded and is fetched again.

@@ -355,7 +355,7 @@ public sealed class MessageRepository(Database db) : IMessageRepository
         return id;
     }
 
-    public async Task<long> AddLocalAsync(MessageSummary m, string? bodyText = null, CancellationToken ct = default)
+    public async Task<long> AddLocalAsync(MessageSummary m, string? bodyText = null, Func<long, Task>? saveContent = null, CancellationToken ct = default)
     {
         using var conn = db.Open();
         using var tx = conn.BeginTransaction();
@@ -364,6 +364,7 @@ public sealed class MessageRepository(Database db) : IMessageRepository
             "SELECT MIN(COALESCE(MIN(uid), 0), 0) - 1 FROM messages WHERE folder_id = @FolderId", new { m.FolderId }, tx, cancellationToken: ct));
         var id = await UpsertCoreAsync(conn, tx, m with { Uid = free }, bodyText, ct);
         await conn.ExecuteAsync(new CommandDefinition("UPDATE messages SET uid = -id, has_body = 1 WHERE id = @id", new { id }, tx, cancellationToken: ct));
+        if (saveContent is not null) await saveContent(id);
         tx.Commit();
         return id;
     }

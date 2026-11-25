@@ -55,7 +55,11 @@ public interface IMessageRepository
     /// Adds a message that so far exists only here (in the Outbox, or a draft not uploaded yet). Its UID is the -id
     /// placeholder, as for a move the server hasn't confirmed; returns the new id.
     /// </summary>
-    Task<long> AddLocalAsync(MessageSummary message, string? bodyText = null, CancellationToken ct = default);
+    /// <param name="saveContent">
+    /// Saves its content under the id given. It's done before anything else can see the message: the Outbox, looking in
+    /// between, would take it for one without content.
+    /// </param>
+    Task<long> AddLocalAsync(MessageSummary message, string? bodyText = null, Func<long, Task>? saveContent = null, CancellationToken ct = default);
     /// <summary>Removes every copy of a message (by its Message-ID header) from a folder but <paramref name="keepId"/>; returns the ids removed.</summary>
     Task<IReadOnlyList<long>> DeleteByMessageIdAsync(long folderId, string messageId, long keepId = 0, CancellationToken ct = default);
     Task UpsertBatchAsync(IReadOnlyList<MessageSummary> messages, CancellationToken ct = default);

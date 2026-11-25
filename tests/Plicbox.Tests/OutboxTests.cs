@@ -104,6 +104,24 @@ public sealed class OutboxTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_message_kept_here_shows_only_once_its_content_is_saved()
+    {
+        // The Outbox looks at any time: a message without its content yet would be dropped as empty, and never sent.
+        MessageSummary New(string subject) => new() { AccountId = _account.Id, FolderId = _drafts.Id, Subject = subject };
+        var id = await _messages.AddLocalAsync(New("a"), saveContent: async id =>
+        {
+            Assert.Empty(await _messages.GetByFolderAsync(_drafts.Id));
+            await _bodies.SaveAsync(id, new MemoryStream("content"u8.ToArray()));
+        });
+        Assert.Equal(id, Assert.Single(await _messages.GetByFolderAsync(_drafts.Id)).Id);
+        using (var content = _bodies.Open(id)) Assert.NotNull(content);
+
+        // Content that can't be saved (a full disk): no message either, and the sender hears of it.
+        await Assert.ThrowsAsync<IOException>(() => _messages.AddLocalAsync(New("b"), saveContent: _ => throw new IOException("full")));
+        Assert.Single(await _messages.GetByFolderAsync(_drafts.Id));
+    }
+
+    [Fact]
     public async Task Sending_offline_keeps_the_message_in_the_Outbox()
     {
         await _engine.SendAsync(_account, Message("Hello", "sent while offline"));

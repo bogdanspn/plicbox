@@ -13,6 +13,7 @@ namespace Plicbox.Tests;
 /// End-to-end tests against a local GreenMail server (IMAPS 3993, SMTPS 3465, user alice/secret).
 /// Skipped unless PLICBOX_GREENMAIL=1, so the normal test run needs no server.
 /// </summary>
+[Collection("GreenMail")] // one mailbox: tests using it take turns
 public sealed class SyncIntegrationTests : IAsyncLifetime
 {
     private const string Host = "127.0.0.1";

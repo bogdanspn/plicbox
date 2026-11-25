@@ -583,7 +583,7 @@ public sealed class MailEngine(
         await message.WriteToAsync(eml, ct);
         var from = message.From.Mailboxes.FirstOrDefault();
         var text = MessageRenderer.ExtractText(message);
-        var id = await messages.AddLocalAsync(new MessageSummary
+        return await messages.AddLocalAsync(new MessageSummary
         {
             AccountId = folder.AccountId, FolderId = folder.Id,
             MessageId = message.MessageId, InReplyTo = message.InReplyTo,
@@ -594,10 +594,11 @@ public sealed class MailEngine(
             Date = date ?? (message.Date == default ? DateTimeOffset.Now : message.Date),
             Preview = text.Length > 200 ? text[..200].ReplaceLineEndings(" ").Trim() : text.ReplaceLineEndings(" ").Trim(),
             IsRead = true, HasAttachments = message.Attachments.Any(), Size = eml.Length,
-        }, text, ct);
-        eml.Position = 0;
-        await bodies.SaveAsync(id, eml, ct);
-        return id;
+        }, text, id =>
+        {
+            eml.Position = 0;
+            return bodies.SaveAsync(id, eml, ct);
+        }, ct);
     }
 
     /// <summary>

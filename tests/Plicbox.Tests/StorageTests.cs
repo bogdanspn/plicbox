@@ -237,6 +237,23 @@ public sealed class StorageTests : IDisposable
     }
 
     [Fact]
+    public async Task A_message_can_be_replaced_or_deleted_while_its_being_read()
+    {
+        var store = new FileBodyStore(Path.Combine(_dir, "bodies"));
+        static Stream Of(string text) => new MemoryStream(System.Text.Encoding.UTF8.GetBytes(text));
+        await store.SaveAsync(1, Of("first"));
+
+        using var reading = new StreamReader(store.Open(1)!);
+        await store.SaveAsync(1, Of("second"));
+        store.Delete(1);
+        Assert.Null(store.Open(1));
+        Assert.Equal("first", await reading.ReadToEndAsync()); // what was opened
+        await store.SaveAsync(1, Of("third")); // the id is free again
+        using var again = new StreamReader(store.Open(1)!);
+        Assert.Equal("third", await again.ReadToEndAsync());
+    }
+
+    [Fact]
     public async Task Body_store_round_trips()
     {
         var store = new FileBodyStore(Path.Combine(_dir, "bodies"));
