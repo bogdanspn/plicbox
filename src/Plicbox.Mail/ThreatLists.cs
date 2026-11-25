@@ -50,14 +50,17 @@ public sealed partial class ThreatLists
     };
 
     /// <summary>Reads a downloaded list: uBlock-style filters ("||site/page^$all"), plain domains, or hosts-file lines.</summary>
-    public void Add(ThreatKind kind, string text)
+    public void Add(ThreatKind kind, string text) => Add(kind, new StringReader(text));
+
+    /// <summary>The same, line by line: the lists are some 14 MB, twice that as text in memory.</summary>
+    public void Add(ThreatKind kind, TextReader text)
     {
-        foreach (var raw in text.AsSpan().EnumerateLines())
+        while (text.ReadLine() is { } raw)
         {
-            var line = raw.Trim();
+            var line = raw.AsSpan().Trim();
             if (line.Length == 0 || line[0] is '!' or '#' or '[') continue;
             if (line.StartsWith("0.0.0.0 ") || line.StartsWith("127.0.0.1 ")) line = line[(line.IndexOf(' ') + 1)..].Trim();
-            AddEntry(kind, line.ToString());
+            AddEntry(kind, line.Length == raw.Length ? raw : line.ToString());
         }
     }
 
@@ -360,16 +363,17 @@ public sealed class ThreatListUpdater(HttpClient http, string directory, ILogger
                     log.LogInformation("Threat list {Name}: {Url} answered {Status}", feed.Name, url, (int)response.StatusCode);
                     continue;
                 }
-                var text = await response.Content.ReadAsStringAsync(ct);
+                // Straight to a file, and read from there: never whole in memory.
+                var tmp = path + ".tmp";
+                await using (var file = File.Create(tmp)) await response.Content.CopyToAsync(file, ct);
                 var check = new ThreatLists();
-                check.Add(feed.Kind, text);
+                using (var reader = new StreamReader(tmp)) check.Add(feed.Kind, reader);
                 if (check.Count < MinimumEntries)
                 {
                     log.LogWarning("Threat list {Name} from {Url} had only {Count} entries; keeping the copy we have", feed.Name, url, check.Count);
+                    File.Delete(tmp);
                     continue;
                 }
-                var tmp = path + ".tmp";
-                await File.WriteAllTextAsync(tmp, text, ct);
                 File.Move(tmp, path, overwrite: true);
                 if (response.Headers.ETag is { } tag) await File.WriteAllLinesAsync(etagPath, [url, tag.ToString()], ct);
                 else File.Delete(etagPath);
@@ -393,7 +397,9 @@ public sealed class ThreatListUpdater(HttpClient http, string directory, ILogger
         {
             try
             {
-                if (File.Exists(PathOf(feed))) lists.Add(feed.Kind, File.ReadAllText(PathOf(feed)));
+                if (!File.Exists(PathOf(feed))) continue;
+                using var reader = new StreamReader(PathOf(feed));
+                lists.Add(feed.Kind, reader);
             }
             catch (IOException ex)
             {

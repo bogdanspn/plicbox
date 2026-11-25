@@ -143,12 +143,18 @@ public partial class App : Application
             .MinimumLevel.Information()
             .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning) // HttpClient chatter
             .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
-            .WriteTo.File(Path.Combine(DataDir, "logs", Updates.IsInstalled ? "plicbox-.log" : "plicbox-dev-.log"), rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14)
+            // Two weeks, 10 MB a day at most: something failing over and over once filled 300 MB in an evening.
+            .WriteTo.File(Path.Combine(DataDir, "logs", Updates.IsInstalled ? "plicbox-.log" : "plicbox-dev-.log"), rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 14, fileSizeLimitBytes: 10 * 1024 * 1024)
             .CreateLogger();
 
         DispatcherUnhandledException += OnUnhandledException;
         // Big messages are shown from temporary files; anything an earlier run left behind goes (this is the only instance).
-        if (devDb is null && sandbox is null) _ = Task.Run(MailWebView.CleanUp);
+        if (devDb is null && sandbox is null)
+        {
+            _ = Task.Run(MailWebView.CleanUp);
+            _ = Task.Run(DeleteFormerLogs);
+        }
 
         var dbPath = devDb ?? (sandbox is null ? Database.DefaultPath : Path.Combine(DataDir, sandbox, "plicbox.db"));
         var bodyRoot = devDb is not null ? Path.Combine(Path.GetDirectoryName(devDb)!, "dev-bodies")
@@ -356,6 +362,16 @@ public partial class App : Application
             MessageDialog.Show(null, L.T("Plicbox couldn't start"), ex.Message, DialogKind.Danger);
             Shutdown(1);
         }
+    }
+
+    /// <summary>Logs from before the rename: kept by nothing, so never cleared out.</summary>
+    private static void DeleteFormerLogs()
+    {
+        try
+        {
+            foreach (var file in Directory.EnumerateFiles(Path.Combine(DataDir, "logs"), "mailroom-*.log")) File.Delete(file);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
 
     private CancellationTokenSource? _wakeDelay;
