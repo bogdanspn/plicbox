@@ -43,12 +43,14 @@ public interface IMessageRepository
     Task<IReadOnlyList<MessageSummary>> GetFlaggedAsync(int limit = 500, int offset = 0, ListSort? sort = null, CancellationToken ct = default);
     /// <summary>Full-text search, newest first; everywhere unless <paramref name="scope"/> narrows it.</summary>
     Task<IReadOnlyList<MessageSummary>> SearchAsync(string query, SearchScope? scope = null, int limit = 200, CancellationToken ct = default);
-    Task<MailboxCounts> GetCountsAsync(CancellationToken ct = default);
+    /// <param name="withTotals">Also count every folder's messages (many times slower); without, only Drafts' and the Outbox's.</param>
+    Task<MailboxCounts> GetCountsAsync(bool withTotals = false, CancellationToken ct = default);
     Task<IReadOnlyList<long>> GetIdsByAccountAsync(long accountId, CancellationToken ct = default);
     /// <summary>Every message of a conversation across folders (newest first), each message once.</summary>
     Task<IReadOnlyList<MessageSummary>> GetThreadAsync(long accountId, string threadKey, CancellationToken ct = default);
     /// <summary>Conversation sizes across folders, keyed by (account, thread key); Trash/Junk and label duplicates not counted.</summary>
-    Task<IReadOnlyDictionary<(long AccountId, string ThreadKey), int>> GetThreadCountsAsync(IReadOnlyCollection<string> threadKeys, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<(long AccountId, string ThreadKey), int>> GetThreadCountsAsync(
+        IReadOnlyCollection<(long AccountId, string ThreadKey)> threads, CancellationToken ct = default);
 
     Task<long> UpsertAsync(MessageSummary message, string? bodyText = null, CancellationToken ct = default);
     /// <summary>
@@ -77,9 +79,11 @@ public interface IMessageRepository
     // Sync support
     /// <summary>Server UIDs present locally for a folder (placeholders from pending moves excluded).</summary>
     Task<IReadOnlyList<long>> GetUidsAsync(long folderId, CancellationToken ct = default);
-    Task ApplyServerFlagsAsync(long folderId, IReadOnlyList<(long Uid, bool IsRead, bool IsFlagged)> flags, CancellationToken ct = default);
+    /// <returns>How many messages that changed.</returns>
+    Task<int> ApplyServerFlagsAsync(long folderId, IReadOnlyList<(long Uid, bool IsRead, bool IsFlagged)> flags, CancellationToken ct = default);
     /// <summary>Gmail's Important label as the server has it now, for messages already stored.</summary>
-    Task ApplyServerImportanceAsync(long folderId, IReadOnlyList<(long Uid, bool IsImportant)> marks, CancellationToken ct = default);
+    /// <returns>How many messages that changed.</returns>
+    Task<int> ApplyServerImportanceAsync(long folderId, IReadOnlyList<(long Uid, bool IsImportant)> marks, CancellationToken ct = default);
     Task SetImportantAsync(long id, bool isImportant, CancellationToken ct = default);
     /// <summary>Deletes rows by UID; returns the local ids removed (so cached bodies can be dropped).</summary>
     Task<IReadOnlyList<long>> DeleteByUidsAsync(long folderId, IReadOnlyCollection<long> uids, CancellationToken ct = default);
@@ -113,6 +117,7 @@ public interface IPendingOpRepository
 
 public sealed record MailboxCounts(
     IReadOnlyDictionary<long, int> UnreadByFolder,
+    // Drafts and the Outbox only, unless asked for with totals.
     IReadOnlyDictionary<long, int> TotalByFolder,
     int UnreadInboxes,
     int UnreadTotal,

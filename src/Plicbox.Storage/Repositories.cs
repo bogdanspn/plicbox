@@ -228,15 +228,29 @@ public sealed class MessageRepository(Database db) : IMessageRepository
         return result;
     }
 
-    public Task<IReadOnlyList<MessageSummary>> GetUnifiedInboxAsync(int limit = 500, int offset = 0, ListSort? sort = null, CancellationToken ct = default) =>
-        QueryAsync($"""
-            SELECT {SelectColumns} FROM messages m JOIN folders f ON f.id = m.folder_id
-            WHERE f.role = @inbox ORDER BY {OrderBy(sort)} LIMIT @limit OFFSET @offset
-            """, new { inbox = (int)FolderRole.Inbox, limit, offset }, ct);
+    // Views over several folders start from the folders (CROSS JOIN keeps SQLite to that order): started from the messages,
+    // they'd go through every one there is, All Mail's too.
+
+    public Task<IReadOnlyList<MessageSummary>> GetUnifiedInboxAsync(int limit = 500, int offset = 0, ListSort? sort = null, CancellationToken ct = default)
+    {
+        // By date, the page is picked from the index alone and only its rows are read.
+        var byDate = sort is null || sort.Key == ListSortKey.Date;
+        return QueryAsync(byDate
+            ? $"""
+               SELECT {SelectColumns} FROM messages m WHERE m.id IN (
+                   SELECT m.id FROM folders f CROSS JOIN messages m INDEXED BY ix_messages_folder_date ON m.folder_id = f.id
+                   WHERE f.role = @inbox ORDER BY {OrderBy(sort)} LIMIT @limit OFFSET @offset)
+               ORDER BY {OrderBy(sort)}
+               """
+            : $"""
+               SELECT {SelectColumns} FROM folders f CROSS JOIN messages m ON m.folder_id = f.id
+               WHERE f.role = @inbox ORDER BY {OrderBy(sort)} LIMIT @limit OFFSET @offset
+               """, new { inbox = (int)FolderRole.Inbox, limit, offset }, ct);
+    }
 
     public Task<IReadOnlyList<MessageSummary>> GetUnreadAsync(int limit = 500, int offset = 0, ListSort? sort = null, CancellationToken ct = default) =>
         QueryAsync($"""
-            SELECT {SelectColumns} FROM messages m JOIN folders f ON f.id = m.folder_id
+            SELECT {SelectColumns} FROM folders f CROSS JOIN messages m ON m.folder_id = f.id
             WHERE m.is_read = 0 AND f.role NOT IN @excluded AND f.is_virtual = 0 ORDER BY {OrderBy(sort)} LIMIT @limit OFFSET @offset
             """, new { excluded = ExcludedFromViews, limit, offset }, ct);
 
@@ -254,8 +268,8 @@ public sealed class MessageRepository(Database db) : IMessageRepository
 
     public Task<IReadOnlyList<MessageSummary>> GetFlaggedAsync(int limit = 500, int offset = 0, ListSort? sort = null, CancellationToken ct = default) =>
         QueryAsync($"""
-            SELECT {SelectColumns} FROM messages m JOIN folders f ON f.id = m.folder_id
-            WHERE m.is_flagged = 1 AND f.role NOT IN @excluded AND f.is_virtual = 0 ORDER BY {OrderBy(sort)} LIMIT @limit OFFSET @offset
+            SELECT {SelectColumns} FROM folders f CROSS JOIN messages m ON m.folder_id = f.id
+            WHERE m.is_read IN (0, 1) AND m.is_flagged = 1 AND f.role NOT IN @excluded AND f.is_virtual = 0 ORDER BY {OrderBy(sort)} LIMIT @limit OFFSET @offset
             """, new { excluded = ExcludedFromViews, limit, offset }, ct);
 
     public Task<IReadOnlyList<MessageSummary>> SearchAsync(string query, SearchScope? scope = null, int limit = 200, CancellationToken ct = default)
@@ -284,20 +298,23 @@ public sealed class MessageRepository(Database db) : IMessageRepository
         }, ct);
     }
 
-    public async Task<MailboxCounts> GetCountsAsync(CancellationToken ct = default)
+    public async Task<MailboxCounts> GetCountsAsync(bool withTotals = false, CancellationToken ct = default)
     {
         using var conn = db.Open();
-        var perFolder = (await conn.QueryAsync<(long FolderId, long AccountId, int Role, bool IsVirtual, int Unread, int Flagged, int Total)>(new CommandDefinition("""
+        // Looked up in the index per folder (is_read IN (0, 1): the index has it before is_flagged), so it takes a moment
+        // whatever the mailbox's size. Counting everything in a folder does not, hence withTotals.
+        var perFolder = (await conn.QueryAsync<(long FolderId, long AccountId, int Role, bool IsVirtual, int Unread, int Flagged, int? Total)>(new CommandDefinition("""
             SELECT f.id, f.account_id, f.role, f.is_virtual,
-                   COALESCE(SUM(m.is_read = 0), 0), COALESCE(SUM(m.is_flagged = 1), 0), COUNT(m.id)
-            FROM folders f LEFT JOIN messages m ON m.folder_id = f.id
-            GROUP BY f.id
-            """, cancellationToken: ct))).AsList();
+                   (SELECT COUNT(*) FROM messages m WHERE m.folder_id = f.id AND m.is_read = 0),
+                   (SELECT COUNT(*) FROM messages m WHERE m.folder_id = f.id AND m.is_read IN (0, 1) AND m.is_flagged = 1),
+                   CASE WHEN @withTotals OR f.role IN (@drafts, @outbox) THEN (SELECT COUNT(*) FROM messages m WHERE m.folder_id = f.id) END
+            FROM folders f
+            """, new { withTotals, drafts = (int)FolderRole.Drafts, outbox = (int)FolderRole.Outbox }, cancellationToken: ct))).AsList();
 
         var counted = perFolder.Where(r => !ExcludedFromViews.Contains(r.Role) && !r.IsVirtual).ToList();
         return new MailboxCounts(
             perFolder.ToDictionary(r => r.FolderId, r => r.Unread),
-            perFolder.ToDictionary(r => r.FolderId, r => r.Total),
+            perFolder.Where(r => r.Total is not null).ToDictionary(r => r.FolderId, r => r.Total!.Value),
             UnreadInboxes: perFolder.Where(r => r.Role == (int)FolderRole.Inbox).Sum(r => r.Unread),
             UnreadTotal: counted.Sum(r => r.Unread),
             Flagged: counted.Sum(r => r.Flagged),
@@ -317,15 +334,13 @@ public sealed class MessageRepository(Database db) : IMessageRepository
     }
 
     public async Task<IReadOnlyDictionary<(long AccountId, string ThreadKey), int>> GetThreadCountsAsync(
-        IReadOnlyCollection<string> threadKeys, CancellationToken ct = default)
+        IReadOnlyCollection<(long AccountId, string ThreadKey)> threads, CancellationToken ct = default)
     {
         var result = new Dictionary<(long, string), int>();
-        if (threadKeys.Count == 0) return result;
+        if (threads.Count == 0) return result;
         using var conn = db.Open();
-        var keys = threadKeys.Distinct().ToList();
         // Per account, so ix_messages_thread (account_id, thread_key) is searched key by key rather than read whole.
-        var accounts = (await conn.QueryAsync<long>(new CommandDefinition("SELECT id FROM accounts", cancellationToken: ct))).AsList();
-        foreach (var accountId in accounts)
+        foreach (var (accountId, keys) in threads.Distinct().GroupBy(t => t.AccountId, t => t.ThreadKey).Select(g => (g.Key, g)))
         foreach (var chunk in keys.Chunk(500))
         {
             var rows = await conn.QueryAsync<(long AccountId, string ThreadKey, int Count)>(new CommandDefinition("""
@@ -470,30 +485,45 @@ public sealed class MessageRepository(Database db) : IMessageRepository
             "SELECT uid FROM messages WHERE folder_id = @folderId AND uid > 0", new { folderId }, cancellationToken: ct))).AsList();
     }
 
-    public async Task ApplyServerFlagsAsync(long folderId, IReadOnlyList<(long Uid, bool IsRead, bool IsFlagged)> flags, CancellationToken ct = default)
+    public async Task<int> ApplyServerFlagsAsync(long folderId, IReadOnlyList<(long Uid, bool IsRead, bool IsFlagged)> flags, CancellationToken ct = default)
     {
-        if (flags.Count == 0) return;
+        if (flags.Count == 0) return 0;
         using var conn = db.Open();
+        // A server that can't say what changed (Outlook.com) sends the whole folder's flags on every pass: what's here is
+        // read in one go, and only the few that differ are touched.
+        if (flags.Count > 100)
+        {
+            var here = (await conn.QueryAsync<(long Uid, bool IsRead, bool IsFlagged)>(new CommandDefinition(
+                "SELECT uid, is_read, is_flagged FROM messages WHERE folder_id = @folderId AND uid > 0", new { folderId }, cancellationToken: ct)))
+                .ToDictionary(r => r.Uid, r => (r.IsRead, r.IsFlagged));
+            flags = flags.Where(f => here.TryGetValue(f.Uid, out var h) && h != (f.IsRead, f.IsFlagged)).ToList();
+            if (flags.Count == 0) return 0;
+        }
+        var changed = 0;
         using var tx = conn.BeginTransaction();
         foreach (var (uid, isRead, isFlagged) in flags)
         {
-            await conn.ExecuteAsync(new CommandDefinition(
-                "UPDATE messages SET is_read = @isRead, is_flagged = @isFlagged WHERE folder_id = @folderId AND uid = @uid",
-                new { folderId, uid, isRead, isFlagged }, tx, cancellationToken: ct));
+            changed += await conn.ExecuteAsync(new CommandDefinition("""
+                UPDATE messages SET is_read = @isRead, is_flagged = @isFlagged
+                WHERE folder_id = @folderId AND uid = @uid AND (is_read <> @isRead OR is_flagged <> @isFlagged)
+                """, new { folderId, uid, isRead, isFlagged }, tx, cancellationToken: ct));
         }
         tx.Commit();
+        return changed;
     }
 
-    public async Task ApplyServerImportanceAsync(long folderId, IReadOnlyList<(long Uid, bool IsImportant)> marks, CancellationToken ct = default)
+    public async Task<int> ApplyServerImportanceAsync(long folderId, IReadOnlyList<(long Uid, bool IsImportant)> marks, CancellationToken ct = default)
     {
-        if (marks.Count == 0) return;
+        if (marks.Count == 0) return 0;
         using var conn = db.Open();
+        var changed = 0;
         using var tx = conn.BeginTransaction();
         foreach (var (uid, important) in marks)
-            await conn.ExecuteAsync(new CommandDefinition(
+            changed += await conn.ExecuteAsync(new CommandDefinition(
                 "UPDATE messages SET is_important = @important WHERE folder_id = @folderId AND uid = @uid AND is_important <> @important",
                 new { folderId, uid, important }, tx, cancellationToken: ct));
         tx.Commit();
+        return changed;
     }
 
     public async Task SetImportantAsync(long id, bool isImportant, CancellationToken ct = default)

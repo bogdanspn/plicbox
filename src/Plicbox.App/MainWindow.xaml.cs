@@ -2045,20 +2045,27 @@ public partial class MainWindow : Window, IReaderHost
     /// </summary>
     private async void MessageList_ScrollChanged(object sender, ScrollChangedEventArgs e)
     {
-        if (e.OriginalSource is not ScrollViewer sv || _loadingOlder || !_vm.HasMoreMessages) return;
-        if (sv.VerticalOffset + sv.ViewportHeight < sv.ExtentHeight - 2 * sv.ViewportHeight) return;
+        if (e.OriginalSource is not ScrollViewer sv || _loadingOlder || !NearEnd()) return;
         _loadingOlder = true;
         try
         {
-            var offset = sv.VerticalOffset;
-            // The page goes in with one Reset, which sends the list back to the top: put it back where it was.
-            if (await _vm.LoadMoreMessagesAsync())
+            // Once more if the end is near again when the page is in (its height is an estimate at first): at the very
+            // end nothing scrolls any more, so nothing else would ask for the next one.
+            for (var pages = 0; pages < 3 && NearEnd(); pages++)
+            {
+                var offset = sv.VerticalOffset;
+                // The page goes in with one Reset, which sends the list back to the top: put it back where it was.
+                if (!await _vm.LoadMoreMessagesAsync()) break;
                 await Dispatcher.InvokeAsync(() => sv.ScrollToVerticalOffset(offset), System.Windows.Threading.DispatcherPriority.Loaded);
+                await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.Background); // laid out
+            }
         }
         finally
         {
             _loadingOlder = false;
         }
+
+        bool NearEnd() => _vm.HasMoreMessages && sv.VerticalOffset + sv.ViewportHeight >= sv.ExtentHeight - 2 * sv.ViewportHeight;
     }
 
     /// <summary>The search box's scope button: all mail (the default), the selected account or folder, and Trash/Junk.</summary>
@@ -2274,7 +2281,7 @@ public partial class MainWindow : Window, IReaderHost
             await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ContextIdle);
             await Task.Delay(50);
         }
-        var counts = await Task.Run(() => App.Services!.GetService(typeof(IMessageRepository)) is IMessageRepository repo ? repo.GetCountsAsync() : null!);
+        var counts = await Task.Run(() => App.Services!.GetService(typeof(IMessageRepository)) is IMessageRepository repo ? repo.GetCountsAsync(withTotals: true) : null!);
         var biggest = _vm.SidebarNodes.Where(n => n.Kind == NodeKind.Folder).MaxBy(n => counts.TotalByFolder.GetValueOrDefault(n.FolderId));
         if (biggest is null || FindChild<ScrollViewer>(MessageList) is not { } sv) return;
         _vm.SelectedNode = biggest;

@@ -173,6 +173,105 @@ public sealed class StorageTests : IDisposable
     }
 
     [Fact]
+    public async Task Views_and_counts_over_many_folders_match_reading_every_message()
+    {
+        var random = new Random(42);
+        var folders = new FolderRepository(_db);
+        var all = new List<Folder>();
+        for (var account = 1; account <= 2; account++)
+        {
+            var accountId = await new AccountRepository(_db).AddAsync(new Account
+            {
+                DisplayName = "Test", Email = $"t{account}@example.com", Username = "t", ImapHost = "imap", SmtpHost = "smtp",
+            });
+            foreach (var role in Enum.GetValues<FolderRole>())
+            {
+                var folder = new Folder { AccountId = accountId, Path = $"{role}", Name = $"{role}", Role = role, IsVirtual = role == FolderRole.All };
+                all.Add(folder with { Id = await folders.UpsertAsync(folder) });
+            }
+        }
+        var empty = all.Last(f => f.Role == FolderRole.Archive);
+        for (var uid = 1; uid <= 600; uid++)
+        {
+            var folder = all[random.Next(all.Count)];
+            if (folder.Id == empty.Id) continue;
+            // Some share a minute (and so need the id to have one place), a sender or a subject.
+            await _messages.UpsertAsync(Msg(folder, uid, $"Subject {random.Next(40)}", minutesAgo: random.Next(200)) with
+            {
+                IsRead = random.Next(3) > 0, IsFlagged = random.Next(4) == 0, HasAttachments = random.Next(3) == 0, FromName = $"Sender {random.Next(20)}",
+            });
+        }
+
+        // What they were before they were made faster: every message, with its folder.
+        List<long> Plain(string where, ListSort sort, int limit, int offset)
+        {
+            using var conn = _db.Open();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = $"SELECT m.id FROM messages m JOIN folders f ON f.id = m.folder_id WHERE {where} ORDER BY {MessageRepository.OrderBy(sort)} LIMIT {limit} OFFSET {offset}";
+            using var reader = cmd.ExecuteReader();
+            var ids = new List<long>();
+            while (reader.Read()) ids.Add(reader.GetInt64(0));
+            return ids;
+        }
+        var kept = $"f.role NOT IN ({(int)FolderRole.Trash}, {(int)FolderRole.Junk}) AND f.is_virtual = 0";
+        foreach (var key in Enum.GetValues<ListSortKey>())
+        foreach (var descending in new[] { true, false })
+        foreach (var (limit, offset) in new[] { (500, 0), (7, 0), (7, 7), (7, 35), (10, 5000) })
+        {
+            var sort = new ListSort(key, descending);
+            Assert.Equal(Plain($"f.role = {(int)FolderRole.Inbox}", sort, limit, offset), (await _messages.GetUnifiedInboxAsync(limit, offset, sort)).Select(m => m.Id));
+            Assert.Equal(Plain($"m.is_read = 0 AND {kept}", sort, limit, offset), (await _messages.GetUnreadAsync(limit, offset, sort)).Select(m => m.Id));
+            Assert.Equal(Plain($"m.is_flagged = 1 AND {kept}", sort, limit, offset), (await _messages.GetFlaggedAsync(limit, offset, sort)).Select(m => m.Id));
+        }
+
+        var counts = await _messages.GetCountsAsync(withTotals: true);
+        var quick = await _messages.GetCountsAsync();
+        Assert.Equal(all.Select(f => f.Id).Order(), counts.TotalByFolder.Keys.Order());
+        Assert.Equal(0, counts.TotalByFolder[empty.Id]);
+        foreach (var f in all)
+        {
+            var mail = await _messages.GetByFolderAsync(f.Id, 10_000);
+            Assert.Equal((mail.Count, mail.Count(m => !m.IsRead)), (counts.TotalByFolder[f.Id], counts.UnreadByFolder[f.Id]));
+            // Without the totals: the same, and the two folders whose badge is their total still have it.
+            Assert.Equal(mail.Count(m => !m.IsRead), quick.UnreadByFolder[f.Id]);
+            Assert.Equal(f.Role is FolderRole.Drafts or FolderRole.Outbox ? mail.Count : 0, quick.TotalByFolder.GetValueOrDefault(f.Id));
+        }
+        Assert.Equal((await _messages.GetFlaggedAsync(10_000)).Count, counts.Flagged);
+        Assert.Equal((await _messages.GetUnreadAsync(10_000)).Count, counts.UnreadTotal);
+        Assert.Equal((counts.Flagged, counts.UnreadTotal, counts.UnreadInboxes), (quick.Flagged, quick.UnreadTotal, quick.UnreadInboxes));
+        Assert.Equal(counts.UnreadByAccount.OrderBy(a => a.Key), quick.UnreadByAccount.OrderBy(a => a.Key));
+    }
+
+    [Theory]
+    [InlineData(20)] // a few changes, as a server that says what changed sends them
+    [InlineData(150)] // a whole folder's flags
+    public async Task Server_flags_change_only_what_differs(int messages)
+    {
+        var (inbox, trash) = await SeedAccountAsync();
+        for (var uid = 1; uid <= messages; uid++)
+            await _messages.UpsertAsync(Msg(inbox, uid, "m") with { IsRead = uid % 2 == 0, IsFlagged = uid == 3 });
+        var other = await _messages.UpsertAsync(Msg(trash, 5, "other"));
+        List<(long, bool, bool)> Same() => Enumerable.Range(1, messages).Select(uid => ((long)uid, uid % 2 == 0, uid == 3)).ToList();
+
+        Assert.Equal(0, await _messages.ApplyServerFlagsAsync(inbox.Id, Same()));
+        Assert.Equal(0, await _messages.ApplyServerFlagsAsync(inbox.Id, []));
+        var server = Same();
+        server[4] = (5, true, false); // read elsewhere
+        server[2] = (3, false, false); // flag taken off
+        server.Add((9999, true, true)); // not here (yet)
+        Assert.Equal(2, await _messages.ApplyServerFlagsAsync(inbox.Id, server));
+
+        var byUid = (await _messages.GetByFolderAsync(inbox.Id)).ToDictionary(m => m.Uid);
+        Assert.Equal((true, false), (byUid[5].IsRead, byUid[5].IsFlagged));
+        Assert.Equal((false, false), (byUid[3].IsRead, byUid[3].IsFlagged));
+        Assert.Equal(messages, byUid.Count);
+        Assert.False((await _messages.GetAsync(other))!.IsRead); // the same number in another folder
+
+        Assert.Equal(1, await _messages.ApplyServerImportanceAsync(inbox.Id, [(1, true), (2, false)]));
+        Assert.Equal(0, await _messages.ApplyServerImportanceAsync(inbox.Id, [(1, true), (2, false)]));
+    }
+
+    [Fact]
     public async Task Account_unread_counts_mail_filed_away_but_not_trash()
     {
         var (inbox, trash) = await SeedAccountAsync();
@@ -233,7 +332,8 @@ public sealed class StorageTests : IDisposable
         var thread = await _messages.GetThreadAsync(inbox.AccountId, "t");
         Assert.Equal(["c@x", "b@x", "a@x"], thread.Select(m => m.MessageId));
         Assert.Equal(inbox.Id, thread[0].FolderId); // the Inbox copy wins over the label copy
-        Assert.Equal(3, (await _messages.GetThreadCountsAsync(["t"]))[(inbox.AccountId, "t")]);
+        Assert.Equal(3, (await _messages.GetThreadCountsAsync([(inbox.AccountId, "t")]))[(inbox.AccountId, "t")]);
+        Assert.Empty(await _messages.GetThreadCountsAsync([(inbox.AccountId + 1, "t")])); // another account's conversation
     }
 
     [Fact]

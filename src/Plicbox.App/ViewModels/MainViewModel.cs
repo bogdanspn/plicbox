@@ -92,6 +92,7 @@ public sealed partial class MainViewModel : ObservableObject
         _engine.StatusChanged += (_, _) => _ui.Post(_ => UpdateStatus(), null);
         _engine.FoldersChanged += accountId => _ui.Post(_ => _ = OnFoldersChangedAsync(accountId), null);
         _engine.FolderSynced += (_, _) => _ui.Post(_ => _ = OnFolderProgressAsync(), null);
+        _engine.MailChanged += _ => _ui.Post(_ => _ = OnFolderProgressAsync(), null);
         _engine.BusyChanged += messageId => _ui.Post(_ => OnBusyChanged(messageId), null);
         _engine.SendFailed += (accountId, subject, why) => _ui.Post(_ => OnSendFailed(accountId, subject, why), null);
         _engine.SendUnsure += (_, messageId, subject) => _ui.Post(_ => _ = OnSendUnsureAsync(messageId, subject), null);
@@ -274,6 +275,7 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var collapse = node.Kind is NodeKind.UnifiedInbox or NodeKind.Folder;
+            NextPage:
             var (version, offset, sort) = (_listVersion, _rawLoaded, CurrentListSort);
             var (heads, raw) = await Task.Run(async () =>
             {
@@ -295,6 +297,7 @@ public sealed partial class MainViewModel : ObservableObject
                 row.Group = GroupOf(row);
                 return row;
             }).ToList();
+            if (rows.Count == 0 && HasMoreMessages) goto NextPage; // all of it in conversations already listed
             if (rows.Count == 0) return false;
 
             var selected = SelectedMessage;
@@ -595,7 +598,7 @@ public sealed partial class MainViewModel : ObservableObject
         catch (Exception ex) { _log.LogError(ex, "Refreshing folders failed"); }
     }
 
-    /// <summary>A folder finished syncing: refresh counts and the visible list, at most a couple of times a second.</summary>
+    /// <summary>Mail changed here: refresh counts and the visible list, once for what comes together (several accounts at a time).</summary>
     private async Task OnFolderProgressAsync()
     {
         _progressCts?.Cancel();
@@ -624,6 +627,7 @@ public sealed partial class MainViewModel : ObservableObject
             _accountsById[account.Id] = account;
             _foldersByAccount[account.Id] = await _folders.GetByAccountAsync(account.Id);
         }
+        _ownAddresses = null;
 
         var favorites = new SidebarNode { Title = L.T("Favorites"), Glyph = Glyphs.Star, Kind = NodeKind.Group };
         SidebarNodes.Add(favorites);
@@ -699,14 +703,18 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             if (newInbox > 0) await AnnounceNewMailAsync(accountId, newInbox);
-            var folders = await _folders.GetByAccountAsync(accountId);
+            var folders = await Task.Run(() => _folders.GetByAccountAsync(accountId));
             var known = _foldersByAccount.GetValueOrDefault(accountId);
             if (known is null || !folders.Select(f => (f.Id, f.Name)).SequenceEqual(known.Select(f => (f.Id, f.Name))))
                 await LoadAsync(); // folder list changed (first sync, renamed folders…)
-            else
+            else if (newInbox > 0)
+            {
+                // New mail shows at once; anything else that changed is told by MailChanged.
                 await RefreshCountsAsync();
-
-            if (SearchText.Length == 0) await ReloadMessagesAsync(preserveSelection: true);
+                if (SearchText.Length == 0) await ReloadMessagesAsync(preserveSelection: true);
+            }
+            else if (_listedOn != DateTime.Today && SearchText.Length == 0)
+                await ReloadMessagesAsync(preserveSelection: true); // past midnight: "Today" is "Yesterday" now
         }
         catch (Exception ex) { _log.LogError(ex, "Refreshing after sync failed"); }
     }
@@ -979,9 +987,9 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>The list folds a conversation into one row; its badge counts the whole conversation (incl. Sent).</summary>
     private async Task<IReadOnlyList<ThreadHead>> WithConversationCountsAsync(IReadOnlyList<ThreadHead> heads)
     {
-        var keys = heads.Where(h => h.Latest.ThreadKey is not null).Select(h => h.Latest.ThreadKey!).ToList();
-        if (keys.Count == 0) return heads;
-        var counts = await _messages.GetThreadCountsAsync(keys);
+        var threads = heads.Where(h => h.Latest.ThreadKey is not null).Select(h => (h.Latest.AccountId, h.Latest.ThreadKey!)).ToList();
+        if (threads.Count == 0) return heads;
+        var counts = await _messages.GetThreadCountsAsync(threads);
         return heads.Select(h => h.Latest.ThreadKey is { } key && counts.TryGetValue((h.Latest.AccountId, key), out var n) && n > h.Count
             ? h with { Count = n } : h).ToList();
     }
@@ -1007,13 +1015,15 @@ public sealed partial class MainViewModel : ObservableObject
         Trace(clock, "sorted", heads.Count);
         // Same conversations as before: refresh flags in place so scroll position, selection and open threads stay put.
         var currentHeads = Messages.Where(m => !m.IsThreadChild).ToList();
-        if (!force && preserveSelection && heads.Count == currentHeads.Count
+        var sameDay = _listedOn == DateTime.Today; // the rows' dates and headings still say the right thing
+        if (!force && sameDay && preserveSelection && heads.Count == currentHeads.Count
             && heads.Select(h => (h.Latest.Id, h.Count)).SequenceEqual(currentHeads.Select(m => (m.Model.Id, m.ThreadCount))))
         {
             for (var i = 0; i < heads.Count; i++)
             {
                 currentHeads[i].IsRead = heads[i].Latest.IsRead;
                 currentHeads[i].IsFlagged = heads[i].Latest.IsFlagged;
+                currentHeads[i].IsImportant = heads[i].Latest.IsImportant;
             }
             return;
         }
@@ -1025,11 +1035,25 @@ public sealed partial class MainViewModel : ObservableObject
         // A refresh of the list on screen (not a folder switch): rows that weren't there and are recent just arrived.
         var shownIds = preserveSelection && Messages.Count > 0 ? Messages.Select(m => m.Model.Id).ToHashSet() : null;
         var wasAtTop = IsListAtTop?.Invoke() ?? false;
+        // Rows whose message is as it was are kept, so their pictures stay as they are.
+        var kept = new Dictionary<long, MessageItemViewModel>();
+        if (sameDay && preserveSelection)
+            foreach (var row in currentHeads)
+                if (row.IsRead == row.Model.IsRead && row.IsFlagged == row.Model.IsFlagged && row.IsImportant == row.Model.IsImportant)
+                    kept.TryAdd(row.Model.Id, row);
+        _listedOn = now.Date;
         _repopulating = true;
         try
         {
             var built = heads.Select(h =>
             {
+                if (kept.Remove(h.Latest.Id, out var same) && same.ThreadCount == h.Count && same.Model == h.Latest)
+                {
+                    same.IsExpanded = false; // the rows under it go with the old list; opened again below
+                    same.IsBusy = _engine.IsBusy(h.Latest.Id);
+                    same.Group = GroupOf(same);
+                    return same;
+                }
                 var row = NewRow(h.Latest, h.Count, now);
                 row.Group = GroupOf(row);
                 row.IsFresh = shownIds is not null && !shownIds.Contains(h.Latest.Id) && h.Latest.Date > DateTimeOffset.Now.AddDays(-2);
@@ -1067,6 +1091,9 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>The day the rows listed were made on.</summary>
+    private DateTime _listedOn;
+
     private static async Task UnmarkFreshAsync(IReadOnlyList<MessageItemViewModel> rows)
     {
         await Task.Delay(3500);
@@ -1089,20 +1116,23 @@ public sealed partial class MainViewModel : ObservableObject
             if (row.Model.Id == messageId) row.IsBusy = busy;
     }
 
-    /// <summary>One row's sender picture; the row keeps its coloured letter until (unless) one arrives.</summary>
     /// <summary>The picture chosen for one of your accounts (Accounts > picture), or null.</summary>
     public System.Windows.Media.ImageSource? AccountPicture(long accountId) => _pictures.ForAccount(accountId);
 
     /// <summary>An account's colour, as set in Accounts.</summary>
     public string? AccountColor(long accountId) => _accountsById.GetValueOrDefault(accountId)?.Color;
 
+    /// <summary>Your addresses, by account; made again when the accounts change.</summary>
+    private Dictionary<string, long>? _ownAddresses;
+
+    /// <summary>One row's sender picture; the row keeps its coloured letter until (unless) one arrives.</summary>
     private async Task LoadPictureAsync(MessageItemViewModel row)
     {
         await Task.Yield(); // not inside the binding that asked for it
         try
         {
             if (string.IsNullOrWhiteSpace(row.Model.FromAddress)) return;
-            var own = _accountsById.Values
+            var own = _ownAddresses ??= _accountsById.Values
                 .SelectMany(a => a.Identities.Select(i => (i.Address, a.Id)))
                 .DistinctBy(x => x.Address, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(x => x.Address, x => x.Id, StringComparer.OrdinalIgnoreCase);

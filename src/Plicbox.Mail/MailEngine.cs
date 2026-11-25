@@ -28,6 +28,8 @@ public sealed class MailEngine(
 
     /// <summary>(accountId, newInboxMessages) after every sync pass.</summary>
     public event Action<long, int>? Synced;
+    /// <summary>(accountId) a sync pass, or the rules run after it, changed mail here: what's listed needs a refresh.</summary>
+    public event Action<long>? MailChanged;
     public event Action<long, AccountStatus>? StatusChanged;
     /// <summary>(accountId) the folder list changed.</summary>
     public event Action<long>? FoldersChanged;
@@ -769,7 +771,7 @@ public sealed class MailEngine(
 
     // New inbox mail goes through the rules before anyone hears about it, so a message a rule files away
     // doesn't pop up a "new mail" notification.
-    private void OnWorkerSynced(AccountSync worker, int newInbox)
+    private void OnWorkerSynced(AccountSync worker, int newInbox, bool changed)
     {
         KickOutbox(worker.Account.Id); // also after a failed pass: sending may work when the incoming server doesn't
 
@@ -778,6 +780,7 @@ public sealed class MailEngine(
         if (fresh.Count == 0 || (rules.Count == 0 && settings?.Current.BlockedSenders is not { Count: > 0 }))
         {
             Synced?.Invoke(worker.Account.Id, newInbox);
+            if (changed) MailChanged?.Invoke(worker.Account.Id);
             return;
         }
         _ = Task.Run(async () =>
@@ -792,6 +795,7 @@ public sealed class MailEngine(
                 _log.LogWarning(ex, "Running mail rules failed");
             }
             Synced?.Invoke(worker.Account.Id, Math.Max(0, newInbox - movedOut));
+            MailChanged?.Invoke(worker.Account.Id);
         });
     }
 
@@ -865,7 +869,10 @@ public sealed class MailEngine(
             if (await messages.GetAsync(messageId) is not { } m || m.FolderId != folderId) return;
             var rules = settings?.Current.Rules.Where(r => r.Enabled).ToList() ?? [];
             if ((await ApplyRulesAsync([m], rules, fetchBodies: true, holdInView: true)).MovedOut > 0)
-                Synced?.Invoke(m.AccountId, 0); // the lists drop it
+            {
+                Synced?.Invoke(m.AccountId, 0);
+                MailChanged?.Invoke(m.AccountId); // the lists drop it
+            }
         }
         catch (Exception ex)
         {
@@ -992,7 +999,7 @@ public sealed class MailEngine(
     {
         var worker = new AccountSync(account, connector, folders, messages, ops, bodies, loggerFactory.CreateLogger<AccountSync>(),
             () => TimeSpan.FromMinutes(Math.Max(1, settings?.Current.SyncIntervalMinutes ?? 5)));
-        worker.Synced += (w, n) => OnWorkerSynced(w, n);
+        worker.Synced += OnWorkerSynced;
         worker.StatusChanged += w =>
         {
             StatusChanged?.Invoke(w.Account.Id, w.Status);

@@ -105,8 +105,8 @@ internal sealed class AccountSync : IAsyncDisposable
     public Account Account { get; }
     public AccountStatus Status { get; private set; } = new(SyncState.Idle);
 
-    /// <summary>Raised after each sync pass with the number of new inbox messages.</summary>
-    public event Action<AccountSync, int>? Synced;
+    /// <summary>Raised after each sync pass with the number of new inbox messages, and whether it changed any mail here.</summary>
+    public event Action<AccountSync, int, bool>? Synced;
 
     // New inbox mail found since the last TakeFreshInbox(): (folder, server UIDs), for mail rules.
     private readonly List<(long FolderId, List<long> Uids)> _freshInbox = [];
@@ -126,7 +126,7 @@ internal sealed class AccountSync : IAsyncDisposable
     public event Action<AccountSync>? FoldersChanged;
     /// <summary>Queued local changes were sent to the server (those it refused stay queued).</summary>
     public event Action<AccountSync>? ChangesSent;
-    /// <summary>One folder finished syncing (fired as a long first sync progresses).</summary>
+    /// <summary>A folder's mail here changed (fired as a long first sync progresses); not for a folder found as it was.</summary>
     public event Action<AccountSync, long>? FolderSynced;
 
     // Folders that only sync while the user looks at them (Gmail's All Mail, Important), once opened this session.
@@ -221,7 +221,9 @@ internal sealed class AccountSync : IAsyncDisposable
                 backoff = TimeSpan.FromSeconds(15);
                 retriedFresh = false;
                 SetStatus(new AccountStatus(SyncState.Idle, null, DateTimeOffset.Now));
-                Synced?.Invoke(this, newInbox);
+                var changed = _passChanged;
+                _passChanged = false;
+                Synced?.Invoke(this, newInbox, changed);
                 if (!_backlog.IsEmpty) _requests.Writer.TryWrite(SyncScope.Backfill); // the next few hundred, quietly
                 if (Account.OfflineDownload) _ = Task.Run(() => PrefetchBodiesAsync(ct), ct);
             }
@@ -249,7 +251,7 @@ internal sealed class AccountSync : IAsyncDisposable
                 _log.LogWarning(ex, "Sync failed for {Email}", Account.Email);
                 DropClient(ref _syncClient);
                 SetStatus(new AccountStatus(SyncState.Error, AccountDiscovery.Explain(ex, Account.ImapHost, Account.Auth), Status.LastSync));
-                Synced?.Invoke(this, 0); // local changes may still need a refresh
+                Synced?.Invoke(this, 0, true); // local changes may still need a refresh
                 try { await Task.Delay(backoff, ct); } catch (OperationCanceledException) { break; }
                 backoff = TimeSpan.FromTicks(Math.Min(backoff.Ticks * 2, MaxBackoff.Ticks));
                 _requests.Writer.TryWrite(scope);
@@ -302,6 +304,7 @@ internal sealed class AccountSync : IAsyncDisposable
     {
         var ops = await _ops.GetByAccountAsync(Account.Id, ct);
         if (ops.Count == 0) return;
+        _passChanged = true;
         var paths = (await _folders.GetByAccountAsync(Account.Id, ct)).ToDictionary(f => f.Id, f => f.Path);
 
         foreach (var op in ops)
@@ -484,7 +487,12 @@ internal sealed class AccountSync : IAsyncDisposable
                     if (_lastNewUids.Count > 0)
                         lock (_freshInbox) _freshInbox.Add((folder.Id, _lastNewUids));
                 }
-                FolderSynced?.Invoke(this, folder.Id);
+                if (_folderChanged)
+                {
+                    _folderChanged = false;
+                    _passChanged = true;
+                    FolderSynced?.Invoke(this, folder.Id);
+                }
             }
             catch (FolderNotFoundException)
             {
@@ -530,13 +538,17 @@ internal sealed class AccountSync : IAsyncDisposable
         FoldersChanged?.Invoke(this);
     }
 
-    /// <returns>Number of genuinely new messages (0 on a folder's first sync, so it doesn't trigger notifications).</returns>
     /// <summary>The last folder synced was found untouched and skipped.</summary>
     private bool _lastSkipped;
+    // Something changed here (messages new or gone, read, flagged or marked important elsewhere; queued changes sent) that
+    // hasn't been told yet: by folder, and for the pass. Kept when the connection breaks halfway, as the pass that then
+    // finishes the work finds those changes already made.
+    private bool _folderChanged, _passChanged;
     /// <summary>Per folder: when its messages were last compared in full (accounts with a sync period).</summary>
     private readonly System.Collections.Concurrent.ConcurrentDictionary<long, DateTime> _fullCheck = new();
     private static readonly TimeSpan FullCheckEvery = TimeSpan.FromHours(6);
 
+    /// <returns>Number of genuinely new messages (0 on a folder's first sync, so it doesn't trigger notifications).</returns>
     private async Task<int> SyncFolderAsync(ImapClient client, Folder local, bool backfill, CancellationToken ct)
     {
         Step(SyncStep.Opening, local);
@@ -566,7 +578,7 @@ internal sealed class AccountSync : IAsyncDisposable
         if (local.UidValidity != folder.UidValidity)
         {
             // The server renumbered the folder: everything cached for it is meaningless now.
-            if (local.UidValidity != 0) DropBodies(await _messages.WipeFolderAsync(local.Id, ct));
+            if (local.UidValidity != 0) DropBodies(Gone(await _messages.WipeFolderAsync(local.Id, ct)));
             previousLastUid = 0;
             modSeq = 0;
         }
@@ -581,7 +593,7 @@ internal sealed class AccountSync : IAsyncDisposable
         var localUids = (await _messages.GetUidsAsync(local.Id, ct)).ToHashSet();
 
         // Gone from the server, or now outside the sync period.
-        DropBodies(await _messages.DeleteByUidsAsync(local.Id, localUids.Where(u => !serverSet.Contains(u)).ToList(), ct));
+        DropBodies(Gone(await _messages.DeleteByUidsAsync(local.Id, localUids.Where(u => !serverSet.Contains(u)).ToList(), ct)));
 
         // Flag changes (read elsewhere, flagged on the phone, ...) for messages we already have.
         var known = localUids.Where(serverSet.Contains).ToList();
@@ -593,12 +605,12 @@ internal sealed class AccountSync : IAsyncDisposable
             var changed = folder.Supports(FolderFeature.ModSequences) && modSeq > 0
                 ? await folder.FetchAsync(range, (ulong)modSeq, flagItems, ct)
                 : await folder.FetchAsync(range, flagItems, ct);
-            await _messages.ApplyServerFlagsAsync(local.Id, changed
+            _folderChanged |= 0 < await _messages.ApplyServerFlagsAsync(local.Id, changed
                 .Where(s => s.Flags.HasValue && localUids.Contains(s.UniqueId.Id))
                 .Select(s => ((long)s.UniqueId.Id, s.Flags!.Value.HasFlag(MessageFlags.Seen), s.Flags.Value.HasFlag(MessageFlags.Flagged)))
                 .ToList(), ct);
             // Gmail: Important comes and goes with the labels (they change the mod-sequence too).
-            await _messages.ApplyServerImportanceAsync(local.Id, changed
+            _folderChanged |= 0 < await _messages.ApplyServerImportanceAsync(local.Id, changed
                 .Where(s => s.GMailLabels is not null && localUids.Contains(s.UniqueId.Id))
                 .Select(s => ((long)s.UniqueId.Id, IsImportant(s)))
                 .ToList(), ct);
@@ -610,7 +622,7 @@ internal sealed class AccountSync : IAsyncDisposable
         {
             var recent = known.OrderByDescending(u => u).Take(200).Select(u => new UniqueId((uint)u)).ToList();
             var marks = await folder.FetchAsync(recent, MessageSummaryItems.UniqueId | MessageSummaryItems.GMailLabels, ct);
-            await _messages.ApplyServerImportanceAsync(local.Id, marks.Where(s => s.GMailLabels is not null).Select(s => ((long)s.UniqueId.Id, IsImportant(s))).ToList(), ct);
+            _folderChanged |= 0 < await _messages.ApplyServerImportanceAsync(local.Id, marks.Where(s => s.GMailLabels is not null).Select(s => ((long)s.UniqueId.Id, IsImportant(s))).ToList(), ct);
         }
 
         // Whatever is missing locally, newest first: recent mail shows up first, and an interrupted first sync simply
@@ -627,6 +639,7 @@ internal sealed class AccountSync : IAsyncDisposable
             fetchedSoFar += batch.Length;
             var summaries = await folder.FetchAsync(batch, HeaderItems | GmailExtras(client), ct);
             await _messages.UpsertBatchAsync(summaries.Select(s => ToSummary(local, s)).ToList(), ct);
+            _folderChanged = true;
             if (toFetch.Count > FetchBatch) FolderSynced?.Invoke(this, local.Id); // progress during big syncs
         }
         if (complete) _backlog.TryRemove(local.Id, out _);
@@ -638,6 +651,12 @@ internal sealed class AccountSync : IAsyncDisposable
         if (local.Role == FolderRole.Sent) await BackfillRecipientsAsync(folder, local, ct);
         _lastNewUids = previousLastUid == 0 ? [] : toFetch.Where(u => u.Id > previousLastUid).Select(u => (long)u.Id).ToList();
         return _lastNewUids.Count;
+
+        IReadOnlyList<long> Gone(IReadOnlyList<long> ids)
+        {
+            _folderChanged |= ids.Count > 0;
+            return ids;
+        }
     }
 
     /// <summary>
@@ -725,7 +744,8 @@ internal sealed class AccountSync : IAsyncDisposable
                 }
             }
 
-            using var ms = new MemoryStream();
+            // Room for it from the start: grown as it fills, a big attachment would be copied over and over.
+            using var ms = new MemoryStream((int)Math.Clamp(m.Size + m.Size / 32 + 4096, 4096, 64 * 1024 * 1024));
             await mime.WriteToAsync(ms, ct);
             ms.Position = 0;
             await _bodies.SaveAsync(m.Id, ms, ct);

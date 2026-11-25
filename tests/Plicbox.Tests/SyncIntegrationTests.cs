@@ -196,6 +196,56 @@ public sealed class SyncIntegrationTests : IAsyncLifetime
         await Assert.ThrowsAsync<FolderNotFoundException>(() => _probe.GetFolderAsync(moved));
     }
 
+    [SkippableFact]
+    public async Task Only_a_pass_that_changed_something_asks_for_a_refresh()
+    {
+        Skip.IfNot(Enabled, "Set PLICBOX_GREENMAIL=1 with GreenMail running to run integration tests.");
+
+        await DeliverAsync("Hello one", "first body");
+        await DeliverAsync("Hello two", "second body");
+        var refreshes = 0;
+        _service.MailChanged += _ => Interlocked.Increment(ref refreshes);
+        _service.FolderSynced += (_, _) => Interlocked.Increment(ref refreshes);
+        // One pass, and what it raised (MailChanged comes right after Synced).
+        async Task<int> Pass()
+        {
+            Interlocked.Exchange(ref refreshes, 0);
+            var synced = WaitForSync();
+            _service.RequestSync(_account.Id, userInitiated: true);
+            await synced;
+            await Task.Delay(500);
+            return Interlocked.Exchange(ref refreshes, 0);
+        }
+
+        var first = WaitForSync();
+        _account = _account with { Id = await _service.AddAccountAsync(_account, Password) };
+        await first;
+        await Task.Delay(1500); // the inbox connection is up
+        Assert.True(refreshes >= 2); // the inbox's mail, and the pass
+        Assert.Equal(0, await Pass()); // nothing happened meanwhile
+        Assert.Equal(0, await Pass());
+
+        var inbox = (await _folders.GetByAccountAsync(_account.Id)).Single(f => f.Role == FolderRole.Inbox);
+        async Task ShowsUp(Func<Task> elsewhere, Func<IReadOnlyList<Plicbox.Core.MessageSummary>, bool> shown)
+        {
+            Interlocked.Exchange(ref refreshes, 0);
+            await elsewhere();
+            await EventuallyAsync(async () =>
+            {
+                _service.RequestSync(_account.Id);
+                return refreshes > 0 && shown(await _messages.GetByFolderAsync(inbox.Id));
+            });
+            await Task.Delay(1500); // passes asked for meanwhile
+            Assert.Equal(0, await Pass());
+        }
+        await ShowsUp(() => SetServerFlagAsync("INBOX", "Hello one", MessageFlags.Seen), list => list.Single(m => m.Subject == "Hello one").IsRead);
+        await ShowsUp(() => DeliverAsync("Hello three", "third body"), list => list.Count == 3);
+        await ShowsUp(() => ExpungeOnServerAsync("INBOX", "Hello two"), list => list.Count == 2);
+        // A change made here, once the server has it.
+        var one = (await _messages.GetByFolderAsync(inbox.Id)).Single(m => m.Subject == "Hello one");
+        await ShowsUp(() => _service.SetFlagsAsync(one, isRead: true, isFlagged: true), list => list.Single(m => m.Subject == "Hello one").IsFlagged);
+    }
+
     // ───────── helpers ─────────
 
     private Task WaitForSync()

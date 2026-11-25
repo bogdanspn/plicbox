@@ -301,7 +301,7 @@ public sealed partial class AccountsViewModel : ObservableObject
         editor.ErrorText = status?.Error;
         editor.NeedsSignIn = status?.NeedsSignIn == true;
 
-        var counts = await _messages.GetCountsAsync();
+        var counts = await Task.Run(() => _messages.GetCountsAsync(withTotals: true));
         editor.Folders.Clear();
         foreach (var f in (await _folders.GetByAccountAsync(editor.Id)).Where(f => f.Role != FolderRole.Outbox))
         {
