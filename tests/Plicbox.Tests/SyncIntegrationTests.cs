@@ -156,10 +156,12 @@ public sealed class SyncIntegrationTests : IAsyncLifetime
             "Unfinished", "<p>v2</p>", [], asDraft: true);
         Assert.True(await _service.SaveDraftAsync(_account.Id, second));
         // Saved here at once, uploaded by the queue: the server ends up with one copy, the newest.
-        await EventuallyAsync(async () => await ServerCountAsync("Drafts") == 1 && (await ProbeOpenAsync("Drafts")).Count == 1);
-        var drafts = await ProbeOpenAsync("Drafts");
-        var stored = await drafts.GetMessageAsync((await drafts.SearchAsync(SearchQuery.All)).Single());
-        Assert.Contains("v2", stored.HtmlBody);
+        await EventuallyAsync(async () =>
+        {
+            var drafts = await ProbeOpenAsync("Drafts");
+            var uids = await drafts.SearchAsync(SearchQuery.All); // for a moment it may still be the first
+            return uids.Count == 1 && (await drafts.GetMessageAsync(uids[0])).HtmlBody.Contains("v2");
+        });
         Assert.True((await ServerFlagsAsync("Drafts", "Unfinished")).HasFlag(MessageFlags.Draft));
         await _service.DeleteDraftAsync(_account.Id, draft.MessageId!);
         await EventuallyAsync(async () => await ServerCountAsync("Drafts") == 0);

@@ -209,6 +209,34 @@ public sealed class SendOnceTests : IAsyncLifetime
         Assert.Equal(SendState.Waiting, (await _messages.GetAsync(id))!.SendState);
     }
 
+    /// <summary>The lookup itself, on a real IMAP server (GreenMail, as for the sync tests).</summary>
+    [SkippableTheory, InlineData(true), InlineData(false)]
+    public async Task It_looks_in_Sent_on_the_server(bool there)
+    {
+        Skip.IfNot(SyncIntegrationTests.Enabled, "Set PLICBOX_GREENMAIL=1 with GreenMail running to run integration tests.");
+        // Its own Sent folder, so the sync tests and this one don't get in each other's way.
+        var path = "SentLookup" + Guid.NewGuid().ToString("N")[..8];
+        var server = new ServerEndpoint("127.0.0.1", 3993);
+        using var probe = await MailConnector.ConnectImapAsync(server, new MailLogin("alice", "secret"), default);
+        var folder = await probe.GetFolder(probe.PersonalNamespaces[0]).CreateAsync(path, true) ?? await probe.GetFolderAsync(path);
+        await _folders.UpsertAsync(new Folder { AccountId = _account.Id, Path = path, Name = path, Role = FolderRole.Sent });
+        await _folders.DeleteMissingAsync(_account.Id, ["Drafts", path]);
+        var accounts = new AccountRepository(_db);
+        _account = _account with { Username = "alice", ImapPort = 3993, ImapSecurity = TlsMode.Tls };
+        await accounts.UpdateAsync(_account);
+        _engine.SentLookup = null;
+
+        var message = Composing.ToMimeMessage(_account, new ComposeDraft { AccountId = _account.Id }, "bob@example.com", "", "", "Hello", "<p>x</p>", []);
+        var other = Composing.ToMimeMessage(_account, new ComposeDraft { AccountId = _account.Id }, "bob@example.com", "", "", "Hello", "<p>x</p>", []);
+        await folder.AppendAsync(new MailKit.AppendRequest(there ? message : other, MailKit.MessageFlags.Seen));
+        _smtp.Next = Break.AfterMessage;
+        var id = await _engine.SendAsync(_account, message, DateTimeOffset.Now);
+
+        if (there) await UntilAsync(async () => await _messages.GetAsync(id) is null);
+        else await UntilAsync(() => Task.FromResult(Asked == 1));
+        Assert.Equal((1, there ? 0 : 1), (_smtp.Received, Asked));
+    }
+
     public enum Break { None, BeforeMessage, HalfWay, AfterMessage, Busy }
 
     /// <summary>Just enough of an SMTP server (over TLS) for one message at a time.</summary>

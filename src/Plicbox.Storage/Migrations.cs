@@ -300,5 +300,25 @@ internal static class Migrations
         """,
         // How far sending a message in the Outbox got, so one the server may already have isn't sent again.
         "ALTER TABLE messages ADD COLUMN send_state INTEGER NOT NULL DEFAULT 0;",
+        // Queue numbers are never used again: a draft saved while its earlier save was uploading got that one's number, and
+        // was taken off the queue with it. (Adding AUTOINCREMENT means rebuilding the table.)
+        """
+        CREATE TABLE pending_ops_new (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id        INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+            kind              INTEGER NOT NULL,
+            message_id        INTEGER NOT NULL,
+            folder_path       TEXT,
+            uid               INTEGER NOT NULL DEFAULT 0,
+            target_path       TEXT,
+            attempts          INTEGER NOT NULL DEFAULT 0,
+            header_message_id TEXT
+        );
+        INSERT INTO pending_ops_new (id, account_id, kind, message_id, folder_path, uid, target_path, attempts, header_message_id)
+            SELECT id, account_id, kind, message_id, folder_path, uid, target_path, attempts, header_message_id FROM pending_ops;
+        DROP TABLE pending_ops;
+        ALTER TABLE pending_ops_new RENAME TO pending_ops;
+        CREATE INDEX ix_pending_ops_account ON pending_ops(account_id, id);
+        """,
     ];
 }

@@ -91,6 +91,19 @@ public sealed class OutboxTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task A_draft_saved_while_its_earlier_save_uploads_stays_queued()
+    {
+        var v1 = Message("Plans", "v1", asDraft: true);
+        await _engine.SaveDraftAsync(_account.Id, v1);
+        var uploading = Assert.Single(await _ops.GetByAccountAsync(_account.Id)); // the worker has picked it up
+        await _engine.SaveDraftAsync(_account.Id, Message("Plans", "v2", v1.MessageId, asDraft: true));
+        await _ops.RemoveAsync(uploading.Id); // and is done with it
+
+        var draft = Assert.Single(await _messages.GetByFolderAsync(_drafts.Id));
+        Assert.Equal(draft.Id, Assert.Single(await _ops.GetByAccountAsync(_account.Id)).MessageId);
+    }
+
+    [Fact]
     public async Task Sending_offline_keeps_the_message_in_the_Outbox()
     {
         await _engine.SendAsync(_account, Message("Hello", "sent while offline"));
