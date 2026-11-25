@@ -403,10 +403,11 @@ public sealed class MessageRepository(Database db) : IMessageRepository
     private static async Task<long> UpsertCoreAsync(SqliteConnection conn, SqliteTransaction tx, MessageSummary m, string? bodyText, CancellationToken ct)
     {
         var id = await conn.ExecuteScalarAsync<long>(new CommandDefinition("""
-            INSERT INTO messages (account_id, folder_id, uid, message_id, in_reply_to, thread_key, subject,
+            INSERT INTO messages (id, account_id, folder_id, uid, message_id, in_reply_to, thread_key, subject,
                                   from_name, from_address, to_list, recipients, date, preview, is_read, is_flagged,
                                   has_attachments, size, is_important)
-            VALUES (@AccountId, @FolderId, @Uid, @MessageId, @InReplyTo, @ThreadKey, @Subject,
+            VALUES ((SELECT last + 1 FROM message_ids), -- a number no message ever had (a trigger keeps it up to date)
+                    @AccountId, @FolderId, @Uid, @MessageId, @InReplyTo, @ThreadKey, @Subject,
                     @FromName, @FromAddress, @To, @Recipients, @DateUnix, @Preview, @IsRead, @IsFlagged,
                     @HasAttachments, @Size, @IsImportant)
             ON CONFLICT (folder_id, uid) DO UPDATE SET

@@ -611,7 +611,7 @@ public sealed class MailEngine(
     {
         if ((await folders.GetByAccountAsync(accountId, ct)).FirstOrDefault(f => f.Role == FolderRole.Drafts) is not { } drafts) return false;
         if (message.Date == default) message.Date = DateTimeOffset.Now;
-        // The new copy first, then the earlier ones go: removed first, the newest's id would be handed out again.
+        // The new copy first, then the earlier ones go: there's a draft here whatever happens in between.
         var id = await StoreLocalAsync(drafts, message, ct);
         if (!string.IsNullOrEmpty(message.MessageId)) await DropLocalCopiesAsync(drafts, message.MessageId, keepId: id, ct);
         await ops.AddAsync(new PendingOp

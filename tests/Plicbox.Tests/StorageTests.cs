@@ -337,6 +337,81 @@ public sealed class StorageTests : IDisposable
     }
 
     [Fact]
+    public async Task A_messages_number_is_never_given_to_another()
+    {
+        var (inbox, trash) = await SeedAccountAsync();
+        var first = await _messages.UpsertAsync(Msg(inbox, 1, "first"));
+        var newest = await _messages.UpsertAsync(Msg(inbox, 2, "newest"));
+        await _messages.DeleteAsync(newest);
+        var next = await _messages.UpsertAsync(Msg(inbox, 3, "next"));
+        Assert.True(next > newest);
+
+        // One already here keeps its number, and takes none.
+        Assert.Equal(first, await _messages.UpsertAsync(Msg(inbox, 1, "first") with { IsRead = true }));
+        await _messages.UpsertBatchAsync([Msg(inbox, 1, "first"), Msg(inbox, 3, "next"), Msg(trash, 1, "other")]);
+        var other = Assert.Single(await _messages.GetByFolderAsync(trash.Id)).Id;
+        Assert.Equal(next + 1, other);
+
+        // However it goes: by its number on the server, the whole folder, all of it.
+        await _messages.DeleteByUidsAsync(trash.Id, [1]);
+        var local = await _messages.AddLocalAsync(Msg(inbox, 0, "kept here"));
+        Assert.True(local > other);
+        await _messages.WipeFolderAsync(inbox.Id);
+        await _messages.DeleteAsync(local);
+        Assert.Empty(await _messages.GetByFolderAsync(inbox.Id));
+        Assert.True(await _messages.UpsertAsync(Msg(inbox, 1, "afresh")) > local);
+
+        // Not taken when it wasn't added after all (its content couldn't be saved).
+        long tried = 0;
+        await Assert.ThrowsAsync<IOException>(() => _messages.AddLocalAsync(Msg(inbox, 0, "x"), saveContent: id =>
+        {
+            tried = id;
+            throw new IOException();
+        }));
+        Assert.Equal(tried, await _messages.UpsertAsync(Msg(inbox, 9, "y")));
+    }
+
+    [Fact]
+    public async Task Numbers_go_on_from_the_newest_message_of_an_earlier_version()
+    {
+        const string insert = """
+            INSERT INTO messages (id, account_id, folder_id, uid, subject, from_name, from_address, to_list, date, preview, is_read, is_flagged, has_attachments, size)
+                VALUES ({0}, 1, 1, {1}, 's', 'n', 'a', 't', 0, '', 0, 0, 0, 0);
+            """;
+        void Run(Microsoft.Data.Sqlite.SqliteConnection conn, string sql)
+        {
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.ExecuteNonQuery();
+        }
+        var path = Path.Combine(_dir, "earlier.db");
+        var added = Array.FindIndex(Migrations.All, m => m.Contains("CREATE TABLE message_ids", StringComparison.Ordinal));
+        using (var conn = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={path};Pooling=False"))
+        {
+            conn.Open();
+            foreach (var sql in Migrations.All[..added]) Run(conn, sql);
+            Run(conn, $"PRAGMA user_version = {added};");
+            Run(conn, """
+                INSERT INTO accounts (id, display_name, email, provider, auth, username, imap_host, imap_port, smtp_host, smtp_port, color)
+                    VALUES (1, 'T', 't@example.com', 0, 0, 't', 'imap', 993, 'smtp', 465, '#000');
+                INSERT INTO folders (id, account_id, path, name, role) VALUES (1, 1, 'INBOX', 'Inbox', 1);
+                """);
+            Run(conn, string.Format(insert, 4711, 1));
+        }
+        var db = new Database(path);
+        db.Migrate();
+        var messages = new MessageRepository(db);
+        var inbox = new Folder { Id = 1, AccountId = 1, Path = "INBOX", Name = "Inbox" };
+        await messages.DeleteAsync(4711);
+        Assert.Equal(4712, await messages.UpsertAsync(Msg(inbox, 2, "next")));
+
+        // Gone back to an earlier version for a while, which picks its own numbers: those count too.
+        using (var conn = db.Open()) Run(conn, string.Format(insert, 4800, 3));
+        await messages.DeleteAsync(4800);
+        Assert.Equal(4801, await messages.UpsertAsync(Msg(inbox, 4, "after")));
+    }
+
+    [Fact]
     public async Task A_message_can_be_replaced_or_deleted_while_its_being_read()
     {
         var store = new FileBodyStore(Path.Combine(_dir, "bodies"));

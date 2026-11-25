@@ -320,5 +320,15 @@ internal static class Migrations
         ALTER TABLE pending_ops_new RENAME TO pending_ops;
         CREATE INDEX ix_pending_ops_account ON pending_ops(account_id, id);
         """,
+        // Message numbers are never used again either: the newest message deleted, the next one got its number, and what was
+        // still being done for the old one (its file deleted or downloaded) was done to the new one. The highest number
+        // ever used is kept here, and new messages count on from it (AUTOINCREMENT would mean rebuilding the whole table).
+        """
+        CREATE TABLE message_ids (last INTEGER NOT NULL);
+        INSERT INTO message_ids (last) SELECT COALESCE(MAX(id), 0) FROM messages;
+        CREATE TRIGGER messages_ai AFTER INSERT ON messages WHEN new.id > (SELECT last FROM message_ids) BEGIN
+            UPDATE message_ids SET last = new.id;
+        END;
+        """,
     ];
 }

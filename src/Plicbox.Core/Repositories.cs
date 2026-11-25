@@ -109,8 +109,7 @@ public interface IPendingOpRepository
     Task UpdateAsync(PendingOp op, CancellationToken ct = default);
     Task RemoveAsync(long id, CancellationToken ct = default);
     /// <summary>
-    /// Drops the uploads (Append, SaveDraft) queued for a message kept here that's gone: SQLite hands a freed id to the
-    /// next new row, which mustn't inherit them.
+    /// Drops the uploads (Append, SaveDraft) queued for a message kept here that's gone.
     /// </summary>
     Task RemoveUploadsAsync(IReadOnlyCollection<long> messageIds, CancellationToken ct = default);
 }

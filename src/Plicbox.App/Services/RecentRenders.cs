@@ -12,8 +12,8 @@ public static class RecentRenders
     private const long MaxChars = 4_000_000; // ≈ 8 MB of text
 
     /// <summary>
-    /// What was rendered and how. The database can give a deleted message's id to the next one that arrives, so the
-    /// message is also told apart by its Message-ID header, date and subject.
+    /// What was rendered and how. Besides its id, the message is told apart by its Message-ID header, date and subject
+    /// (ids could once be given out again).
     /// </summary>
     public readonly record struct Key(long MessageId, string? HeaderId, long DateTicks, string Subject, bool RemoteContent, bool Tracking, bool PlainText)
     {
