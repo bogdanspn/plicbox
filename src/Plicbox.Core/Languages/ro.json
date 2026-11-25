@@ -2,6 +2,8 @@
   "Also end Plicbox's access at Google": "Încheie și accesul Plicbox la Google",
   "Google couldn't be reached": "Google nu a putut fi contactat",
   "It was sent": "A fost trimis",
+  "Plicbox is your default mail app": "Plicbox este aplicația ta de e-mail implicită",
+  "Email addresses clicked in other programs start a message here.": "Adresele de e-mail pe care dai clic în alte programe deschid un mesaj aici.",
   "Make Plicbox the default mail app…": "Fă din Plicbox aplicația de e-mail implicită…",
   "Opens the Windows settings, where you choose it. Email addresses clicked in other programs then start a message here.": "Deschide setările Windows, unde poți alege asta. Adresele de e-mail pe care dai clic în alte programe vor deschide un mesaj aici.",
   "Plicbox can't look inside {0} archives. Only open it if you expected it.": "Plicbox nu poate verifica ce conțin arhivele {0}. Deschide-o doar dacă o așteptai.",

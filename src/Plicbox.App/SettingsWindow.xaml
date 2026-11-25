@@ -99,9 +99,12 @@
                         <ComboBox x:Name="StartupView" MinWidth="280" DisplayMemberPath="Label" />
                     </StackPanel>
                     <StackPanel x:Name="DefaultAppSection">
-                        <Button Content="{local:T 'Make Plicbox the default mail app…'}" HorizontalAlignment="Left" Margin="10,14,0,0" Padding="12,5" Click="DefaultApp_Click" />
-                        <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,4,0,0" TextWrapping="Wrap"
-                                   Text="{local:T 'Opens the Windows settings, where you choose it. Email addresses clicked in other programs then start a message here.'}" />
+                        <Button x:Name="MakeDefault" Content="{local:T 'Make Plicbox the default mail app…'}" HorizontalAlignment="Left" Margin="10,14,0,0" Padding="12,5" Click="DefaultApp_Click" />
+                        <StackPanel x:Name="IsDefault" Orientation="Horizontal" Margin="10,14,0,0" Visibility="Collapsed">
+                            <TextBlock Style="{StaticResource Icon}" Text="&#xE73E;" Foreground="{DynamicResource LinkBrush}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                            <TextBlock Text="{local:T 'Plicbox is your default mail app'}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock x:Name="DefaultAppNote" Foreground="{DynamicResource MutedTextBrush}" FontSize="12" Margin="10,4,0,0" TextWrapping="Wrap" />
                     </StackPanel>
                     <Border Style="{StaticResource SectionHeader}"><TextBlock Text="{local:T 'Language'}" Foreground="{DynamicResource SecondaryTextBrush}" /></Border>
                     <StackPanel Orientation="Horizontal" Margin="10,4">

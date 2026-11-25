@@ -33,6 +33,8 @@ public partial class SettingsWindow : Window
         (_settings, _accounts, _trusted, _backups) = (settings, accounts, trusted, backups);
         UpdatesSection.DataContext = updates;
         DefaultAppSection.Visibility = Updates.IsInstalled ? Visibility.Visible : Visibility.Collapsed; // a dev build isn't registered
+        ShowDefaultApp();
+        Activated += (_, _) => ShowDefaultApp(); // back from the Windows settings
         VersionText.Text = L.F("Plicbox {0}", Updates.Version);
         // A dev build doesn't update: the installed Plicbox does that.
         CheckUpdates.IsEnabled = AutoUpdate.IsEnabled = Updates.IsInstalled;
@@ -482,6 +484,16 @@ public partial class SettingsWindow : Window
         foreach (var gone in before.Where(b => !_pictureSenders.Contains(b, StringComparer.OrdinalIgnoreCase))) _trusted.Untrust(gone);
         foreach (var added in _pictureSenders.Where(a => !before.Contains(a))) _trusted.Trust(added);
         DialogResult = true;
+    }
+
+    private void ShowDefaultApp()
+    {
+        var isDefault = DefaultMailApp.IsDefault();
+        MakeDefault.Visibility = isDefault ? Visibility.Collapsed : Visibility.Visible;
+        IsDefault.Visibility = isDefault ? Visibility.Visible : Visibility.Collapsed;
+        DefaultAppNote.Text = isDefault
+            ? L.T("Email addresses clicked in other programs start a message here.")
+            : L.T("Opens the Windows settings, where you choose it. Email addresses clicked in other programs then start a message here.");
     }
 
     private void DefaultApp_Click(object sender, RoutedEventArgs e) => DefaultMailApp.OpenWindowsSettings();

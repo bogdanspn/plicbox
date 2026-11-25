@@ -2,6 +2,8 @@
   "Also end Plicbox's access at Google": "Auch den Zugriff von Plicbox bei Google beenden",
   "Google couldn't be reached": "Google ist nicht erreichbar",
   "It was sent": "Wurde gesendet",
+  "Plicbox is your default mail app": "Plicbox ist Ihre Standard-E-Mail-App",
+  "Email addresses clicked in other programs start a message here.": "In anderen Programmen angeklickte E-Mail-Adressen beginnen hier eine Nachricht.",
   "Make Plicbox the default mail app…": "Plicbox zur Standard-E-Mail-App machen…",
   "Opens the Windows settings, where you choose it. Email addresses clicked in other programs then start a message here.": "Öffnet die Windows-Einstellungen, wo Sie das festlegen. In anderen Programmen angeklickte E-Mail-Adressen beginnen dann hier eine Nachricht.",
   "Plicbox can't look inside {0} archives. Only open it if you expected it.": "Plicbox kann nicht in {0}-Archive hineinsehen. Öffnen Sie es nur, wenn Sie es erwartet haben.",
