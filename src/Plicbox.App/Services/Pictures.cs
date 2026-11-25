@@ -91,6 +91,26 @@ public sealed class Pictures(SenderPictures senders, ISettingsStore settings, st
         return image;
     }
 
+    private const int DrawnSize = 96; // as the others are decoded
+
+    /// <summary>A vector logo as an ordinary picture, its middle square (it's shown round); null when nothing of it can be drawn.</summary>
+    private static ImageSource? Draw(Drawing drawing)
+    {
+        var visual = new DrawingVisual();
+        using (var dc = visual.RenderOpen())
+            dc.DrawRectangle(new ImageBrush(new DrawingImage(drawing)) { Stretch = Stretch.UniformToFill }, null, new Rect(0, 0, DrawnSize, DrawnSize));
+        var target = new RenderTargetBitmap(DrawnSize, DrawnSize, 96, 96, PixelFormats.Pbgra32);
+        target.Render(visual);
+        var pixels = new byte[DrawnSize * DrawnSize * 4];
+        target.CopyPixels(pixels, DrawnSize * 4, 0);
+        var anything = false;
+        for (var alpha = 3; alpha < pixels.Length && !anything; alpha += 4) anything = pixels[alpha] != 0;
+        if (!anything) return null; // the letter instead
+        var image = BitmapSource.Create(DrawnSize, DrawnSize, 96, 96, PixelFormats.Pbgra32, null, pixels, DrawnSize * 4);
+        image.Freeze();
+        return image;
+    }
+
     private static ImageSource? Decode(string p)
     {
         try
@@ -99,10 +119,7 @@ public sealed class Pictures(SenderPictures senders, ISettingsStore settings, st
             {
                 if (!SenderPictures.IsSafeSvg(File.ReadAllText(p))) return null;
                 var drawing = new FileSvgReader(new WpfDrawingSettings { IncludeRuntime = false, TextAsGeometry = true }).Read(p);
-                if (drawing is null) return null;
-                var svg = new DrawingImage(drawing);
-                svg.Freeze();
-                return svg;
+                return drawing is null ? null : Draw(drawing);
             }
             var image = new BitmapImage();
             image.BeginInit();

@@ -151,27 +151,18 @@
                 <Grid Width="48" Height="48" VerticalAlignment="Center">
                     <Ellipse Fill="{Binding SelectedMessage.AvatarBrush}" />
                     <local:CenteredInitial Text="{Binding SelectedMessage.Initial}" Scale="0.42" />
-                    <Grid>
+                    <local:SenderPicture Source="{Binding SelectedMessage.Picture}" Ring="{DynamicResource AvatarRingBrush}">
                         <!-- No picture for a sender flagged as doubtful: a forged message mustn't borrow a real logo. -->
-                        <Grid.Style>
-                            <Style TargetType="Grid">
+                        <local:SenderPicture.Style>
+                            <Style TargetType="local:SenderPicture">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding SelectedMessage.Picture}" Value="{x:Null}">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                    </DataTrigger>
                                     <DataTrigger Binding="{Binding HasSenderWarning}" Value="True">
                                         <Setter Property="Visibility" Value="Collapsed" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
-                        </Grid.Style>
-                        <Ellipse Fill="White" Margin="0.5" />
-                        <Ellipse Stroke="{DynamicResource AvatarRingBrush}" StrokeThickness="0.5" Margin="-0.75">
-                            <Ellipse.Fill>
-                                <ImageBrush ImageSource="{Binding SelectedMessage.Picture}" Stretch="UniformToFill" />
-                            </Ellipse.Fill>
-                        </Ellipse>
-                    </Grid>
+                        </local:SenderPicture.Style>
+                    </local:SenderPicture>
                 </Grid>
                 <Grid Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
                     <Grid.ColumnDefinitions>

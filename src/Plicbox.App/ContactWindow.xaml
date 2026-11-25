@@ -11,9 +11,7 @@
             <Grid>
                 <Ellipse Fill="{Binding AvatarBrush}" />
                 <local:CenteredInitial Text="{Binding Initial}" Scale="0.5" />
-                <Ellipse Stroke="{DynamicResource AvatarRingBrush}" StrokeThickness="0.5" Margin="-0.75" Visibility="{Binding Photo, Converter={StaticResource NullToCollapsed}}">
-                    <Ellipse.Fill><ImageBrush ImageSource="{Binding Photo}" Stretch="UniformToFill" /></Ellipse.Fill>
-                </Ellipse>
+                <local:SenderPicture Source="{Binding Photo}" Ring="{DynamicResource AvatarRingBrush}" />
             </Grid>
         </DataTemplate>
     </Window.Resources>
