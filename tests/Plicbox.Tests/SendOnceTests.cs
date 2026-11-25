@@ -96,7 +96,8 @@ public sealed class SendOnceTests : IAsyncLifetime
         await UntilAsync(async () => (await _messages.GetAsync(id))?.FolderId == _sent.Id);
         Assert.Equal(1, _smtp.Received);
         Assert.Equal(SendState.Waiting, (await _messages.GetAsync(id))!.SendState);
-        Assert.Contains(await _ops.GetByAccountAsync(_account.Id), o => o.Kind == PendingOpKind.Append && o.MessageId == id);
+        // Queued for the server's Sent right after the move.
+        await UntilAsync(async () => (await _ops.GetByAccountAsync(_account.Id)).Any(o => o.Kind == PendingOpKind.Append && o.MessageId == id));
     }
 
     [Fact]

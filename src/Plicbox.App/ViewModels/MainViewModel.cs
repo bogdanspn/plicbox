@@ -614,7 +614,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         var accounts = await _accounts.GetAllAsync();
         HasAccounts = accounts.Count > 0;
-        var expanded = SidebarNodes.Where(n => n.IsGroup).ToDictionary(n => (n.Title, n.AccountId, n.Level), n => n.IsExpanded);
+        var expanded = SidebarNodes.Where(n => n.IsGroup).ToDictionary(n => n.GroupKey, n => n.IsExpanded);
 
         SidebarNodes.Clear();
         _foldersByAccount.Clear();
@@ -659,7 +659,7 @@ public sealed partial class MainViewModel : ObservableObject
                 var more = new SidebarNode
                 {
                     Title = L.T("More"), Glyph = Glyphs.More, Kind = NodeKind.Group, Parent = group,
-                    AccountId = account.Id, Level = 1, IsExpanded = false,
+                    AccountId = account.Id, Level = 1,
                 };
                 SidebarNodes.Add(more);
                 foreach (var f in others) SidebarNodes.Add(FolderNode(f, more, level: 2));
@@ -667,7 +667,8 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         foreach (var node in SidebarNodes.Where(n => n.IsGroup))
-            if (expanded.TryGetValue((node.Title, node.AccountId, node.Level), out var isExpanded)) node.IsExpanded = isExpanded;
+            node.IsExpanded = expanded.TryGetValue(node.GroupKey, out var isOpen) || _settings.Current.SidebarGroups.TryGetValue(node.GroupKey, out isOpen)
+                ? isOpen : node.OpensByDefault;
         SidebarView.Refresh();
         await RefreshCountsAsync();
     }
@@ -1477,6 +1478,16 @@ public sealed partial class MainViewModel : ObservableObject
         node.IsExpanded = !node.IsExpanded;
         UpdateFoldedCounts();
         SidebarView.Refresh();
+        RememberGroups();
+    }
+
+    /// <summary>Which sidebar groups are open and which folded, for the next start.</summary>
+    private void RememberGroups()
+    {
+        var groups = SidebarNodes.Where(n => n.IsGroup && n.IsExpanded != n.OpensByDefault).ToDictionary(n => n.GroupKey, n => n.IsExpanded);
+        var known = _settings.Current.SidebarGroups;
+        if (groups.Count != known.Count || groups.Any(g => !known.TryGetValue(g.Key, out var open) || open != g.Value))
+            _settings.Save(_settings.Current with { SidebarGroups = groups });
     }
 
     // Row buttons pass their own item; toolbar buttons and shortcuts pass nothing and act on the selection.
@@ -2096,6 +2107,7 @@ public sealed partial class MainViewModel : ObservableObject
         foreach (var group in SidebarNodes.Where(n => n.IsGroup)) group.IsExpanded = expanded;
         UpdateFoldedCounts();
         SidebarView.Refresh();
+        RememberGroups();
     }
 
     public Task SetFolderVisibilityAsync(Folder folder, FolderVisibility visibility)

@@ -41,6 +41,10 @@ public sealed partial class SidebarNode : ObservableObject
     [ObservableProperty] private bool _isBusy;
 
     public bool IsGroup => Kind == NodeKind.Group;
+    /// <summary>A group in the settings: "favorites", "account:3" or "more:3" (the same whatever it's called).</summary>
+    public string GroupKey => AccountId == 0 ? "favorites" : Level == 0 ? $"account:{AccountId}" : $"more:{AccountId}";
+    /// <summary>A group as it starts out: an account's More is folded.</summary>
+    public bool OpensByDefault => Level == 0;
     /// <summary>Drafts and the Outbox: the count is how many are waiting there, not unread mail (shown muted).</summary>
     public bool CountIsTotal => Kind == NodeKind.Outbox || (Kind == NodeKind.Folder && Role is FolderRole.Drafts or FolderRole.Outbox);
     public bool IsVisible => Parent is null || (Parent.IsExpanded && Parent.IsVisible);

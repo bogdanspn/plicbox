@@ -56,6 +56,10 @@ public static class Appearance
     /// <summary>The font or size for message text changed: messages on screen show again with it.</summary>
     public static event Action? MessageTextChanged;
 
+    /// <summary>The settings <see cref="Apply(AppSettings)"/> uses, to tell whether they changed.</summary>
+    public static object Part(AppSettings s) =>
+        (s.Theme, s.AccentColor, s.UiFont, s.MessageZoom, s.MessageFont, s.MessageTextSize, s.AccentHighlights, s.DarkMessages);
+
     public static void Apply(AppSettings s) =>
         Apply(s.Theme, s.AccentColor, s.UiFont, s.MessageZoom, s.MessageFont, s.MessageTextSize, s.AccentHighlights, s.DarkMessages);
 

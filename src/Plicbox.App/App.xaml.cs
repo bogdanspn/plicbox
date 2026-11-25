@@ -259,7 +259,14 @@ public partial class App : Application
             Appearance.Apply(settingsStore.Current);
             SolidWindows.Register(); // no see-through backdrop, title bars in the app's colours
             RenderRecovery.Register(Dispatcher); // a fresh drawing surface after sleep, unlock or a display change
-            settingsStore.Changed += s => Dispatcher.BeginInvoke(() => Appearance.Apply(s));
+            // Only when it's about the looks: applying them lays everything out again, and folding a sidebar group saves too.
+            var looks = Appearance.Part(settingsStore.Current);
+            settingsStore.Changed += s =>
+            {
+                if (Appearance.Part(s).Equals(looks)) return;
+                looks = Appearance.Part(s);
+                Dispatcher.BeginInvoke(() => Appearance.Apply(s));
+            };
             Appearance.WatchWindows(() => settingsStore.Current);
             // The startup entry follows the installed app's own path (it changes on reinstall; a dev build may have
             // changed the setting meanwhile).

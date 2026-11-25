@@ -75,6 +75,8 @@ public sealed record AppSettings
     public double SidebarWidth { get; init; } = 300;
     /// <summary>The sidebar is folded down to a strip of icons (dragged narrow); <see cref="SidebarWidth"/> is the width it opens to.</summary>
     public bool SidebarCollapsed { get; init; }
+    /// <summary>Mail's sidebar groups (Favorites, an account, its More) left open or folded otherwise than they start out.</summary>
+    public Dictionary<string, bool> SidebarGroups { get; init; } = [];
     /// <summary>The app's language: "system" (the Windows display language), or a code from L.Languages ("en", "de", "ro", "es"). Applies on restart.</summary>
     public string Language { get; init; } = "en";
     /// <summary>Appearance: "system" (follow Windows), "light" or "dark".</summary>

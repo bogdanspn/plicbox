@@ -114,7 +114,13 @@ public sealed partial class CalendarViewModel : ObservableObject
         engine.StatusChanged += () => _ui.Post(_ => UpdateBanner(), null);
         engine.ChangeRefused += message => _ui.Post(_ => _dialogs.Error(message), null);
         // Week start, work days and hours all change how the views are drawn, the mini month included.
-        settings.Changed += _ => _ui.Post(_ => { OnPropertyChanged(nameof(MiniMonth)); _ = ReloadAsync(); }, null);
+        var prefs = settings.Current.Calendar;
+        settings.Changed += s =>
+        {
+            if (ReferenceEquals(s.Calendar, prefs)) return; // something else was saved
+            prefs = s.Calendar;
+            _ui.Post(_ => { OnPropertyChanged(nameof(MiniMonth)); _ = ReloadAsync(); }, null);
+        };
 
         // Every 30 s: refresh "Up next", move the now line, and pop reminders.
         _clock = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
