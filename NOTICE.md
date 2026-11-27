@@ -24,6 +24,8 @@ of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Publ
 
 Plicbox includes libraries and icons by others, each under its own licence (MIT, Apache 2.0, BSD and public domain),
 listed with their notices in [src/Plicbox.App/THIRD-PARTY-NOTICES.txt](src/Plicbox.App/THIRD-PARTY-NOTICES.txt).
+The website uses the Inter typeface by The Inter Project Authors, under the SIL Open Font License 1.1
+([site/fonts/LICENSE.txt](site/fonts/LICENSE.txt)).
 
 ## Contact
 

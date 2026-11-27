@@ -24,6 +24,7 @@ ErrorDocument 404 /404.html
 <IfModule mod_mime.c>
   AddType application/manifest+json .webmanifest
   AddType image/svg+xml .svg
+  AddType font/woff2 .woff2
   AddCharset utf-8 .html .css .webmanifest .txt .xml
 </IfModule>
 
@@ -31,7 +32,7 @@ ErrorDocument 404 /404.html
   AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/xml image/svg+xml application/manifest+json
 </IfModule>
 
-# Pictures, videos and icons rarely change; pages are checked on every visit and styles and scripts hourly, so edits show up soon.
+# Pictures, videos, icons and fonts rarely change; pages are checked on every visit and styles and scripts hourly, so edits show up soon.
 <IfModule mod_expires.c>
   ExpiresActive On
   ExpiresDefault "access plus 1 hour"
@@ -45,6 +46,7 @@ ErrorDocument 404 /404.html
   ExpiresByType image/svg+xml "access plus 7 days"
   ExpiresByType image/x-icon "access plus 7 days"
   ExpiresByType image/vnd.microsoft.icon "access plus 7 days"
+  ExpiresByType font/woff2 "access plus 30 days"
 </IfModule>
 
 <IfModule mod_headers.c>

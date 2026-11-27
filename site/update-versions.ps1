@@ -54,27 +54,27 @@ $text = [IO.File]::ReadAllText($index) -replace "`r`n", "`n"
 $text = [regex]::Replace($text, '(?s)(<!-- version -->).*?(<!-- /version -->)',
     { param($m) $m.Groups[1].Value + "Version $version, $date. <a href=`"changes.html`">What's new</a>" + $m.Groups[2].Value })
 
-# The numbers under "Measured, every release": a tile each, with a column per version (the newest in the accent colour).
+# The numbers under "Measured, every release": a tile each, with a column of dots per version (the newest in the accent
+# colour), like the dot floor behind the home page's headline. home.css turns the columns into dots, with a mask.
 $inv = [Globalization.CultureInfo]::InvariantCulture
 function Num($value) { [double]::Parse($value, $inv) }
 function Show($value, [string]$format) { ([double]$value).ToString($format, $inv) }
 # Rounded first, so the two figures shown beside it add up to it.
 function Memory($row) { [math]::Round((Num $row.appPrivateMb)) + [math]::Round((Num $row.webViewPrivateMb)) }
 function Columns($points, [string]$label) {
-    # Columns from zero, so a small change looks small. One point isn't a trend.
+    # Columns from zero, so a small change looks small: 8 dots for the largest, at least one. One point isn't a trend.
     $points = @($points | Select-Object -Last 14)
     if ($points.Count -lt 2) { return "" }
     $max = ($points.value | Measure-Object -Maximum).Maximum
     $bars = for ($i = 0; $i -lt $points.Count; $i++) {
-        $height = [math]::Max(4, [math]::Round(40 * $points[$i].value / $max, 1))
+        $dots = [math]::Max(1, [math]::Round(8 * $points[$i].value / $max))
         $x = $i * 16
-        $side = Show ($height - 3) '0.#'
         $class = if ($i -eq $points.Count - 1) { ' class="now"' } else { "" }
-        "<g$class><title>$($points[$i].version): $($points[$i].text)</title><rect class=`"hit`" x=`"$x`" width=`"16`" height=`"40`"/><path d=`"M$($x + 2) 40v-${side}q0-3 3-3h6q3 0 3 3v${side}z`"/></g>"
+        "<g$class style=`"--i:$i`"><title>$($points[$i].version): $($points[$i].text)</title><rect class=`"hit`" x=`"$x`" width=`"16`" height=`"40`"/><rect class=`"col`" x=`"$x`" y=`"$(40 - 5 * $dots)`" width=`"16`" height=`"$(5 * $dots)`"/></g>"
     }
     $width = $points.Count * 16
     $summary = "${label}: $($points[0].text) in $($points[0].version), $($points[-1].text) in $($points[-1].version)"
-    "<svg class=`"columns`" viewBox=`"0 0 $width 40`" width=`"$width`" height=`"40`" role=`"img`" aria-label=`"$summary`">$($bars -join '')</svg>" +
+    "<svg class=`"columns`" style=`"--cols:$($points.Count)`" viewBox=`"0 0 $width 40`" width=`"$width`" height=`"40`" role=`"img`" aria-label=`"$summary`"><rect class=`"grid`" width=`"$width`" height=`"40`"/>$($bars -join '')</svg>" +
     "<span class=`"range`" style=`"width:${width}px`"><span>$($points[0].version)</span><span>$($points[-1].version)</span></span>"
 }
 function Tile([string]$name, [string]$value, [string]$unit, [string]$note, [string]$chart) {

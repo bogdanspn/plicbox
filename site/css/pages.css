@@ -1,6 +1,6 @@
 /* Text pages (docs, privacy, terms), set for long reading. Colours, type and the footer come from base.css. */
 
-body { font-size: 16.5px; line-height: 1.65; }
+body { font-size: 16px; line-height: 1.7; }
 h1, h2, h3 { line-height: 1.2; }
 a { color: var(--link); text-underline-offset: 2px; }
 code { font: 13.5px/1.4 Consolas, "Cascadia Mono", ui-monospace, monospace; background: color-mix(in srgb, var(--text) 6%, transparent);

@@ -1,6 +1,6 @@
 # Plicbox website
 
-Static pages with no build step and no external requests: no fonts, scripts or analytics. Live at
+Static pages with no build step and no external requests: no outside fonts, scripts or analytics. Live at
 **https://plicbox.bogdanrosu.net/** (Apache).
 
 ```
@@ -8,12 +8,14 @@ index.html                    the home page
 docs.html privacy.html terms.html   text pages (Google's consent screen links to privacy and terms)
 changes.html                  What's new: every version and its notes (written by update-versions.ps1)
 404.html                      the error page; self-contained, because Apache shows it at any missing address
-css/  base.css                colours (light and dark), type, footer: every page
+css/  base.css                Inter, colours (light and dark), type, footer: every page
       home.css                the home page
-      pages.css               docs, privacy, terms
-js/   home.js                 tabs, the videos, the dot floor behind the hero
+      pages.css               docs, privacy, terms, changes
+js/   home.js                 tabs, the videos, the feature tiles' animations, the dot floor behind the hero
       docs.js                 marks the section in view in the docs sidebar
 icons/                        favicon.svg, apple-touch-icon.png, icon-192/512.png (favicon.ico stays at the root)
+fonts/                        Inter (SIL Open Font License, fonts/LICENSE.txt): Latin, and the extra letters Romanian
+                              and other European languages need and currency signs, cut down from Google Fonts' Latin Extended file
 media/                        the videos recorded from the app, their posters, the link-preview picture
 favicon.ico robots.txt sitemap.xml site.webmanifest .htaccess
 README.md record-videos.ps1 update-versions.ps1   tools, never published
@@ -59,6 +61,30 @@ pwsh -File webdisk\deploy.ps1 -InstallHook    # publish automatically after each
 - The address and the login (encrypted with DPAPI) are kept in `%APPDATA%\Plicbox\site-deploy`, not in the repository.
 - Cloudflare caches pictures and videos. To clear its copies of what a deploy changed, set `CLOUDFLARE_API_TOKEN` (a token
   with Zone > Cache Purge) and `CLOUDFLARE_ZONE_ID`; otherwise purge in the Cloudflare dashboard, or wait.
+
+## Feature tiles
+
+The small pieces of the app in the home page's Features tiles (the tracking and pictures notes, the phishing banner,
+Undo, the search box, the Outbox, the Reply button in four languages, the accent colours, the rolling €0) are plain HTML and CSS, not
+pictures. Their wording and colours are the app's own, from `src/Plicbox.Core/Languages/*.json` and
+`Services/Appearance.cs`; when those change, change the tiles too. The pop-ups struck through around the headline are
+made up on purpose: the noise Plicbox leaves out.
+
+Two figures in the tiles are measured, not made up; check them now and then:
+- Search, "250,000 messages searched in 0.013 s": Plicbox's own search (MessageRepository.SearchAsync, from the 0.1.24
+  build) on a test mailbox of 250,000 made-up messages (words from Plicbox's own texts), on the PC Plicbox is built on.
+  "boarding pass" took 12.6 ms (median of 25); the most common words up to 0.17 s.
+- Phishing, "About 150,000 reported sites": the app logs "Threat lists loaded: N entries" (153,732 on 26 November 2026:
+  41,013 phishing, 112,722 malware). Their animations run only while on screen, and not at all for
+reduced motion.
+
+## Logos
+
+The accounts under the hero video show their providers' logos, one grey, in their own colours when pointed at: Gmail,
+Google, iCloud, Zoho and GMX from [Simple Icons](https://simpleicons.org) (CC0), and Microsoft's four squares, the mark
+it gives "Sign in with Microsoft" buttons. The names and logos belong to their owners, and only say which accounts work.
+Simple Icons dropped Microsoft's, Yahoo's and Fastmail's own logos at their owners' request, so Yahoo and Fastmail are
+named next to "any IMAP account" instead.
 
 ## Videos
 
