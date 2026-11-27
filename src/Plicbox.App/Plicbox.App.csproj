@@ -23,7 +23,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <!-- The release version: release.ps1 raises it and packs the installer and updates with it. -->
-    <Version>0.1.24</Version>
+    <Version>0.1.25</Version>
     <!-- What Windows calls the app: Task Manager, the list of mail apps. -->
     <AssemblyTitle>Plicbox</AssemblyTitle>
     <Product>Plicbox</Product>
